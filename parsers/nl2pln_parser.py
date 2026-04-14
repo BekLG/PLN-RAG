@@ -1,0 +1,41 @@
+from typing import List
+import dspy
+from core.parser import SemanticParser, ParseResult
+from config import get_settings
+
+
+class NL2PLNParser(SemanticParser):
+    """
+    DSPy-based NL → PLN parser, optimized via SIMBA/GEPA.
+    Loads a compiled module from disk (e.g. simba_all.json).
+    """
+
+    def __init__(self):
+        cfg = get_settings()
+
+        # Lazy import to avoid loading PeTTa at import time
+        from nl2pln import NL2PLNModule, pln_spec
+        from pettachainer import get_language_spec
+
+        self._pln_spec = pln_spec
+        self._module = NL2PLNModule()
+        self._module.load(cfg.nl2pln_module_path)
+        self._nl2pln = self._module.nl2pln
+
+        lm = dspy.LM(cfg.openai_model, api_key=cfg.openai_api_key, cache=False)
+        dspy.configure(lm=lm, temperature=0.1, max_tokens=4000)
+
+    def parse(self, text: str, context: List[str]) -> ParseResult:
+        try:
+            result = self._nl2pln(
+                sentences=[text],
+                context=context,
+                pln_spec=self._pln_spec
+            )
+            return ParseResult(
+                statements=result.statements or [],
+                queries=result.queries or []
+            )
+        except Exception as e:
+            print(f"[NL2PLNParser] Failed for '{text}': {e}")
+            return ParseResult()

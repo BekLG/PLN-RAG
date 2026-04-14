@@ -1,0 +1,7 @@
+.env
+__pycache__/
+*.pyc
+*.pyo
+data/atomspace/
+data/faiss/
+*.metta
