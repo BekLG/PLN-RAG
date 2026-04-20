@@ -88,6 +88,7 @@ class CanonicalPLNParser(SemanticParser):
                 protected_constants,
                 proper_name_map,
             )
+            statements = [self._prune_generic_sortal_premises(stmt) for stmt in statements]
             statements = self._filter_statements(statements)
             queries = self._plan_queries(question=text, queries=queries, statements=statements, context=context)
 
@@ -111,6 +112,7 @@ class CanonicalPLNParser(SemanticParser):
                     protected_constants,
                     proper_name_map,
                 )
+                statements = [self._prune_generic_sortal_premises(stmt) for stmt in statements]
                 statements = self._filter_statements(statements)
                 queries = self._plan_queries(question=text, queries=queries, statements=statements, context=context)
 
@@ -345,6 +347,38 @@ class CanonicalPLNParser(SemanticParser):
                 continue
             filtered.append(statement)
         return filtered
+
+    def _prune_generic_sortal_premises(self, statement: str) -> str:
+        if "Implication" not in statement:
+            return statement
+
+        match = re.search(r"\(Premises\s+((?:\([^()]+\)\s*)+)\)", statement)
+        if not match:
+            return statement
+
+        premises = [atom.group(0) for atom in re.finditer(r"\([^()]+\)", match.group(1))]
+        if len(premises) <= 1:
+            return statement
+
+        kept: List[str] = []
+        for premise in premises:
+            parsed = self._parse_simple_atom(premise)
+            if not parsed:
+                kept.append(premise)
+                continue
+            if (
+                parsed["head"] == "IsA"
+                and len(parsed["args"]) == 2
+                and parsed["args"][0].startswith(("$", "?"))
+            ):
+                continue
+            kept.append(premise)
+
+        if len(kept) == len(premises) or not kept:
+            return statement
+
+        replacement = "(Premises " + " ".join(kept) + ")"
+        return statement[: match.start()] + replacement + statement[match.end() :]
 
     def _has_valid_implication_shape(self, statement: str) -> bool:
         if "Implication" not in statement:
