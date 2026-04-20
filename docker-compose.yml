@@ -5,15 +5,18 @@ services:
       - "8000:8000"
     environment:
       - OPENAI_API_KEY=${OPENAI_API_KEY}
-      - PARSER=${PARSER:-nl2pln}
+      - PARSER=${PARSER:-canonical_pln}
+      - NL2PLN_MODULE_PATH=/app/data/simba_all.json
+      - CANONICAL_PLN_NL2PLN_MODULE_PATH=/app/data/simba_canonical_pln.json
       - QDRANT_URL=http://qdrant:6333
       # Note: Points to Ollama on your host machine
       - OLLAMA_URL=http://host.docker.internal:11434/api/embeddings
       - ATOMSPACE_PATH=/app/data/atomspace/kb.metta
       - FAISS_PATH=/app/data/faiss
+      - QUERY_FALLBACK_ENABLED=${QUERY_FALLBACK_ENABLED:-true}
     volumes:
       - pln_data:/app/data
-      - ./simba_all.json:/app/data/simba_all.json
+      - ./data/simba_all.json:/app/data/simba_all.json
       - ./data/simba_canonical_pln.json:/app/data/simba_canonical_pln.json
     extra_hosts:
       - "host.docker.internal:host-gateway"

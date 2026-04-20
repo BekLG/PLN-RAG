@@ -8,7 +8,7 @@ class Settings(BaseSettings):
     openai_model: str = "openai/gpt-4o-mini"
 
     # Options: "nl2pln" | "canonical_pln" | "manhin"
-    parser: str = "nl2pln"
+    parser: str = "canonical_pln"
     nl2pln_module_path: str = "data/simba_all.json"
     canonical_pln_nl2pln_module_path: str = "data/simba_canonical_pln.json"
 

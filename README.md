@@ -34,7 +34,7 @@ curl http://localhost:11434    # should return "Ollama is running"
 ```bash
 cp .env.example .env
 # Fill in OPENAI_API_KEY
-# OLLAMA_URL is already set to http://host.docker.internal:11434/api/embeddings
+# OLLAMA_URL can stay as localhost in .env; docker-compose overrides it for containers
 
 docker compose up --build
 ```
@@ -210,7 +210,7 @@ ingest and query requests will fail with a connection refused error.
 
 | Path | Contents | Backed by |
 |------|----------|-----------|
-| `data/atomspace/kb.metta` | PLN atoms (facts + rules) | file, loaded on startup |
+| `data/atomspace/kb.metta` locally, `/app/data/atomspace/kb.metta` in Docker | PLN atoms (facts + rules) | file, loaded on startup |
 | `data/faiss/` | Predicate embeddings (Manhin parser) | FAISS index files |
 | Qdrant volume | NL ↔ PLN sentence mappings | Docker volume |
 | `~/.ollama` | Embedding model weights | host machine |
