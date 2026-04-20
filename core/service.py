@@ -205,10 +205,14 @@ class PLNRAGService:
                 "had ",
             )
         )
-        has_variables = "$" in original_query or "?" in original_query
+        has_variables = self._query_has_goal_variables(original_query)
         if is_yes_no and has_variables:
             return "weakly_aligned"
         return "well_aligned"
+
+    def _query_has_goal_variables(self, query: str) -> bool:
+        variables = set(re.findall(r"[$?][A-Za-z_][A-Za-z0-9_]*", query))
+        return bool(variables - {"$prf", "$tv", "?prf", "?tv"})
 
     def _extract_sources(self, proof_traces: List[str]) -> List[str]:
         """

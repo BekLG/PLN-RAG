@@ -35,6 +35,7 @@ curl http://localhost:11434    # should return "Ollama is running"
 cp .env.example .env
 # Fill in OPENAI_API_KEY
 # OLLAMA_URL can stay as localhost in .env; docker-compose overrides it for containers
+# PLNRAG_PARSER controls the parser inside Docker Compose
 
 docker compose up --build
 ```
@@ -85,19 +86,23 @@ curl http://localhost:8000/health
 
 ## Switching parsers
 
-Set `PARSER` in `.env` — no code changes needed:
+Set `PARSER` in `.env` for local runs. For Docker Compose, use `PLNRAG_PARSER`
+to avoid accidental overrides from a shell-level `PARSER` variable.
 
 ```bash
 # Use NL2PLN (DSPy-based, SIMBA/GEPA optimized)
 PARSER=nl2pln
+PLNRAG_PARSER=nl2pln
 NL2PLN_MODULE_PATH=data/simba_all.json
 
 # Use CanonicalPLN parser (separate tuned SIMBA artifact)
 PARSER=canonical_pln
+PLNRAG_PARSER=canonical_pln
 CANONICAL_PLN_NL2PLN_MODULE_PATH=data/simba_canonical_pln.json
 
 # Use Manhin's parser (format self-correction + FAISS predicate store)
 PARSER=manhin
+PLNRAG_PARSER=manhin
 ```
 
 `nl2pln` and `canonical_pln` intentionally use separate compiled artifacts so baseline

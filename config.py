@@ -1,5 +1,6 @@
 from pydantic_settings import BaseSettings
 from functools import lru_cache
+from pydantic import ConfigDict
 
 
 class Settings(BaseSettings):
@@ -36,9 +37,11 @@ class Settings(BaseSettings):
     # Query execution
     query_fallback_enabled: bool = True
 
-    class Config:
-        env_file = ".env"
-        env_file_encoding = "utf-8"
+    model_config = ConfigDict(
+        env_file=".env",
+        env_file_encoding="utf-8",
+        extra="ignore",
+    )
 
 
 @lru_cache
