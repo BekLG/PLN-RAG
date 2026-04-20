@@ -12,13 +12,19 @@ def get_parser() -> SemanticParser:
 
     if name == "nl2pln":
         from parsers.nl2pln_parser import NL2PLNParser
+
         return NL2PLNParser()
+
+    if name == "canonical_pln":
+        from parsers.canonical_pln_parser import CanonicalPLNParser
+
+        return CanonicalPLNParser()
 
     if name == "manhin":
         from parsers.manhin_parser import ManhinParser
+
         return ManhinParser()
 
     raise ValueError(
-        f"Unknown parser '{name}'. "
-        f"Set PARSER to one of: nl2pln, manhin"
+        f"Unknown parser '{name}'. Set PARSER to one of: nl2pln, canonical_pln, manhin"
     )

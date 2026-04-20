@@ -5,3 +5,8 @@ __pycache__/
 data/atomspace/
 data/faiss/
 *.metta
+docs/reference/
+*matrix*.json
+*_sanity.json
+berekets_fallback_on_off.json
+.venv

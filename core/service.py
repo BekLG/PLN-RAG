@@ -29,8 +29,9 @@ class PLNRAGService:
         self._vector_store = VectorStore()
         self._answer_gen = AnswerGenerator()
         self._context_top_k = cfg.context_top_k
+        self._query_fallback_enabled = cfg.query_fallback_enabled
 
-    #  Ingest 
+    #  Ingest
 
     async def ingest_batch(self, texts: List[str]) -> List[IngestItemResult]:
         """
@@ -74,20 +75,13 @@ class PLNRAGService:
                 if added:
                     self._vector_store.store(chunk, added, vector)
 
-            return IngestItemResult(
-                text=text,
-                atoms=all_atoms,
-                status="success"
-            )
+            return IngestItemResult(text=text, atoms=all_atoms, status="success")
 
         except Exception as e:
             import traceback
+
             traceback.print_exc()
-            return IngestItemResult(
-                text=text,
-                status="failed",
-                error=str(e)
-            )
+            return IngestItemResult(text=text, status="failed", error=str(e))
 
     def _enrich_context(self, rag_context: List[str], max_atoms: int = 50) -> List[str]:
         """
@@ -98,6 +92,7 @@ class PLNRAGService:
         """
         from config import get_settings
         import os
+
         cfg = get_settings()
         file_atoms: List[str] = []
         if os.path.exists(cfg.atomspace_path):
@@ -113,7 +108,7 @@ class PLNRAGService:
 
         return merged[-max_atoms:]
 
-    #  Query 
+    #  Query
 
     async def query(self, question: str) -> QueryResponse:
         # 1. Retrieve context for translation
@@ -123,44 +118,97 @@ class PLNRAGService:
         context = self._enrich_context(context)
 
         # 2. Parse question → PLN query
-        parse_result = self._parser.parse(question, context)
-
-        # Support Manhin parser's separate query mode
         if hasattr(self._parser, "parse_query"):
             parse_result = self._parser.parse_query(question, context)
+        else:
+            parse_result = self._parser.parse(question, context)
 
+        original_query = parse_result.queries[0] if parse_result.queries else ""
         if not parse_result.queries:
             return QueryResponse(
                 question=question,
                 pln_query="",
+                original_query="",
+                executed_query="",
+                fallback_used=False,
+                query_status="no_query",
                 raw_proof="",
                 sources=[],
-                answer="I couldn't translate this question into a logical query."
+                answer="I couldn't translate this question into a logical query.",
             )
-
-        target_query = parse_result.queries[0]
 
         # 3. Add any supporting statements the parser generated for the query
         if parse_result.statements:
             self._reasoner.add_statements(parse_result.statements)
 
-        # 4. Run reasoning via PeTTaChainer
-        proof_traces = self._reasoner.query(target_query)
+        # 4. Run reasoning via PeTTaChainer against ordered candidates
+        proof_traces: List[str] = []
+        executed_query = ""
+        candidates = (
+            parse_result.queries if self._query_fallback_enabled else parse_result.queries[:1]
+        )
+        for candidate in candidates:
+            executed_query = candidate
+            proof_traces = self._reasoner.query(candidate)
+            if proof_traces:
+                break
+
         raw_proof = str(proof_traces)
+        fallback_used = bool(executed_query and original_query and executed_query != original_query)
+        query_status = self._classify_query_status(question, original_query, fallback_used)
 
         # 5. Reverse-lookup NL sources from proof atoms
         sources = self._extract_sources(proof_traces)
 
         # 6. Generate natural language answer
         answer = self._answer_gen.generate(question, proof_traces)
+        if not proof_traces and query_status == "weakly_aligned":
+            answer = (
+                "No proof was found. The generated query is only weakly aligned with the current "
+                "knowledge base, so the failure may come from query shape mismatch or missing witness facts."
+            )
 
         return QueryResponse(
             question=question,
-            pln_query=target_query,
+            pln_query=executed_query,
+            original_query=original_query,
+            executed_query=executed_query,
+            fallback_used=fallback_used,
+            query_status=query_status,
             raw_proof=raw_proof,
             sources=sources,
-            answer=answer
+            answer=answer,
         )
+
+    def _classify_query_status(
+        self, question: str, original_query: str, fallback_used: bool
+    ) -> str:
+        if not original_query:
+            return "no_query"
+        if fallback_used:
+            return "weakly_aligned"
+
+        normalized = question.strip().lower()
+        is_yes_no = normalized.startswith(
+            (
+                "is ",
+                "are ",
+                "was ",
+                "were ",
+                "does ",
+                "do ",
+                "did ",
+                "can ",
+                "could ",
+                "has ",
+                "have ",
+                "had ",
+            )
+        )
+        has_variables = "$" in original_query or "?" in original_query
+        if is_yes_no and has_variables:
+            return "weakly_aligned"
+        return "well_aligned"
 
     def _extract_sources(self, proof_traces: List[str]) -> List[str]:
         """
@@ -169,7 +217,7 @@ class PLNRAGService:
         """
         atoms_to_search = set()
         for trace in proof_traces:
-            for match in re.findall(r'\([^()]+?\)', str(trace)):
+            for match in re.findall(r"\([^()]+?\)", str(trace)):
                 if "STV" not in match and len(match) >= 5:
                     atoms_to_search.add(match)
 
@@ -182,7 +230,7 @@ class PLNRAGService:
                 resp = self._vector_store._client.post(
                     f"{self._vector_store._qdrant}/collections"
                     f"/{self._vector_store._collection}/points/search",
-                    json={"vector": vector, "limit": 1, "with_payload": True}
+                    json={"vector": vector, "limit": 1, "with_payload": True},
                 )
                 results = resp.json().get("result", [])
                 if results and results[0].get("score", 0) > 0.6:
@@ -194,7 +242,7 @@ class PLNRAGService:
 
         return list(sources)
 
-    #  Reset 
+    #  Reset
 
     def reset(self, scope: str):
         if scope in ("all", "atomspace"):
@@ -202,7 +250,7 @@ class PLNRAGService:
         if scope in ("all", "vectordb"):
             self._vector_store.reset()
 
-    #  Health 
+    #  Health
 
     def health(self) -> dict:
         return {

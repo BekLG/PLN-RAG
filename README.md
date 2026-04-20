@@ -90,11 +90,28 @@ Set `PARSER` in `.env` — no code changes needed:
 ```bash
 # Use NL2PLN (DSPy-based, SIMBA/GEPA optimized)
 PARSER=nl2pln
-NL2PLN_MODULE_PATH=models/simba_all.json
+NL2PLN_MODULE_PATH=data/simba_all.json
+
+# Use CanonicalPLN parser (separate tuned SIMBA artifact)
+PARSER=canonical_pln
+CANONICAL_PLN_NL2PLN_MODULE_PATH=data/simba_canonical_pln.json
 
 # Use Manhin's parser (format self-correction + FAISS predicate store)
 PARSER=manhin
 ```
+
+`nl2pln` and `canonical_pln` intentionally use separate compiled artifacts so baseline
+comparisons stay clean. Tune `data/simba_canonical_pln.json` without modifying the
+baseline `simba_all.json`.
+
+Query fallback execution can be toggled independently at runtime:
+
+```bash
+QUERY_FALLBACK_ENABLED=true
+```
+
+When disabled, the service runs only the original generated query. When enabled,
+it may try later fallback candidates produced by the parser.
 
 To add a new parser:
 1. Create `parsers/your_parser.py` implementing `SemanticParser`
@@ -158,6 +175,22 @@ cp .env.example .env
 # 7. Run
 uvicorn api.main:app --reload
 ```
+
+## Compare parser outputs
+
+Use `compare_parsers.py` to inspect how `nl2pln`, `canonical_pln`, and `manhin`
+translate the same input:
+
+```bash
+python compare_parsers.py \
+  --mode query \
+  --text "Is Kebede smart?" \
+  --context "(Inheritance Kebede Human)" \
+  --context "(Implication (Inheritance $x Human) (Inheritance $x Smart))"
+```
+
+The script prints JSON and marks parsers as unavailable if their dependencies are
+not installed in the current environment.
 
 ## Dependency notes
 

@@ -29,6 +29,10 @@ class QueryRequest(BaseModel):
 class QueryResponse(BaseModel):
     question: str
     pln_query: str
+    original_query: str
+    executed_query: str
+    fallback_used: bool
+    query_status: Literal["well_aligned", "weakly_aligned", "malformed", "no_query"]
     raw_proof: str
     sources: List[str]       # NL sentences that contributed to the proof
     answer: str

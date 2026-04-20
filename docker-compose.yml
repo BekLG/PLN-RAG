@@ -14,6 +14,7 @@ services:
     volumes:
       - pln_data:/app/data
       - ./simba_all.json:/app/data/simba_all.json
+      - ./data/simba_canonical_pln.json:/app/data/simba_canonical_pln.json
     extra_hosts:
       - "host.docker.internal:host-gateway"
     depends_on:
