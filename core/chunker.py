@@ -1,3 +1,4 @@
+import re
 from typing import List
 from config import get_settings
 
@@ -14,13 +15,82 @@ class Chunker:
         cfg = get_settings()
         self.chunk_size = cfg.chunk_size
         self.overlap = cfg.chunk_overlap
+        self._merge_cues = {
+            "it",
+            "its",
+            "they",
+            "their",
+            "them",
+            "this",
+            "these",
+            "those",
+            "he",
+            "she",
+            "therefore",
+            "thus",
+            "hence",
+            "however",
+            "so",
+        }
+        self._merge_prefixes = (
+            "this result",
+            "this finding",
+            "these findings",
+            "this method",
+            "this approach",
+            "this model",
+            "this suggests",
+            "this indicates",
+            "these results",
+        )
 
     def chunk(self, text: str) -> List[str]:
         """
-        Split text into overlapping chunks at sentence boundaries.
-        Falls back to hard character split if no sentence boundary found.
+        Split text into sentence-first chunks.
+        Merge adjacent sentences only when the next sentence appears to
+        depend on the previous one. Oversized chunks still fall back to
+        size-based splitting.
         """
         text = text.strip()
+        if not text:
+            return []
+
+        sentences = self._split_sentences(text)
+        if len(sentences) <= 1:
+            return self._split_oversized_chunk(text)
+
+        merged: List[str] = []
+        for sentence in sentences:
+            if merged and self._should_merge_with_previous(sentence):
+                merged[-1] = f"{merged[-1]} {sentence}".strip()
+            else:
+                merged.append(sentence)
+
+        chunks: List[str] = []
+        for chunk in merged:
+            chunks.extend(self._split_oversized_chunk(chunk))
+        return [chunk for chunk in chunks if chunk]
+
+    def _split_sentences(self, text: str) -> List[str]:
+        parts = re.split(r"(?<=[.!?])\s+", text)
+        return [part.strip() for part in parts if part.strip()]
+
+    def _should_merge_with_previous(self, sentence: str) -> bool:
+        normalized = sentence.strip().lower()
+        if not normalized:
+            return False
+        tokens = normalized.split()
+        if not tokens:
+            return False
+        if tokens[0] in self._merge_cues:
+            return True
+        prefix = " ".join(tokens[:2])
+        if prefix in self._merge_prefixes:
+            return True
+        prefix = " ".join(tokens[:3])
+        return prefix in self._merge_prefixes
+
+    def _split_oversized_chunk(self, text: str) -> List[str]:
         if len(text) <= self.chunk_size:
             return [text]
 
