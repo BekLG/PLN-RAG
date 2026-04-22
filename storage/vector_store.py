@@ -1,4 +1,3 @@
-import json
 import uuid
 import httpx
 from typing import List, Tuple
@@ -54,6 +53,31 @@ class VectorStore:
             }]}
         ).raise_for_status()
 
+    def store_many(self, records: List[dict], batch_size: int = 100):
+        if not records:
+            return
+        for start in range(0, len(records), batch_size):
+            chunk = records[start : start + batch_size]
+            points = []
+            vector_size: int | None = None
+            for record in chunk:
+                vector = self.embed(record["nl"])
+                vector_size = len(vector)
+                points.append(
+                    {
+                        "id": str(uuid.uuid4()),
+                        "vector": vector,
+                        "payload": record,
+                    }
+                )
+            if vector_size is None:
+                continue
+            self._ensure_collection(vector_size)
+            self._client.put(
+                f"{self._qdrant}/collections/{self._collection}/points?wait=true",
+                json={"points": points},
+            ).raise_for_status()
+
     def retrieve_context(self, text: str, top_k: int) -> Tuple[List[str], List[float]]:
         """
         Returns (context_atoms, embedding_vector).
@@ -91,3 +115,36 @@ class VectorStore:
             return resp.json().get("result", {}).get("points_count", 0)
         except Exception:
             return 0
+
+    def count_by_source(self, source: str) -> int:
+        try:
+            resp = self._client.post(
+                f"{self._qdrant}/collections/{self._collection}/points/count",
+                json={
+                    "filter": {
+                        "must": [
+                            {"key": "source", "match": {"value": source}}
+                        ]
+                    }
+                },
+            )
+            if resp.status_code != 200:
+                return 0
+            return resp.json().get("result", {}).get("count", 0)
+        except Exception:
+            return 0
+
+    def delete_by_source(self, source: str):
+        try:
+            self._client.post(
+                f"{self._qdrant}/collections/{self._collection}/points/delete?wait=true",
+                json={
+                    "filter": {
+                        "must": [
+                            {"key": "source", "match": {"value": source}}
+                        ]
+                    }
+                },
+            ).raise_for_status()
+        except Exception:
+            pass

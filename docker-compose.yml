@@ -13,11 +13,27 @@ services:
       - OLLAMA_URL=http://host.docker.internal:11434/api/embeddings
       - ATOMSPACE_PATH=/app/data/atomspace/kb.metta
       - FAISS_PATH=/app/data/faiss
+      - CHAINING_TIMEOUT=${CHAINING_TIMEOUT:-180}
+      - CHAINING_MAX_STEPS=${CHAINING_MAX_STEPS:-100}
       - QUERY_FALLBACK_ENABLED=${QUERY_FALLBACK_ENABLED:-true}
+      - CONCEPTNET_ENABLED=${CONCEPTNET_ENABLED:-false}
+      - CONCEPTNET_AUTOLOAD=${CONCEPTNET_AUTOLOAD:-true}
+      - CONCEPTNET_INPUT_FILE=/app/data/conceptnet/conceptnet-assertions-5.7.0.csv.gz
+      - CONCEPTNET_ATOMSPACE_PATH=/app/data/conceptnet/conceptnet_background.metta
+      - CONCEPTNET_VECTOR_PAYLOAD_PATH=/app/data/conceptnet/conceptnet_background.jsonl
+      - CONCEPTNET_MANIFEST_PATH=/app/data/conceptnet/conceptnet_manifest.json
+      - CONCEPTNET_INDEX_ON_STARTUP=${CONCEPTNET_INDEX_ON_STARTUP:-true}
+      - CONCEPTNET_MIN_WEIGHT=${CONCEPTNET_MIN_WEIGHT:-2.0}
+      - CONCEPTNET_COVERAGE_PERCENT=${CONCEPTNET_COVERAGE_PERCENT:-100.0}
+      - CONCEPTNET_SAMPLE_SEED=${CONCEPTNET_SAMPLE_SEED:-42}
+      - CONCEPTNET_AUTO_REBUILD_ON_CHANGE=${CONCEPTNET_AUTO_REBUILD_ON_CHANGE:-true}
+      - CONCEPTNET_REINDEX_ON_RESET=${CONCEPTNET_REINDEX_ON_RESET:-true}
+      - CONCEPTNET_STARTUP_FAIL_OPEN=${CONCEPTNET_STARTUP_FAIL_OPEN:-true}
     volumes:
       - pln_data:/app/data
       - ./data/simba_all.json:/app/data/simba_all.json
       - ./data/simba_canonical_pln.json:/app/data/simba_canonical_pln.json
+      - ./data/conceptnet:/app/data/conceptnet
     extra_hosts:
       - "host.docker.internal:host-gateway"
     depends_on:

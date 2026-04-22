@@ -91,6 +91,7 @@ async def health():
         status="ok",
         parser=info["parser"],
         atomspace_size=info["atomspace_size"],
+        background_atomspace_size=info["background_atomspace_size"],
         vectordb_count=info["vectordb_count"],
         uptime_seconds=round(time.time() - _start_time, 1),
     )

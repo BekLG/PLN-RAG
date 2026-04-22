@@ -55,5 +55,6 @@ class HealthResponse(BaseModel):
     status: Literal["ok", "degraded"]
     parser: str
     atomspace_size: int
+    background_atomspace_size: int
     vectordb_count: int
     uptime_seconds: float

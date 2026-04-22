@@ -38,6 +38,8 @@ class CanonicalPLNParser(SemanticParser):
         "is_a": "IsA",
         "kind_of": "IsA",
         "type_of": "IsA",
+        "located_at": "AtLocation",
+        "locatedat": "AtLocation",
     }
     _QUERY_MARKERS = {"who", "what", "when", "where", "why", "how", "which"}
 
@@ -427,6 +429,11 @@ class CanonicalPLNParser(SemanticParser):
 
         planned.sort(key=lambda item: item[0], reverse=True)
         ordered = [query for _, query in planned]
+        ordered.extend(
+            self._build_question_aligned_fallbacks(
+                question, ordered or queries, facts, conclusions
+            )
+        )
         if is_yes_no:
             fallback = self._build_grounded_yes_no_fallbacks(
                 question, queries, facts, conclusions
@@ -476,6 +483,77 @@ class CanonicalPLNParser(SemanticParser):
 
         grounded.sort(key=lambda item: item[0], reverse=True)
         return self._dedupe_preserve_order([query for _, query in grounded])
+
+    def _build_question_aligned_fallbacks(
+        self,
+        question: str,
+        queries: List[str],
+        facts: list[dict],
+        conclusions: list[dict],
+    ) -> List[str]:
+        normalized = self._normalize_text(question)
+        preferred_heads = self._preferred_heads_from_question(normalized)
+        if not preferred_heads:
+            return []
+
+        aligned: List[tuple[int, str]] = []
+        candidates = facts + conclusions
+        for query_text in queries:
+            parsed = self._parse_query_signature(query_text)
+            if not parsed or parsed["variables"]:
+                continue
+            for signature in candidates:
+                if signature["arity"] != parsed["arity"]:
+                    continue
+                if signature["head"] not in preferred_heads:
+                    continue
+                score = self._score_signature_alignment(parsed, signature, normalized)
+                if score <= 0:
+                    continue
+                aligned.append((score, self._signature_to_query(signature)))
+
+        aligned.sort(key=lambda item: item[0], reverse=True)
+        return self._dedupe_preserve_order([query for _, query in aligned])
+
+    def _preferred_heads_from_question(self, normalized_question: str) -> List[str]:
+        heads: List[str] = []
+        if any(
+            phrase in normalized_question
+            for phrase in {"located at", "located in", " in the ", " in a ", " in an "}
+        ):
+            heads.append("AtLocation")
+        if "used for" in normalized_question:
+            heads.append("UsedFor")
+        if "capable of" in normalized_question:
+            heads.append("CapableOf")
+        if "part of" in normalized_question:
+            heads.append("PartOf")
+        return heads
+
+    def _score_signature_alignment(
+        self, query: dict, signature: dict, normalized_question: str
+    ) -> int:
+        score = 0
+        question_tokens = set(normalized_question.split())
+        for q_arg, s_arg in zip(query["args"], signature["args"]):
+            if q_arg == s_arg:
+                score += 4
+                continue
+            if self._canonical_symbol(q_arg) == self._canonical_symbol(s_arg):
+                score += 3
+                continue
+            q_parts = set(q_arg.split("_"))
+            s_parts = set(s_arg.split("_"))
+            if q_parts and q_parts.issubset(s_parts):
+                score += 2
+                continue
+            if s_parts.intersection(question_tokens):
+                score += 1
+                continue
+            return -1
+        if signature["head"] != query["head"]:
+            score += 3
+        return score
 
     def _collect_available_signatures(
         self, statements: List[str], context: List[str]

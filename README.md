@@ -118,6 +118,54 @@ QUERY_FALLBACK_ENABLED=true
 When disabled, the service runs only the original generated query. When enabled,
 it may try later fallback candidates produced by the parser.
 
+## ConceptNet Background Knowledge
+
+ConceptNet can be loaded as readonly background knowledge and indexed into the
+same Qdrant collection as normal ingested facts.
+
+```bash
+CONCEPTNET_ENABLED=true
+CONCEPTNET_AUTOLOAD=true
+CONCEPTNET_ATOMSPACE_PATH=data/conceptnet/conceptnet_background.metta
+CONCEPTNET_VECTOR_PAYLOAD_PATH=data/conceptnet/conceptnet_background.jsonl
+CONCEPTNET_COVERAGE_PERCENT=100.0
+CONCEPTNET_SAMPLE_SEED=42
+CONCEPTNET_AUTO_REBUILD_ON_CHANGE=true
+```
+
+Background points use the normal `nl` / `pln` payload schema with extra metadata
+such as `source=conceptnet` and `background=true`.
+
+To build the aligned background files from a raw ConceptNet dump:
+
+```bash
+cp "/path/to/conceptnet-assertions-5.7.0.csv.gz" data/conceptnet/
+python scripts/conceptnet/export_conceptnet.py
+```
+
+Coverage is controlled at export time. For example:
+
+```bash
+CONCEPTNET_COVERAGE_PERCENT=1.0
+CONCEPTNET_SAMPLE_SEED=42
+python scripts/conceptnet/export_conceptnet.py
+```
+
+This uses deterministic seeded sampling over eligible ConceptNet triples. The
+same seed and coverage percentage will reproduce the same exported background
+files. When `CONCEPTNET_AUTO_REBUILD_ON_CHANGE=true`, the service will detect
+config drift against `conceptnet_manifest.json` on startup and regenerate the
+background files automatically before loading them.
+
+`--max-rows` remains available as an exporter-only debugging flag, but it is
+not part of the normal `.env` configuration surface.
+
+This produces:
+
+- `data/conceptnet/conceptnet_background.metta`
+- `data/conceptnet/conceptnet_background.jsonl`
+- `data/conceptnet/conceptnet_manifest.json`
+
 To add a new parser:
 1. Create `parsers/your_parser.py` implementing `SemanticParser`
 2. Register it in `parsers/__init__.py`

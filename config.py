@@ -37,6 +37,23 @@ class Settings(BaseSettings):
     # Query execution
     query_fallback_enabled: bool = True
 
+    # ConceptNet background knowledge
+    conceptnet_enabled: bool = False
+    conceptnet_autoload: bool = True
+    conceptnet_input_file: str = "data/conceptnet/conceptnet-assertions-5.7.0.csv.gz"
+    conceptnet_atomspace_path: str = "data/conceptnet/conceptnet_background.metta"
+    conceptnet_vector_payload_path: str = (
+        "data/conceptnet/conceptnet_background.jsonl"
+    )
+    conceptnet_manifest_path: str = "data/conceptnet/conceptnet_manifest.json"
+    conceptnet_index_on_startup: bool = True
+    conceptnet_min_weight: float = 2.0
+    conceptnet_coverage_percent: float = 100.0
+    conceptnet_sample_seed: int = 42
+    conceptnet_auto_rebuild_on_change: bool = True
+    conceptnet_reindex_on_reset: bool = True
+    conceptnet_startup_fail_open: bool = True
+
     model_config = ConfigDict(
         env_file=".env",
         env_file_encoding="utf-8",

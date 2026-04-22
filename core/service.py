@@ -8,6 +8,7 @@ from core.chunker import Chunker
 from core.parser import SemanticParser
 from core.reasoner import Reasoner
 from core.answer_generator import AnswerGenerator
+from core.conceptnet import ConceptNetManager
 from storage.vector_store import VectorStore
 from api.models import IngestItemResult, QueryResponse
 
@@ -27,9 +28,11 @@ class PLNRAGService:
         self._chunker = Chunker()
         self._reasoner = Reasoner()
         self._vector_store = VectorStore()
+        self._conceptnet = ConceptNetManager()
         self._answer_gen = AnswerGenerator()
         self._context_top_k = cfg.context_top_k
         self._query_fallback_enabled = cfg.query_fallback_enabled
+        self._conceptnet.ensure_loaded(self._reasoner, self._vector_store)
 
     #  Ingest
 
@@ -253,12 +256,14 @@ class PLNRAGService:
             self._reasoner.reset()
         if scope in ("all", "vectordb"):
             self._vector_store.reset()
+        self._conceptnet.restore_after_reset(self._reasoner, self._vector_store, scope)
 
     #  Health
 
     def health(self) -> dict:
         return {
             "atomspace_size": self._reasoner.size,
+            "background_atomspace_size": self._reasoner.background_size,
             "vectordb_count": self._vector_store.count,
             "parser": self._parser.__class__.__name__,
         }

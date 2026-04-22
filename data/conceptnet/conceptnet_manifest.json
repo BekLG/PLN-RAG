@@ -1,0 +1,24 @@
+{
+  "atom_count": 10273,
+  "atomspace_sha256": "4dac9e39586031a8710cbf30dd971d6595fc2a28b3580cd15d4507bd2d4d3d54",
+  "coverage_percent": 10.0,
+  "deduped_atom_count": 10273,
+  "eligible_row_count": 102908,
+  "max_rows": 0,
+  "min_weight": 2.0,
+  "relation_counts": {
+    "AtLocation": 583,
+    "CapableOf": 282,
+    "HasA": 56,
+    "IsA": 7884,
+    "MadeOf": 11,
+    "PartOf": 917,
+    "UsedFor": 540
+  },
+  "sample_seed": 42,
+  "sampled_row_count": 10371,
+  "scanned_rows": 34074917,
+  "source_file": "/app/data/conceptnet/conceptnet-assertions-5.7.0.csv.gz",
+  "vector_payload_sha256": "3ecc4718f41ccb94e152545e82bb60967e2acbfbf48ee9c4e1c4b7fb87d595b4",
+  "vector_record_count": 10273
+}
