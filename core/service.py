@@ -261,9 +261,16 @@ class PLNRAGService:
     #  Health
 
     def health(self) -> dict:
+        conceptnet = self._conceptnet.status()
         return {
             "atomspace_size": self._reasoner.size,
             "background_atomspace_size": self._reasoner.background_size,
             "vectordb_count": self._vector_store.count,
             "parser": self._parser.__class__.__name__,
+            "conceptnet_enabled": conceptnet["enabled"],
+            "conceptnet_indexing": conceptnet["indexing"],
+            "conceptnet_vectors_indexed": conceptnet["indexed_count"],
+            "conceptnet_vectors_expected": conceptnet["expected_count"],
+            "conceptnet_last_error": conceptnet["last_error"],
+            "status": "degraded" if conceptnet["last_error"] else "ok",
         }

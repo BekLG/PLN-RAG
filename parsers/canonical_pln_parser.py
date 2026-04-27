@@ -5,6 +5,7 @@ import dspy
 
 from config import get_settings
 from core.parser import ParseResult, SemanticParser
+from core.symbol_normalization import canonical_symbol, normalize_text, pluralize, singularize
 
 
 class CanonicalPLNParser(SemanticParser):
@@ -40,6 +41,12 @@ class CanonicalPLNParser(SemanticParser):
         "type_of": "IsA",
         "located_at": "AtLocation",
         "locatedat": "AtLocation",
+        "used_for": "UsedFor",
+        "usedfor": "UsedFor",
+        "capable_of": "CapableOf",
+        "capableof": "CapableOf",
+        "part_of": "PartOf",
+        "partof": "PartOf",
     }
     _QUERY_MARKERS = {"who", "what", "when", "where", "why", "how", "which"}
 
@@ -81,12 +88,14 @@ class CanonicalPLNParser(SemanticParser):
             statements = self._canonicalize_outputs(
                 self._dedupe_preserve_order(result.statements or []),
                 concepts,
+                context,
                 protected_constants,
                 proper_name_map,
             )
             queries = self._canonicalize_outputs(
                 self._dedupe_preserve_order(result.queries or []),
                 concepts,
+                context,
                 protected_constants,
                 proper_name_map,
             )
@@ -105,12 +114,14 @@ class CanonicalPLNParser(SemanticParser):
                         fallback_result.statements or statements
                     ),
                     concepts,
+                    context,
                     protected_constants,
                     proper_name_map,
                 )
                 queries = self._canonicalize_outputs(
                     self._dedupe_preserve_order(fallback_result.queries or queries),
                     concepts,
+                    context,
                     protected_constants,
                     proper_name_map,
                 )
@@ -158,9 +169,7 @@ class CanonicalPLNParser(SemanticParser):
         return original, enriched_context
 
     def _normalize_text(self, text: str) -> str:
-        text = text.lower().replace("-", " ")
-        text = re.sub(r"[^a-z0-9\s]", " ", text)
-        return " ".join(text.split())
+        return normalize_text(text)
 
     def _extract_concepts(self, normalized_text: str, max_items: int = 12) -> List[str]:
         concepts: List[str] = []
@@ -175,22 +184,10 @@ class CanonicalPLNParser(SemanticParser):
         return concepts
 
     def _singularize(self, word: str) -> str:
-        if len(word) <= 3:
-            return word
-        if word.endswith("ies") and len(word) > 4:
-            return word[:-3] + "y"
-        if word.endswith("ses") and len(word) > 4:
-            return word[:-2]
-        if word.endswith("s") and not word.endswith(("ss", "us", "is")):
-            return word[:-1]
-        return word
+        return singularize(word)
 
     def _pluralize(self, word: str) -> str:
-        if word.endswith("y") and len(word) > 2:
-            return word[:-1] + "ies"
-        if word.endswith(("s", "x", "z", "ch", "sh")):
-            return word + "es"
-        return word + "s"
+        return pluralize(word)
 
     def _extract_context_predicates(
         self, context: List[str], max_items: int = 12
@@ -209,6 +206,7 @@ class CanonicalPLNParser(SemanticParser):
         self,
         items: List[str],
         concepts: List[str],
+        context: List[str],
         protected_constants: set[str],
         proper_name_map: dict[str, str],
     ) -> List[str]:
@@ -219,6 +217,7 @@ class CanonicalPLNParser(SemanticParser):
         for concept in concepts:
             concept_map[concept] = concept
             concept_map[self._pluralize(concept)] = concept
+        concept_map.update(self._extract_context_symbol_map(context))
 
         canonical_items = [
             self._canonicalize_atom(item, concept_map, protected_constants, proper_name_map)
@@ -226,6 +225,22 @@ class CanonicalPLNParser(SemanticParser):
         ]
         canonical_items = [self._normalize_isa_classes(item) for item in canonical_items]
         return self._dedupe_preserve_order(canonical_items)
+
+    def _extract_context_symbol_map(self, context: List[str]) -> dict[str, str]:
+        symbol_map: dict[str, str] = {}
+        facts, conclusions = self._collect_available_signatures([], context)
+        for signature in facts + conclusions:
+            for arg in signature["args"]:
+                if arg.startswith(("$", "?")):
+                    continue
+                symbol_map.setdefault(arg, arg)
+                singular = self._canonical_symbol(arg, lemmatize=True)
+                plural = self._pluralize(singular) if singular else ""
+                if singular:
+                    symbol_map.setdefault(singular, arg)
+                if plural:
+                    symbol_map.setdefault(plural, arg)
+        return symbol_map
 
     def _canonicalize_atom(
         self,
@@ -302,19 +317,7 @@ class CanonicalPLNParser(SemanticParser):
     def _canonical_symbol(
         self, token: str, lemmatize: bool = True, protect: bool = False
     ) -> str:
-        token = token.strip()
-        if not token:
-            return token
-        token = re.sub(r"(?<=[a-z0-9])(?=[A-Z])", "_", token)
-        token = token.replace("-", "_")
-        token = re.sub(r"[^A-Za-z0-9_]", "_", token)
-        token = re.sub(r"_+", "_", token).strip("_")
-        token = token.lower()
-        if lemmatize and token and not protect:
-            token = "_".join(
-                self._singularize(part) for part in token.split("_") if part
-            )
-        return token
+        return canonical_symbol(token, lemmatize=lemmatize, protect=protect)
 
     def _extract_protected_constants(self, text: str) -> set[str]:
         protected: set[str] = set()
@@ -424,7 +427,8 @@ class CanonicalPLNParser(SemanticParser):
                 fallback = self._build_grounded_yes_no_fallbacks(
                     question, queries, facts, conclusions
                 )
-                return self._dedupe_preserve_order(queries + fallback)
+                heuristic = self._build_heuristic_question_queries(question)
+                return self._dedupe_preserve_order(queries + fallback + heuristic)
             return queries[:1]
 
         planned.sort(key=lambda item: item[0], reverse=True)
@@ -439,7 +443,38 @@ class CanonicalPLNParser(SemanticParser):
                 question, queries, facts, conclusions
             )
             ordered.extend(fallback)
+            ordered.extend(self._build_heuristic_question_queries(question))
         return self._dedupe_preserve_order(ordered)
+
+    def _build_heuristic_question_queries(self, question: str) -> List[str]:
+        normalized = self._normalize_text(question).strip("?. ")
+        patterns = [
+            (r"^(?:does|do|did|has|have|had)\s+(.+?)\s+have\s+(.+)$", "HasA"),
+            (r"^(?:is|are|was|were)\s+(.+?)\s+used for\s+(.+)$", "UsedFor"),
+            (r"^(?:is|are|was|were|can|could)\s+(.+?)\s+capable of\s+(.+)$", "CapableOf"),
+            (r"^(?:is|are|was|were)\s+(.+?)\s+part of\s+(.+)$", "PartOf"),
+            (r"^(?:is|are|was|were)\s+(.+?)\s+located (?:at|in|on)\s+(.+)$", "AtLocation"),
+        ]
+
+        queries: List[str] = []
+        for pattern, head in patterns:
+            match = re.match(pattern, normalized)
+            if not match:
+                continue
+            subject = self._canonical_phrase(match.group(1))
+            target = self._canonical_phrase(match.group(2))
+            if subject and target:
+                queries.append(f"(: $prf ({head} {subject} {target}) $tv)")
+        return queries
+
+    def _canonical_phrase(self, phrase: str) -> str:
+        tokens = [
+            token
+            for token in self._normalize_text(phrase).split()
+            if token not in {"a", "an", "the"}
+        ]
+        normalized = [self._canonical_symbol(token) for token in tokens if token]
+        return "_".join(token for token in normalized if token)
 
     def _build_grounded_yes_no_fallbacks(
         self,

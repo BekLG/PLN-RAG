@@ -57,4 +57,9 @@ class HealthResponse(BaseModel):
     atomspace_size: int
     background_atomspace_size: int
     vectordb_count: int
+    conceptnet_enabled: bool
+    conceptnet_indexing: bool
+    conceptnet_vectors_indexed: int
+    conceptnet_vectors_expected: int
+    conceptnet_last_error: str
     uptime_seconds: float

@@ -5,7 +5,14 @@ import hashlib
 import json
 import os
 import re
+import sys
 from collections import Counter
+
+PROJECT_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".."))
+if PROJECT_ROOT not in sys.path:
+    sys.path.insert(0, PROJECT_ROOT)
+
+from core.symbol_normalization import NORMALIZATION_VERSION, canonical_symbol
 
 
 DEFAULT_INPUT_FILE = "data/conceptnet/conceptnet-assertions-5.7.0.csv.gz"
@@ -43,10 +50,7 @@ def clean_concept(uri: str) -> str | None:
     if not uri.startswith(LANGUAGE_FILTER):
         return None
     text = uri[len(LANGUAGE_FILTER) :].split("/")[0]
-    text = text.lower().replace("-", "_").replace(" ", "_")
-    text = re.sub(r"[^a-z0-9_]", "_", text)
-    text = "_".join(part for part in text.split("_") if part)
-    return text or None
+    return canonical_symbol(text, lemmatize=True)
 
 
 def calculate_stv(weight: float) -> str:
@@ -211,6 +215,7 @@ def main():
 
     manifest = {
         "source_file": args.input,
+        "normalization_version": NORMALIZATION_VERSION,
         "min_weight": args.min_weight,
         "coverage_percent": args.coverage_percent,
         "sample_seed": args.sample_seed,

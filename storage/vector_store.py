@@ -53,9 +53,10 @@ class VectorStore:
             }]}
         ).raise_for_status()
 
-    def store_many(self, records: List[dict], batch_size: int = 100):
+    def store_many(self, records: List[dict], batch_size: int = 100) -> int:
         if not records:
-            return
+            return 0
+        stored = 0
         for start in range(0, len(records), batch_size):
             chunk = records[start : start + batch_size]
             points = []
@@ -77,6 +78,8 @@ class VectorStore:
                 f"{self._qdrant}/collections/{self._collection}/points?wait=true",
                 json={"points": points},
             ).raise_for_status()
+            stored += len(points)
+        return stored
 
     def retrieve_context(self, text: str, top_k: int) -> Tuple[List[str], List[float]]:
         """

@@ -3,6 +3,7 @@ import re
 import threading
 from typing import List
 from config import get_settings
+from core.symbol_normalization import canonical_symbol
 
 from pettachainer.pettachainer import PeTTaChainer
 
@@ -100,6 +101,10 @@ class Reasoner:
             match = self._find_exact_atom_in_file(path, target)
             if match:
                 return [match]
+        for path in self._fact_sources():
+            match = self._find_canonical_atom_in_file(path, target)
+            if match:
+                return [match]
         return []
 
     def _extract_grounded_query_atom(self, pln_query: str) -> str:
@@ -126,6 +131,23 @@ class Reasoner:
                     return atom
         return ""
 
+    def _find_canonical_atom_in_file(self, path: str, target: str) -> str:
+        target_signature = self._parse_simple_atom(target)
+        if not target_signature:
+            return ""
+        with open(path, "r", encoding="utf-8") as handle:
+            for line in handle:
+                atom = line.strip()
+                if not atom:
+                    continue
+                body = self._extract_statement_body(atom)
+                signature = self._parse_simple_atom(body)
+                if not signature:
+                    continue
+                if self._canonically_same_signature(target_signature, signature):
+                    return atom
+        return ""
+
     def _extract_statement_body(self, statement: str) -> str:
         match = re.fullmatch(
             r"\(:\s+[^\s]+\s+(\(.+\))\s+\(STV\s+[^\s]+\s+[^\s]+\)\)",
@@ -134,6 +156,22 @@ class Reasoner:
         if not match:
             return ""
         return " ".join(match.group(1).split())
+
+    def _parse_simple_atom(self, atom: str) -> dict | None:
+        match = re.fullmatch(r"\(([A-Za-z][A-Za-z0-9_]*)((?:\s+[^()\s]+)*)\)", atom.strip())
+        if not match:
+            return None
+        head = match.group(1)
+        args = [part for part in match.group(2).split() if part]
+        return {"head": head, "args": args, "arity": len(args)}
+
+    def _canonically_same_signature(self, left: dict, right: dict) -> bool:
+        if left["head"] != right["head"] or left["arity"] != right["arity"]:
+            return False
+        for l_arg, r_arg in zip(left["args"], right["args"]):
+            if canonical_symbol(l_arg) != canonical_symbol(r_arg):
+                return False
+        return True
 
     def reset(self):
         """Clear the in-memory atomspace and wipe the persistence file."""

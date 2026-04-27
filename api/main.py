@@ -88,10 +88,15 @@ async def health():
     svc = get_service()
     info = svc.health()
     return HealthResponse(
-        status="ok",
+        status=info["status"],
         parser=info["parser"],
         atomspace_size=info["atomspace_size"],
         background_atomspace_size=info["background_atomspace_size"],
         vectordb_count=info["vectordb_count"],
+        conceptnet_enabled=info["conceptnet_enabled"],
+        conceptnet_indexing=info["conceptnet_indexing"],
+        conceptnet_vectors_indexed=info["conceptnet_vectors_indexed"],
+        conceptnet_vectors_expected=info["conceptnet_vectors_expected"],
+        conceptnet_last_error=info["conceptnet_last_error"],
         uptime_seconds=round(time.time() - _start_time, 1),
     )
