@@ -1,3 +1,5 @@
+import os
+import sys
 from typing import List
 from core.parser import SemanticParser, ParseResult
 
@@ -13,10 +15,24 @@ class ManhinParser(SemanticParser):
 
     def __init__(self):
         # Lazy import — only loaded if this parser is selected
+        self._ensure_module_path()
         from pipelines import nl2pln as manhin_nl2pln
         from vector_index import faiss_store
         self._nl2pln = manhin_nl2pln
         self._faiss_store = faiss_store
+
+    def _ensure_module_path(self):
+        candidates = []
+        configured = os.getenv("MANHIN_PARSER_PATH", "").strip()
+        if configured:
+            candidates.append(configured)
+        candidates.extend([
+            "/deps/manhin-parser",
+            "/app/local-deps/manhin-parser",
+        ])
+        for path in candidates:
+            if path and os.path.isdir(path) and path not in sys.path:
+                sys.path.insert(0, path)
 
     def parse(self, text: str, context: List[str]) -> ParseResult:
         try:
