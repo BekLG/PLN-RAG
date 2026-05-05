@@ -10,4 +10,6 @@ docs/reference/
 *_sanity.json
 berekets_fallback_on_off.json
 .venv
+local-deps/
+data/benchmarks/*
 data/conceptnet/conceptnet-assertions-5.7.0.csv.gz
