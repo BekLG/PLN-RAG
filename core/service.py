@@ -25,7 +25,8 @@ class PLNRAGService:
     def __init__(self, parser: SemanticParser):
         cfg = get_settings()
         self._parser = parser
-        self._chunker = Chunker()
+        create_chunker = getattr(parser, "create_chunker", None)
+        self._chunker = create_chunker() if callable(create_chunker) else Chunker()
         self._reasoner = Reasoner()
         self._vector_store = VectorStore()
         self._conceptnet = ConceptNetManager()
@@ -319,6 +320,9 @@ class PLNRAGService:
     def reset(self, scope: str):
         if scope in ("all", "atomspace"):
             self._reasoner.reset()
+            reset_parser = getattr(self._parser, "reset", None)
+            if callable(reset_parser):
+                reset_parser()
         if scope in ("all", "vectordb"):
             self._vector_store.reset()
         self._conceptnet.restore_after_reset(self._reasoner, self._vector_store, scope)

@@ -1,6 +1,7 @@
 from pydantic_settings import BaseSettings
 from functools import lru_cache
 from pydantic import ConfigDict
+from typing import Optional
 
 
 class Settings(BaseSettings):
@@ -8,10 +9,20 @@ class Settings(BaseSettings):
     openai_api_key: str
     openai_model: str = "openai/gpt-4o-mini"
 
-    # Options: "nl2pln" | "canonical_pln" | "manhin"
+    # Options: "nl2pln" | "canonical_pln" | "manhin" | "langextract"
     parser: str = "canonical_pln"
     nl2pln_module_path: str = "data/simba_all.json"
     canonical_pln_nl2pln_module_path: str = "data/simba_canonical_pln.json"
+
+    # LangExtract parser
+    langextract_api_key: Optional[str] = None
+    langextract_model_id: str = "gpt-4o-mini"
+    langextract_model_url: Optional[str] = None
+    langextract_examples_path: str = "data/langextract_examples.json"
+    langextract_extraction_passes: int = 1
+    langextract_max_workers: int = 1
+    langextract_skip_fuzzy: bool = True
+    langextract_chunk_size: Optional[int] = None
 
     # Vector store
     qdrant_url: str = "http://localhost:6333"

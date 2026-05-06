@@ -15,6 +15,17 @@ def _load_parser_factories() -> dict[str, Callable[[], object]]:
     }
 
     try:
+        from parsers.langextract_pln_parser import LangExtractPLNParser
+
+        factories["langextract"] = LangExtractPLNParser
+    except Exception as exc:
+
+        def _langextract_unavailable() -> object:
+            raise RuntimeError(f"LangExtract parser unavailable: {exc}")
+
+        factories["langextract"] = _langextract_unavailable
+
+    try:
         from parsers.manhin_parser import ManhinParser
 
         factories["manhin"] = ManhinParser
