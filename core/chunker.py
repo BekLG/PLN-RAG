@@ -71,6 +71,37 @@ class Chunker:
             chunks.extend(self._split_oversized_chunk(chunk))
         return [chunk for chunk in chunks if chunk]
 
+    def batch_chunks(self, text: str, max_sentences: int, max_chars: int) -> List[List[str]]:
+        """
+        Group sentence-first chunks into bounded parser batches.
+        Each batch preserves chunk order while reducing LLM round-trips.
+        """
+        units = self.chunk(text)
+        if not units:
+            return []
+
+        max_sentences = max(1, max_sentences)
+        max_chars = max(1, max_chars)
+        batches: List[List[str]] = []
+        current: List[str] = []
+        current_chars = 0
+
+        for unit in units:
+            unit_len = len(unit)
+            exceeds_sentences = len(current) >= max_sentences
+            exceeds_chars = current and (current_chars + 1 + unit_len) > max_chars
+            if current and (exceeds_sentences or exceeds_chars):
+                batches.append(current)
+                current = []
+                current_chars = 0
+
+            current.append(unit)
+            current_chars = current_chars + unit_len if current_chars == 0 else current_chars + 1 + unit_len
+
+        if current:
+            batches.append(current)
+        return batches
+
     def _split_sentences(self, text: str) -> List[str]:
         parts = re.split(r"(?<=[.!?])\s+", text)
         return [part.strip() for part in parts if part.strip()]

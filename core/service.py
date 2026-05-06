@@ -51,40 +51,105 @@ class PLNRAGService:
 
     def _ingest_single(self, text: str) -> IngestItemResult:
         try:
-            # 1. Chunk large texts
-            chunks = self._chunker.chunk(text)
             all_atoms: List[str] = []
+            supports_batch_parse = (
+                self._parser.__class__.parse_batch is not SemanticParser.parse_batch
+            )
+            chunk_units = self._chunker.chunk(text)
+            chunk_count = len(chunk_units)
+            batch_count = 0
+            batch_sizes: List[int] = []
+            parser_calls = 0
+            empty_results = 0
 
-            for chunk in chunks:
-                # 2. Retrieve context from atomspace + vector store
-                context, vector = self._vector_store.retrieve_context(
-                    chunk, top_k=self._context_top_k
+            if supports_batch_parse:
+                batches = self._chunker.batch_chunks(
+                    text,
+                    max_sentences=get_settings().parser_batch_sentences,
+                    max_chars=get_settings().parser_batch_max_chars,
                 )
-                # Also supplement with recent atoms from disk
-                context = self._enrich_context(context)
+                batch_count = len(batches)
+                batch_sizes = [len(batch) for batch in batches]
+                parser_calls = batch_count
+                for batch in batches:
+                    batch_text = " ".join(batch)
+                    context, vector = self._vector_store.retrieve_context(
+                        batch_text, top_k=self._context_top_k
+                    )
+                    context = self._enrich_context(context)
+                    parse_result = self._parser.parse_batch(batch, context)
 
-                # 3. Parse chunk → PLN atoms
-                parse_result = self._parser.parse(chunk, context)
+                    if not parse_result.statements:
+                        empty_results += 1
+                        print(f"[Service] No statements for batch: '{batch_text[:60]}...'")
+                        continue
 
-                if not parse_result.statements:
-                    print(f"[Service] No statements for chunk: '{chunk[:60]}...'")
-                    continue
+                    added = self._reasoner.add_statements(parse_result.statements)
+                    all_atoms.extend(added)
+                    if added:
+                        self._vector_store.store(batch_text, added, vector)
+            else:
+                parser_calls = chunk_count
 
-                # 4. Add to atomspace via reasoner
-                added = self._reasoner.add_statements(parse_result.statements)
-                all_atoms.extend(added)
+                for chunk in chunk_units:
+                    # 2. Retrieve context from atomspace + vector store
+                    context, vector = self._vector_store.retrieve_context(
+                        chunk, top_k=self._context_top_k
+                    )
+                    # Also supplement with recent atoms from disk
+                    context = self._enrich_context(context)
 
-                # 5. Store in vector DB for future context retrieval
-                if added:
-                    self._vector_store.store(chunk, added, vector)
+                    # 3. Parse chunk → PLN atoms
+                    parse_result = self._parser.parse(chunk, context)
 
-            return IngestItemResult(text=text, atoms=all_atoms, status="success")
+                    if not parse_result.statements:
+                        empty_results += 1
+                        print(f"[Service] No statements for chunk: '{chunk[:60]}...'")
+                        continue
+
+                    # 4. Add to atomspace via reasoner
+                    added = self._reasoner.add_statements(parse_result.statements)
+                    all_atoms.extend(added)
+
+                    # 5. Store in vector DB for future context retrieval
+                    if added:
+                        self._vector_store.store(chunk, added, vector)
+
+            if parser_calls > 0 and empty_results == parser_calls and not all_atoms:
+                return IngestItemResult(
+                    text=text,
+                    atoms=[],
+                    status="failed",
+                    error="Parser produced no statements for any chunk or batch. Check parser logs and model configuration.",
+                    chunk_count=chunk_count,
+                    batch_count=batch_count,
+                    batch_sizes=batch_sizes,
+                    parser_calls=parser_calls,
+                )
+
+            return IngestItemResult(
+                text=text,
+                atoms=all_atoms,
+                status="success",
+                chunk_count=chunk_count,
+                batch_count=batch_count,
+                batch_sizes=batch_sizes,
+                parser_calls=parser_calls,
+            )
 
         except Exception as e:
             import traceback
 
             traceback.print_exc()
-            return IngestItemResult(text=text, status="failed", error=str(e))
+            return IngestItemResult(
+                text=text,
+                status="failed",
+                error=str(e),
+                chunk_count=0,
+                batch_count=0,
+                batch_sizes=[],
+                parser_calls=0,
+            )
 
     def _enrich_context(self, rag_context: List[str], max_atoms: int = 50) -> List[str]:
         """

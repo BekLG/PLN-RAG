@@ -38,3 +38,13 @@ class SemanticParser(ABC):
             atomspace) and queries (to run against the reasoner).
         """
         ...
+
+    def parse_batch(self, texts: List[str], context: List[str]) -> ParseResult:
+        """Optional batch interface. Default implementation parses sequentially."""
+        statements: List[str] = []
+        queries: List[str] = []
+        for text in texts:
+            result = self.parse(text, context)
+            statements.extend(result.statements)
+            queries.extend(result.queries)
+        return ParseResult(statements=statements, queries=queries)

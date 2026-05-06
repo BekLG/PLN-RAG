@@ -29,6 +29,8 @@ class Settings(BaseSettings):
     chunk_size: int = 512  # chars per chunk
     chunk_overlap: int = 64  # overlap between chunks
     context_top_k: int = 10  # atoms to retrieve as parser context
+    parser_batch_sentences: int = 4
+    parser_batch_max_chars: int = 2000
 
     # Reasoning
     chaining_timeout: int = 30  # seconds before proof search is killed

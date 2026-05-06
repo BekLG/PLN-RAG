@@ -39,3 +39,22 @@ class NL2PLNParser(SemanticParser):
         except Exception as e:
             print(f"[NL2PLNParser] Failed for '{text}': {e}")
             return ParseResult()
+
+    def parse_batch(self, texts: List[str], context: List[str]) -> ParseResult:
+        try:
+            sentences = [text.strip() for text in texts if text and text.strip()]
+            if not sentences:
+                return ParseResult()
+            result = self._nl2pln(
+                sentences=sentences,
+                context=context,
+                pln_spec=self._pln_spec,
+            )
+            return ParseResult(
+                statements=result.statements or [],
+                queries=result.queries or [],
+            )
+        except Exception as e:
+            preview = texts[0] if texts else ""
+            print(f"[NL2PLNParser] Failed for batch '{preview}': {e}")
+            return ParseResult()

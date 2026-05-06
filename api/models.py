@@ -13,6 +13,10 @@ class IngestItemResult(BaseModel):
     atoms: List[str] = []
     status: Literal["success", "failed"]
     error: Optional[str] = None
+    chunk_count: int = 0
+    batch_count: int = 0
+    batch_sizes: List[int] = []
+    parser_calls: int = 0
 
 
 class IngestResponse(BaseModel):

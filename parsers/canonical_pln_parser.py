@@ -66,21 +66,40 @@ class CanonicalPLNParser(SemanticParser):
     def parse(self, text: str, context: List[str]) -> ParseResult:
         return self._parse_with_mode(text, context, is_query=False)
 
+    def parse_batch(self, texts: List[str], context: List[str]) -> ParseResult:
+        return self._parse_many_with_mode(texts, context, is_query=False)
+
     def parse_query(self, text: str, context: List[str]) -> ParseResult:
         return self._parse_with_mode(text, context, is_query=True)
 
     def _parse_with_mode(
         self, text: str, context: List[str], is_query: bool
     ) -> ParseResult:
+        return self._parse_many_with_mode([text], context, is_query=is_query)
+
+    def _parse_many_with_mode(
+        self, texts: List[str], context: List[str], is_query: bool
+    ) -> ParseResult:
         try:
-            concepts = self._extract_concepts(self._normalize_text(text))
-            protected_constants = self._extract_protected_constants(text)
-            proper_name_map = self._extract_proper_name_map(text)
-            prepared_text, prepared_context = self._build_parser_inputs(
-                text, context, is_query=is_query
+            texts = [text.strip() for text in texts if text and text.strip()]
+            if not texts:
+                return ParseResult()
+
+            concepts: List[str] = []
+            protected_constants: set[str] = set()
+            proper_name_map: dict[str, str] = {}
+            for text in texts:
+                for concept in self._extract_concepts(self._normalize_text(text)):
+                    if concept not in concepts:
+                        concepts.append(concept)
+                protected_constants.update(self._extract_protected_constants(text))
+                proper_name_map.update(self._extract_proper_name_map(text))
+
+            prepared_texts, prepared_context = self._build_parser_inputs_batch(
+                texts, context, is_query=is_query, concepts=concepts
             )
             result = self._nl2pln(
-                sentences=[prepared_text],
+                sentences=prepared_texts,
                 context=prepared_context,
                 pln_spec=self._pln_spec,
             )
@@ -101,11 +120,12 @@ class CanonicalPLNParser(SemanticParser):
             )
             statements = [self._prune_generic_sortal_premises(stmt) for stmt in statements]
             statements = self._filter_statements(statements)
-            queries = self._plan_queries(question=text, queries=queries, statements=statements, context=context)
+            question_text = " ".join(texts)
+            queries = self._plan_queries(question=question_text, queries=queries, statements=statements, context=context)
 
-            if is_query and not queries:
+            if is_query and len(texts) == 1 and not queries:
                 fallback_result = self._nl2pln(
-                    sentences=[text.strip()],
+                    sentences=[texts[0]],
                     context=prepared_context,
                     pln_spec=self._pln_spec,
                 )
@@ -127,19 +147,17 @@ class CanonicalPLNParser(SemanticParser):
                 )
                 statements = [self._prune_generic_sortal_premises(stmt) for stmt in statements]
                 statements = self._filter_statements(statements)
-                queries = self._plan_queries(question=text, queries=queries, statements=statements, context=context)
+                queries = self._plan_queries(question=texts[0], queries=queries, statements=statements, context=context)
 
             return ParseResult(statements=statements, queries=queries)
         except Exception as e:
-            print(f"[CanonicalPLNParser] Failed for '{text}': {e}")
+            preview = texts[0] if texts else ""
+            print(f"[CanonicalPLNParser] Failed for '{preview}': {e}")
             return ParseResult()
 
-    def _build_parser_inputs(
-        self, text: str, context: List[str], is_query: bool
-    ) -> tuple[str, List[str]]:
-        original = " ".join(text.strip().split())
-        normalized = self._normalize_text(original)
-        concepts = self._extract_concepts(normalized)
+    def _build_parser_inputs_batch(
+        self, texts: List[str], context: List[str], is_query: bool, concepts: List[str]
+    ) -> tuple[List[str], List[str]]:
         predicates = self._extract_context_predicates(context)
 
         hint_lines: List[str] = [
@@ -148,25 +166,39 @@ class CanonicalPLNParser(SemanticParser):
             "; normalize entity and class symbols to lowercase snake_case",
             "; lemmatize common nouns and verbs so plural and singular forms reuse one symbol",
             "; reuse existing predicate heads from context when possible",
+            "; keep symbols consistent across all sentences in this batch",
         ]
         if concepts:
-            hint_lines.append(f"; canonical common concepts: {', '.join(concepts[:8])}")
+            hint_lines.append(f"; canonical common concepts: {', '.join(concepts[:12])}")
         if predicates:
             hint_lines.append(
                 f"; preferred predicate heads: {', '.join(predicates[:8])}"
             )
-        if is_query:
+        if is_query and texts:
+            original = " ".join(" ".join(text.strip().split()) for text in texts)
+            normalized = self._normalize_text(original)
             hint_lines.append(
                 "; query mode: ask only for forms that your own facts or rules can directly derive"
             )
             hint_lines.extend(self._build_query_hints(original, normalized, predicates))
-        else:
+        elif not is_query:
             hint_lines.append(
                 "; statement mode: prefer rules whose conclusions match the eventual query predicate shape"
             )
 
+        prepared_texts = [" ".join(text.strip().split()) for text in texts]
         enriched_context = self._dedupe_preserve_order(context + hint_lines)
-        return original, enriched_context
+        return prepared_texts, enriched_context
+
+    def _build_parser_inputs(
+        self, text: str, context: List[str], is_query: bool
+    ) -> tuple[str, List[str]]:
+        normalized = self._normalize_text(text)
+        concepts = self._extract_concepts(normalized)
+        prepared_texts, prepared_context = self._build_parser_inputs_batch(
+            [text], context, is_query=is_query, concepts=concepts
+        )
+        return prepared_texts[0], prepared_context
 
     def _normalize_text(self, text: str) -> str:
         return normalize_text(text)
