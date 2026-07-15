@@ -1,0 +1,2 @@
+-r requirements.common.txt
+langextract>=1.0.0

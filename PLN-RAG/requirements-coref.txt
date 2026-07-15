@@ -1,0 +1,4 @@
+# Optional neural coreference support.
+# Keep separate from the lightweight/default deployment: FastCoref pulls large
+# neural dependencies and downloads the LingMess model at runtime.
+fastcoref==2.1.6

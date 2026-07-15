@@ -1,0 +1,510 @@
+{
+  "statement_prompt": "Extract semantic facts, type declarations, inheritance relationships, rules, and negations.\n\nThe output is not PLN text. Return LangExtract objects with these extraction classes:\n- fact: a predicate with one or more arguments. Attributes: predicate, plus either arguments or subject/object.\n- type_decl: declares that an entity belongs to a type. Attributes: entity, type.\n- property: assigns a property value to an entity. Attributes: entity, property, value.\n- inheritance: subtype or kind-of relationship. Attributes: child, parent.\n- rule: a conditional implication. Attributes: head_predicate, head_args, body.\n- negation: explicit negation of a unary or binary fact. Attributes: predicate, plus either arguments or subject/object.\n\nRules:\n- Use lowercase hyphen-separated predicate names, such as eats or can-fly.\n- Entity and type names may preserve source casing.\n- Hyphens and digits inside source identifiers are preserved, such as Object-77 and Rack-01.\n- Variables in rules must start with $, such as $x.\n- rule.head_args must be a space-separated argument string.\n- rule.body must be a valid S-expression using the same predicate names.\n- Use (and ...) for multi-premise rule bodies.\n- Definitional sentences become rules with a single-atom body.\n- Emit each causal/transitive link as a separate rule.\n- Use exact source spans for extraction_text; do not paraphrase.\n- For binary predicates (e.g., eats, consumes, owns, teaches), include both subject and object when the object is present in the text.\n- Do not bake objects into predicate names when an object is present; keep the object in subject/object or arguments.\n- If a sentence adds an adverb like \"frequently\", keep the object and encode the adverb in the predicate name only if needed (e.g., eats-frequently with subject+object).\n- Portion-size phrases (e.g., \"large portions\", \"small portions\") should become facts like eats-large-portions or eats-small-portions.\n- If the portion-size phrase modifies a known food/object in the same clause or sentence, include that object too, e.g., subject=Jordan, predicate=eats-large-portions, object=rice.\n- Use unary portion-size facts only when no object can be recovered from the sentence.\n- Ensure every dependent clause and comma-separated phrase (e.g., \", often in large portions,\") emits its own distinct fact. Do not skip details.\n- IMPORTANT: When a proper name (capitalized word that is not at sentence start) appears as an actor in facts or rules, emit a type_decl extraction declaring that entity as a 'person' unless context clearly indicates otherwise (e.g., company names, place names). This helps the reasoner understand entity types.",
+  "query_prompt": "Extract one or more executable logical queries from the question.\n\nReturn LangExtract objects with extraction_class=query.\nAttributes:\n- predicate: lowercase hyphen-separated predicate name.\n- arguments: ordered argument list.\n\nRules:\n- Yes/no questions should use grounded arguments from the question.\n- Who/what/which questions should use variables such as $who, $what, or $x.\n- \"is a kind of\", \"is a\", and type/class questions should use predicate=isa.\n- Property questions may use predicate=has with arguments [entity, property, value].\n- Reuse predicate names from the provided context when possible.\n- Do not output PLN syntax directly.",
+  "statement_examples": [
+    {
+      "text": "People who eat fish are smart. Kebede eats fish.",
+      "extractions": [
+        {
+          "class": "type_decl",
+          "text": "Kebede",
+          "attributes": {
+            "entity": "Kebede",
+            "type": "person"
+          }
+        },
+        {
+          "class": "rule",
+          "text": "People who eat fish are smart",
+          "attributes": {
+            "head_predicate": "smart",
+            "head_args": "$x",
+            "body": "(eats $x fish)"
+          }
+        },
+        {
+          "class": "fact",
+          "text": "Kebede eats fish",
+          "attributes": {
+            "subject": "Kebede",
+            "predicate": "eats",
+            "object": "fish"
+          }
+        }
+      ]
+    },
+    {
+      "text": "Jordan eats rice almost every day, often in large portions, and chooses refined rice, not whole-grain rice.",
+      "extractions": [
+        {
+          "class": "type_decl",
+          "text": "Jordan",
+          "attributes": {
+            "entity": "Jordan",
+            "type": "person"
+          }
+        },
+        {
+          "class": "fact",
+          "text": "Jordan eats rice almost every day",
+          "attributes": {
+            "subject": "Jordan",
+            "predicate": "eats-frequently",
+            "object": "rice"
+          }
+        },
+        {
+          "class": "fact",
+          "text": "often in large portions",
+          "attributes": {
+            "subject": "Jordan",
+            "predicate": "eats-large-portions",
+            "object": "rice"
+          }
+        },
+        {
+          "class": "fact",
+          "text": "refined rice",
+          "attributes": {
+            "subject": "rice",
+            "predicate": "is-refined"
+          }
+        },
+        {
+          "class": "negation",
+          "text": "not whole-grain rice",
+          "attributes": {
+            "subject": "rice",
+            "predicate": "is-whole-grain"
+          }
+        }
+      ]
+    },
+    {
+      "text": "A frog is a kind of animal. Cats are mammals. Tom is white. Sam has age 3.",
+      "extractions": [
+        {
+          "class": "inheritance",
+          "text": "A frog is a kind of animal",
+          "attributes": {
+            "child": "frog",
+            "parent": "animal"
+          }
+        },
+        {
+          "class": "inheritance",
+          "text": "Cats are mammals",
+          "attributes": {
+            "child": "cat",
+            "parent": "mammal"
+          }
+        },
+        {
+          "class": "property",
+          "text": "Tom is white",
+          "attributes": {
+            "entity": "Tom",
+            "property": "color",
+            "value": "white"
+          }
+        },
+        {
+          "class": "property",
+          "text": "Sam has age 3",
+          "attributes": {
+            "entity": "Sam",
+            "property": "age",
+            "value": "3"
+          }
+        }
+      ]
+    },
+    {
+      "text": "Every frog that croaks and eats flies is green. If an animal has wings it can fly.",
+      "extractions": [
+        {
+          "class": "rule",
+          "text": "Every frog that croaks and eats flies is green",
+          "attributes": {
+            "head_predicate": "has",
+            "head_args": "$x color green",
+            "body": "(and (isa $x frog) (croaks $x) (eats $x flies))"
+          }
+        },
+        {
+          "class": "rule",
+          "text": "If an animal has wings it can fly",
+          "attributes": {
+            "head_predicate": "can-fly",
+            "head_args": "$x",
+            "body": "(and (isa $x animal) (has-wings $x))"
+          }
+        }
+      ]
+    },
+    {
+      "text": "Drivers who regularly race sports cars experience high tire wear, especially if the tracks are rough and the car is heavy rather than lightweight.",
+      "extractions": [
+        {
+          "class": "rule",
+          "text": "Drivers who regularly race sports cars experience high tire wear, especially if the tracks are rough and the car is heavy rather than lightweight",
+          "attributes": {
+            "head_predicate": "experiences-high-tire-wear",
+            "head_args": "$x",
+            "body": "(and (races-regularly $x $c) (isa $c sports-car) (drives-on-rough-tracks $x) (is-heavy $c) (not (is-lightweight $c)))"
+          }
+        }
+      ]
+    },
+    {
+      "text": "Tom is not a frog. Sam cannot fly.",
+      "extractions": [
+        {
+          "class": "negation",
+          "text": "Tom is not a frog",
+          "attributes": {
+            "subject": "Tom",
+            "predicate": "isa",
+            "object": "frog"
+          }
+        },
+        {
+          "class": "negation",
+          "text": "Sam cannot fly",
+          "attributes": {
+            "subject": "Sam",
+            "predicate": "can-fly"
+          }
+        }
+      ]
+    },
+    {
+      "text": "Object-77 is fragile. Fragile items need a double wrap. Items that need a double wrap are in a padded box.",
+      "extractions": [
+        {
+          "class": "fact",
+          "text": "Object-77 is fragile",
+          "attributes": {
+            "subject": "Object-77",
+            "predicate": "fragile"
+          }
+        },
+        {
+          "class": "rule",
+          "text": "Fragile items need a double wrap",
+          "attributes": {
+            "head_predicate": "needs-double-wrap",
+            "head_args": "$x",
+            "body": "(fragile $x)"
+          }
+        },
+        {
+          "class": "rule",
+          "text": "Items that need a double wrap are in a padded box",
+          "attributes": {
+            "head_predicate": "in-padded-box",
+            "head_args": "$x",
+            "body": "(needs-double-wrap $x)"
+          }
+        }
+      ]
+    },
+    {
+      "text": "Kebede is a student of Ayele. Ayele is an expert in quantum physics. A student of an expert knows the topic.",
+      "extractions": [
+        {
+          "class": "fact",
+          "text": "Kebede is a student of Ayele",
+          "attributes": {
+            "subject": "Kebede",
+            "predicate": "student-of",
+            "object": "Ayele"
+          }
+        },
+        {
+          "class": "fact",
+          "text": "Ayele is an expert in quantum physics",
+          "attributes": {
+            "subject": "Ayele",
+            "predicate": "expert-in",
+            "object": "quantum physics"
+          }
+        },
+        {
+          "class": "rule",
+          "text": "A student of an expert knows the topic",
+          "attributes": {
+            "head_predicate": "knows",
+            "head_args": "$s $topic",
+            "body": "(and (student-of $s $t) (expert-in $t $topic))"
+          }
+        }
+      ]
+    },
+    {
+      "text": "An electric motor converts energy. An electric motor is a part of an electric fan. An electric fan is a kind of appliance. If a part converts energy and is part of a whole, the whole converts energy.",
+      "extractions": [
+        {
+          "class": "fact",
+          "text": "An electric motor converts energy",
+          "attributes": {
+            "subject": "electric motor",
+            "predicate": "converts-energy"
+          }
+        },
+        {
+          "class": "fact",
+          "text": "An electric motor is a part of an electric fan",
+          "attributes": {
+            "subject": "electric motor",
+            "predicate": "part-of",
+            "object": "electric fan"
+          }
+        },
+        {
+          "class": "inheritance",
+          "text": "An electric fan is a kind of appliance",
+          "attributes": {
+            "child": "electric fan",
+            "parent": "appliance"
+          }
+        },
+        {
+          "class": "rule",
+          "text": "If a part converts energy and is part of a whole, the whole converts energy",
+          "attributes": {
+            "head_predicate": "converts-energy",
+            "head_args": "$whole",
+            "body": "(and (converts-energy $part) (part-of $part $whole))"
+          }
+        }
+      ]
+    },
+    {
+      "text": "Devices that run at high temperature without cooling require shutdown. Unit-12 runs at high temperature and does not have cooling.",
+      "extractions": [
+        {
+          "class": "rule",
+          "text": "Devices that run at high temperature without cooling require shutdown",
+          "attributes": {
+            "head_predicate": "requires-shutdown",
+            "head_args": "$d",
+            "body": "(and (runs-high-temperature $d) (not (has-cooling $d)))"
+          }
+        },
+        {
+          "class": "fact",
+          "text": "Unit-12 runs at high temperature",
+          "attributes": {
+            "subject": "Unit-12",
+            "predicate": "runs-high-temperature"
+          }
+        },
+        {
+          "class": "negation",
+          "text": "Unit-12 does not have cooling",
+          "attributes": {
+            "subject": "Unit-12",
+            "predicate": "has-cooling"
+          }
+        }
+      ]
+    },
+    {
+      "text": "If a person buys an item, they own the item. Asha buys a laptop.",
+      "extractions": [
+        {
+          "class": "rule",
+          "text": "If a person buys an item, they own the item",
+          "attributes": {
+            "head_predicate": "owns",
+            "head_args": "$x $item",
+            "body": "(buys $x $item)"
+          }
+        },
+        {
+          "class": "fact",
+          "text": "Asha buys a laptop",
+          "attributes": {
+            "subject": "Asha",
+            "predicate": "buys",
+            "object": "laptop"
+          }
+        }
+      ]
+    },
+    {
+      "text": "A person is at elevated risk if they are obese and either sedentary or have a family history.",
+      "extractions": [
+        {
+          "class": "rule",
+          "text": "A person is at elevated risk if they are obese and either sedentary or have a family history",
+          "attributes": {
+            "head_predicate": "at-elevated-risk",
+            "head_args": "",
+            "body": "(and (isa  person) (obese ) (or (sedentary ) (has-family-history )))"
+          }
+        }
+      ]
+    }
+  ],
+  "query_examples": [
+    {
+      "text": "Who is smart?",
+      "extractions": [
+        {
+          "class": "query",
+          "text": "Who is smart?",
+          "attributes": {
+            "predicate": "smart",
+            "arguments": [
+              "$who"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "text": "What does Kebede eat?",
+      "extractions": [
+        {
+          "class": "query",
+          "text": "What does Kebede eat?",
+          "attributes": {
+            "predicate": "eats",
+            "arguments": [
+              "Kebede",
+              "$what"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "text": "Does Jordan eat rice?",
+      "extractions": [
+        {
+          "class": "query",
+          "text": "Does Jordan eat rice?",
+          "attributes": {
+            "predicate": "eats",
+            "arguments": [
+              "Jordan",
+              "rice"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "text": "Does Riley consume higher carbohydrates?",
+      "extractions": [
+        {
+          "class": "query",
+          "text": "Does Riley consume higher carbohydrates?",
+          "attributes": {
+            "predicate": "consumes-higher-carbohydrates",
+            "arguments": [
+              "Riley"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "text": "Is Sam a frog?",
+      "extractions": [
+        {
+          "class": "query",
+          "text": "Is Sam a frog?",
+          "attributes": {
+            "predicate": "isa",
+            "arguments": [
+              "Sam",
+              "frog"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "text": "Is Tom white?",
+      "extractions": [
+        {
+          "class": "query",
+          "text": "Is Tom white?",
+          "attributes": {
+            "predicate": "has",
+            "arguments": [
+              "Tom",
+              "color",
+              "white"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "text": "Can an eagle fly?",
+      "extractions": [
+        {
+          "class": "query",
+          "text": "Can an eagle fly?",
+          "attributes": {
+            "predicate": "can-fly",
+            "arguments": [
+              "eagle"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "text": "Where is Server-3?",
+      "extractions": [
+        {
+          "class": "query",
+          "text": "Where is Server-3?",
+          "attributes": {
+            "predicate": "in-data-center",
+            "arguments": [
+              "Server-3",
+              "$where"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "text": "Who owns the laptop?",
+      "extractions": [
+        {
+          "class": "query",
+          "text": "Who owns the laptop?",
+          "attributes": {
+            "predicate": "owns",
+            "arguments": [
+              "$who",
+              "laptop"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "text": "Is Camera-2 online?",
+      "extractions": [
+        {
+          "class": "query",
+          "text": "Is Camera-2 online?",
+          "attributes": {
+            "predicate": "online",
+            "arguments": [
+              "Camera-2"
+            ]
+          }
+        }
+      ]
+    }
+  ]
+}
