@@ -1,17 +1,8 @@
 from core.senf import SENF, IdentityEdgePlus, IdentityEdgeMinus
 
 class IdentityGraphBuilder:
-    """
-    Phase 3: Identity Graph.
-    Builds costed positive (IdPlus) and negative (IdMinus) evidence 
-    edges between entities in the same SENF batch.
-    """
     
     def build_graph(self, senf: SENF) -> None:
-        """
-        Populate the id_plus_edges and id_minus_edges in the SENF object.
-        Compares every pair of entities in the SENF.
-        """
         entities = list(senf.entities.values())
         
         # O(N^2) comparison for local window

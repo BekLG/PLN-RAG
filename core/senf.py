@@ -78,7 +78,6 @@ class SENF:
         return atoms
 
 def build_senf_from_atoms(atoms: List[str]) -> SENF:
-    """Algorithm 3: Build SENF from canonical PLN atoms."""
     senf = SENF(raw_atoms=atoms)
     
     for atom in atoms:
