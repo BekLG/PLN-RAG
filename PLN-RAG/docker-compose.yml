@@ -1,0 +1,162 @@
+services:
+  pln-rag:
+    image: pln-rag:${PLNRAG_IMAGE_TAG:-latest}
+    build:
+      context: .
+      args:
+        REQUIREMENTS_FILE: ${PLNRAG_REQUIREMENTS_FILE:-requirements.langextract.txt}
+        INSTALL_COREF: ${PLNRAG_INSTALL_COREF:-false}
+    profiles: ["default"]
+    ports:
+      - "8000:8000"
+    environment:
+      - GEMINI_API_KEY=${GEMINI_API_KEY}
+      - GEMINI_MODEL=${GEMINI_MODEL:-gemini/gemini-2.5-flash}
+      - LANGEXTRACT_API_KEY=${LANGEXTRACT_API_KEY:-}
+      - LANGEXTRACT_MODEL_ID=${LANGEXTRACT_MODEL_ID:-gemini-2.5-flash}
+      - LANGEXTRACT_MODEL_URL=${LANGEXTRACT_MODEL_URL:-}
+      - LANGEXTRACT_EXAMPLES_PATH=/app/data/langextract_examples.json
+      - LANGEXTRACT_EXTRACTION_PASSES=${LANGEXTRACT_EXTRACTION_PASSES:-1}
+      - LANGEXTRACT_MAX_WORKERS=${LANGEXTRACT_MAX_WORKERS:-1}
+      - LANGEXTRACT_SKIP_FUZZY=${LANGEXTRACT_SKIP_FUZZY:-true}
+      - LANGEXTRACT_CHUNK_SIZE=${LANGEXTRACT_CHUNK_SIZE:-2000}
+      - MENTION_PREPASS_ENABLED=${MENTION_PREPASS_ENABLED:-true}
+      - COREFERENCE_ENABLED=${COREFERENCE_ENABLED:-false}
+      - COREFERENCE_BACKEND=${COREFERENCE_BACKEND:-lingmess}
+      - COREFERENCE_MODEL=${COREFERENCE_MODEL:-biu-nlp/lingmess-coref}
+      - COREFERENCE_DEVICE=${COREFERENCE_DEVICE:-auto}
+      - COREFERENCE_MODE=${COREFERENCE_MODE:-hint_only}
+      - COREFERENCE_FAIL_OPEN=${COREFERENCE_FAIL_OPEN:-true}
+      - COREFERENCE_MAX_TOKENS_IN_BATCH=${COREFERENCE_MAX_TOKENS_IN_BATCH:-10000}
+      - COREFERENCE_INCLUDE_PAIR_LOGITS=${COREFERENCE_INCLUDE_PAIR_LOGITS:-false}
+      - QDRANT_URL=http://qdrant:6333
+      - QDRANT_COLLECTION=${QDRANT_COLLECTION:-pln_rag_evidence_v2}
+      - QDRANT_HYBRID_ENABLED=${QDRANT_HYBRID_ENABLED:-true}
+      - OLLAMA_URL=http://ollama:11434/api/embeddings
+      - OLLAMA_MODEL=${OLLAMA_MODEL:-nomic-embed-text}
+      - ATOMSPACE_PATH=/app/data/atomspace/kb.metta
+      - EVIDENCE_LEDGER_ENABLED=${EVIDENCE_LEDGER_ENABLED:-true}
+      - EVIDENCE_LEDGER_PATH=/app/data/evidence/evidence.db
+      - EVIDENCE_OUTBOX_BATCH_SIZE=${EVIDENCE_OUTBOX_BATCH_SIZE:-256}
+      - PREDICATE_REGISTRY_ENABLED=${PREDICATE_REGISTRY_ENABLED:-true}
+      - PREDICATE_REGISTRY_PATH=/app/data/predicate_registry.json
+      - PREDICATE_MAPPING_ENABLED=${PREDICATE_MAPPING_ENABLED:-true}
+      - PREDICATE_MAPPING_LLM_ENABLED=${PREDICATE_MAPPING_LLM_ENABLED:-true}
+      - PREDICATE_MAPPING_COLLECTION=${PREDICATE_MAPPING_COLLECTION:-pln_rag_predicates}
+      - PREDICATE_MAPPING_TOP_K=${PREDICATE_MAPPING_TOP_K:-6}
+      - PREDICATE_MAPPING_MAX_CANDIDATES=${PREDICATE_MAPPING_MAX_CANDIDATES:-6}
+      - PREDICATE_MAPPING_MIN_SCORE=${PREDICATE_MAPPING_MIN_SCORE:-0.62}
+      - PREDICATE_MAPPING_PROOF_THRESHOLD=${PREDICATE_MAPPING_PROOF_THRESHOLD:-0.82}
+      - PREDICATE_MAPPING_TIMEOUT=${PREDICATE_MAPPING_TIMEOUT:-12}
+      - PREDICATE_MAPPING_TOTAL_TIMEOUT=${PREDICATE_MAPPING_TOTAL_TIMEOUT:-30}
+      - QUERY_FALLBACK_ENABLED=${QUERY_FALLBACK_ENABLED:-true}
+      - QUERY_ALIGNMENT_ENABLED=${QUERY_ALIGNMENT_ENABLED:-true}
+      - QUERY_ALIGNMENT_TOP_K=${QUERY_ALIGNMENT_TOP_K:-8}
+      - QUERY_ALIGNMENT_MIN_SCORE=${QUERY_ALIGNMENT_MIN_SCORE:-0.55}
+      - QUERY_ALIGNMENT_HYBRID_MIN_SCORE=${QUERY_ALIGNMENT_HYBRID_MIN_SCORE:-0.30}
+    volumes:
+      - pln_data:/app/data
+      - ./data/langextract_examples.json:/app/data/langextract_examples.json
+    depends_on:
+      qdrant:
+        condition: service_started
+      ollama:
+        condition: service_healthy
+    restart: unless-stopped
+
+  pln-rag-light:
+    image: pln-rag-light:${PLNRAG_LIGHT_IMAGE_TAG:-latest}
+    build:
+      context: .
+      args:
+        REQUIREMENTS_FILE: ${PLNRAG_REQUIREMENTS_FILE:-requirements.langextract.txt}
+        INSTALL_COREF: ${PLNRAG_LIGHT_INSTALL_COREF:-false}
+    profiles: ["light"]
+    ports:
+      - "8001:8000"
+    environment:
+      - GEMINI_API_KEY=${GEMINI_API_KEY}
+      - GEMINI_MODEL=${GEMINI_MODEL:-gemini/gemini-2.5-flash}
+      - LANGEXTRACT_API_KEY=${LANGEXTRACT_API_KEY:-}
+      - LANGEXTRACT_MODEL_ID=${LANGEXTRACT_MODEL_ID:-gemini-2.5-flash}
+      - LANGEXTRACT_MODEL_URL=${LANGEXTRACT_MODEL_URL:-}
+      - LANGEXTRACT_EXAMPLES_PATH=/app/data/langextract_examples.json
+      - LANGEXTRACT_EXTRACTION_PASSES=${LANGEXTRACT_EXTRACTION_PASSES:-1}
+      - LANGEXTRACT_MAX_WORKERS=${LANGEXTRACT_MAX_WORKERS:-1}
+      - LANGEXTRACT_SKIP_FUZZY=${LANGEXTRACT_SKIP_FUZZY:-true}
+      - LANGEXTRACT_CHUNK_SIZE=${LANGEXTRACT_CHUNK_SIZE:-2000}
+      - MENTION_PREPASS_ENABLED=${MENTION_PREPASS_ENABLED:-true}
+      - COREFERENCE_ENABLED=${COREFERENCE_ENABLED:-false}
+      - COREFERENCE_BACKEND=${COREFERENCE_BACKEND:-lingmess}
+      - COREFERENCE_MODEL=${COREFERENCE_MODEL:-biu-nlp/lingmess-coref}
+      - COREFERENCE_DEVICE=${COREFERENCE_DEVICE:-auto}
+      - COREFERENCE_MODE=${COREFERENCE_MODE:-hint_only}
+      - COREFERENCE_FAIL_OPEN=${COREFERENCE_FAIL_OPEN:-true}
+      - COREFERENCE_MAX_TOKENS_IN_BATCH=${COREFERENCE_MAX_TOKENS_IN_BATCH:-10000}
+      - COREFERENCE_INCLUDE_PAIR_LOGITS=${COREFERENCE_INCLUDE_PAIR_LOGITS:-false}
+      - ATOMSPACE_PATH=/app/data/atomspace/kb.metta
+      - EVIDENCE_LEDGER_ENABLED=${EVIDENCE_LEDGER_ENABLED:-true}
+      - EVIDENCE_LEDGER_PATH=/app/data/evidence/evidence.db
+      - EVIDENCE_OUTBOX_BATCH_SIZE=${EVIDENCE_OUTBOX_BATCH_SIZE:-256}
+      - PREDICATE_REGISTRY_ENABLED=${PREDICATE_REGISTRY_ENABLED:-true}
+      - PREDICATE_REGISTRY_PATH=/app/data/predicate_registry.json
+      - PREDICATE_MAPPING_ENABLED=${PREDICATE_MAPPING_ENABLED:-true}
+      - PREDICATE_MAPPING_LLM_ENABLED=${PREDICATE_MAPPING_LLM_ENABLED:-true}
+      - PREDICATE_MAPPING_COLLECTION=${PREDICATE_MAPPING_COLLECTION:-pln_rag_predicates}
+      - PREDICATE_MAPPING_TOP_K=${PREDICATE_MAPPING_TOP_K:-6}
+      - PREDICATE_MAPPING_MAX_CANDIDATES=${PREDICATE_MAPPING_MAX_CANDIDATES:-6}
+      - PREDICATE_MAPPING_MIN_SCORE=${PREDICATE_MAPPING_MIN_SCORE:-0.62}
+      - PREDICATE_MAPPING_PROOF_THRESHOLD=${PREDICATE_MAPPING_PROOF_THRESHOLD:-0.82}
+      - PREDICATE_MAPPING_TIMEOUT=${PREDICATE_MAPPING_TIMEOUT:-12}
+      - PREDICATE_MAPPING_TOTAL_TIMEOUT=${PREDICATE_MAPPING_TOTAL_TIMEOUT:-30}
+      - QUERY_FALLBACK_ENABLED=${QUERY_FALLBACK_ENABLED:-true}
+      - QUERY_ALIGNMENT_ENABLED=${QUERY_ALIGNMENT_ENABLED:-true}
+      - QUERY_ALIGNMENT_TOP_K=${QUERY_ALIGNMENT_TOP_K:-8}
+      - QUERY_ALIGNMENT_MIN_SCORE=${QUERY_ALIGNMENT_MIN_SCORE:-0.55}
+      - QUERY_ALIGNMENT_HYBRID_MIN_SCORE=${QUERY_ALIGNMENT_HYBRID_MIN_SCORE:-0.30}
+      - USE_VECTOR_STORE=false
+    volumes:
+      - pln_data:/app/data
+      - ./data/langextract_examples.json:/app/data/langextract_examples.json
+    restart: unless-stopped
+
+  qdrant:
+    image: qdrant/qdrant:latest
+    profiles: ["default"]
+    ports:
+      - "6333:6333"
+    volumes:
+      - qdrant_data:/qdrant/storage
+    restart: unless-stopped
+
+  ollama:
+    image: ollama/ollama:latest
+    profiles: ["default"]
+    ports:
+      - "11434:11434"
+    volumes:
+      - ollama_data:/root/.ollama
+    healthcheck:
+      test: ["CMD", "ollama", "list"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 30s
+    restart: unless-stopped
+
+  # One-shot container that pulls the embedding model on first run
+  ollama-pull:
+    image: ollama/ollama:latest
+    profiles: ["default"]
+    depends_on:
+      ollama:
+        condition: service_healthy
+    entrypoint: ["ollama", "pull", "nomic-embed-text"]
+    environment:
+      - OLLAMA_HOST=http://ollama:11434
+    restart: "no"
+
+volumes:
+  pln_data:
+  qdrant_data:
+  ollama_data:

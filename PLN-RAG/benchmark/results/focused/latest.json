@@ -1,0 +1,1824 @@
+{
+  "created_at": "2026-07-13T09:25:16.833991+00:00",
+  "api_base": "http://localhost:8000",
+  "cases_file": "C:\\Users\\fraol\\Documents\\test\\compare\\lang-extract\\PLN-RAG\\benchmark\\cases.json",
+  "case_count": 5,
+  "query_count": 15,
+  "matched_count": 13,
+  "accuracy": 0.8667,
+  "metrics": {
+    "by_expected_status": {
+      "positive": {
+        "total": 5,
+        "matched": 5,
+        "accuracy": 1.0
+      },
+      "negative": {
+        "total": 5,
+        "matched": 3,
+        "accuracy": 0.6
+      },
+      "unknown": {
+        "total": 1,
+        "matched": 1,
+        "accuracy": 1.0
+      },
+      "unanswered": {
+        "total": 4,
+        "matched": 4,
+        "accuracy": 1.0
+      }
+    },
+    "macro_status_accuracy": 0.9,
+    "direct_query_count": 11,
+    "direct_query_accuracy": 0.8182,
+    "decisive_answer_count": 8,
+    "decisive_answer_precision": 1.0,
+    "validated_decisive_proof_rate": 1.0,
+    "overclaim_count": 0,
+    "no_query_count": 2,
+    "invalid_target_count": 0,
+    "failure_categories": {
+      "correct": 13,
+      "no_query": 2
+    },
+    "latency_seconds": {
+      "ingest_p50": 21.6016,
+      "ingest_p95": 38.1048,
+      "query_p50": 3.8922,
+      "query_p95": 20.6424
+    }
+  },
+  "cases": [
+    {
+      "id": "bench_002_machine_overheating",
+      "topic": "equipment safety",
+      "paragraph": "A machine is considered overheating if its internal temperature stays above 90 degrees Celsius for more than ten minutes. Overheating can trigger an automatic shutdown. A blocked ventilation filter can increase temperature, but it does not by itself prove overheating. Machine M7 has a blocked ventilation filter. Its internal temperature reached 94 degrees Celsius for twelve minutes during the last run. The shutdown controller did not activate because the monitoring cable was disconnected.",
+      "ingest_status": "success",
+      "ingest_seconds": 39.3968,
+      "atom_count": 13,
+      "chunks": [
+        {
+          "chunk": "A machine is considered overheating if its internal temperature stays above 90 degrees Celsius for more than ten minutes. Overheating can trigger an automatic shutdown. A blocked ventilation filter can increase temperature, but it does not by itself prove overheating. Machine M7 has a blocked ventilation filter. Its internal temperature reached 94 degrees Celsius for twelve minutes during the last run. The shutdown controller did not activate because the monitoring cable was disconnected.",
+          "atom_count": 13,
+          "atoms": [
+            "(: m_is_overheating_rule (Implication (Premises (IsA $m machine) (HasInternalTemperature $m $temp) (GreaterThan $temp 90celsius) (HasTemperatureDuration $m $duration) (GreaterThan $duration 10minute)) (Conclusions (IsOverheating $m))) (STV 1.0 1.0))",
+            "(: o_can_trigger_automatic_shutdown_rule (Implication (Premises (IsOverheating $o)) (Conclusions (CanTriggerAutomaticShutdown $o))) (STV 1.0 1.0))",
+            "(: x_can_increase_temperature_rule (Implication (Premises (HasBlockedVentilationFilter $x)) (Conclusions (CanIncreaseTemperature $x))) (STV 1.0 1.0))",
+            "(: machine_m7_has_blocked_ventilation_filter_fact (HasBlockedVentilationFilter machine_m7) (STV 1.0 1.0))",
+            "(: machine_m7_internal_temperature_has_property (Has machine_m7 internal_temperature 94celsius) (STV 1.0 1.0))",
+            "(: machine_m7_temperature_duration_has_property (Has machine_m7 temperature_duration 12minute) (STV 1.0 1.0))",
+            "(: shutdown_controller_activate_neg (Not (Activate shutdown_controller)) (STV 1.0 1.0))",
+            "(: monitoring_cable_disconnected_fact (Disconnected monitoring_cable) (STV 1.0 1.0))",
+            "(: machine_m7_94celsius_has_internal_temperature_numeric_variable_satisfied (HasInternalTemperature machine_m7 94celsius) (STV 1.0 1.0))",
+            "(: 94celsius_90celsius_greater_than_numeric_variable_satisfied (GreaterThan 94celsius 90celsius) (STV 1.0 1.0))",
+            "(: machine_m7_12minute_has_temperature_duration_numeric_variable_satisfied (HasTemperatureDuration machine_m7 12minute) (STV 1.0 1.0))",
+            "(: 12minute_10minute_greater_than_numeric_variable_satisfied (GreaterThan 12minute 10minute) (STV 1.0 1.0))",
+            "(: machine_m7_machine_is_a_role_type_inferred_from_rule_schema (IsA machine_m7 machine) (STV 1.0 1.0))"
+          ],
+          "schema_alignment": [
+            {
+              "action": "registry_predicate_observed",
+              "predicate": "IsOverheating",
+              "arity": 1,
+              "argument_types": [
+                "machine"
+              ],
+              "roles": [
+                "conclusion",
+                "premise"
+              ],
+              "status": "observed"
+            },
+            {
+              "action": "registry_predicate_observed",
+              "predicate": "HasInternalTemperature",
+              "arity": 2,
+              "argument_types": [
+                "machine",
+                "entity"
+              ],
+              "roles": [
+                "premise"
+              ],
+              "status": "observed"
+            },
+            {
+              "action": "registry_predicate_observed",
+              "predicate": "HasTemperatureDuration",
+              "arity": 2,
+              "argument_types": [
+                "machine",
+                "entity"
+              ],
+              "roles": [
+                "premise"
+              ],
+              "status": "observed"
+            },
+            {
+              "action": "registry_predicate_observed",
+              "predicate": "CanTriggerAutomaticShutdown",
+              "arity": 1,
+              "argument_types": [
+                "entity"
+              ],
+              "roles": [
+                "conclusion"
+              ],
+              "status": "observed"
+            },
+            {
+              "action": "registry_predicate_observed",
+              "predicate": "CanIncreaseTemperature",
+              "arity": 1,
+              "argument_types": [
+                "entity"
+              ],
+              "roles": [
+                "conclusion"
+              ],
+              "status": "observed"
+            },
+            {
+              "action": "registry_predicate_observed",
+              "predicate": "HasBlockedVentilationFilter",
+              "arity": 1,
+              "argument_types": [
+                "entity"
+              ],
+              "roles": [
+                "premise",
+                "fact"
+              ],
+              "status": "observed"
+            },
+            {
+              "action": "registry_predicate_observed",
+              "predicate": "Has",
+              "arity": 3,
+              "argument_types": [
+                "entity",
+                "entity",
+                "entity"
+              ],
+              "roles": [
+                "fact"
+              ],
+              "status": "observed"
+            },
+            {
+              "action": "registry_predicate_observed",
+              "predicate": "Activate",
+              "arity": 1,
+              "argument_types": [
+                "entity"
+              ],
+              "roles": [
+                "negated_fact"
+              ],
+              "status": "observed"
+            },
+            {
+              "action": "registry_predicate_observed",
+              "predicate": "Disconnected",
+              "arity": 1,
+              "argument_types": [
+                "entity"
+              ],
+              "roles": [
+                "fact"
+              ],
+              "status": "observed"
+            },
+            {
+              "action": "predicate_cards_upserted",
+              "count": 9
+            },
+            {
+              "status": "added",
+              "reason": "numeric_variable_satisfied",
+              "statement": "(: machine_m7_94celsius_has_internal_temperature_numeric_variable_satisfied (HasInternalTemperature machine_m7 94celsius) (STV 1.0 1.0))"
+            },
+            {
+              "status": "added",
+              "reason": "numeric_variable_satisfied",
+              "statement": "(: 94celsius_90celsius_greater_than_numeric_variable_satisfied (GreaterThan 94celsius 90celsius) (STV 1.0 1.0))"
+            },
+            {
+              "status": "added",
+              "reason": "numeric_variable_satisfied",
+              "statement": "(: machine_m7_12minute_has_temperature_duration_numeric_variable_satisfied (HasTemperatureDuration machine_m7 12minute) (STV 1.0 1.0))"
+            },
+            {
+              "status": "added",
+              "reason": "numeric_variable_satisfied",
+              "statement": "(: 12minute_10minute_greater_than_numeric_variable_satisfied (GreaterThan 12minute 10minute) (STV 1.0 1.0))"
+            },
+            {
+              "status": "added",
+              "reason": "role_type_inferred_from_rule_schema",
+              "statement": "(: machine_m7_machine_is_a_role_type_inferred_from_rule_schema (IsA machine_m7 machine) (STV 1.0 1.0))"
+            },
+            {
+              "action": "semantic_bridges_suppressed",
+              "reason": "proof_authority_disabled",
+              "proof_safe": true
+            }
+          ],
+          "predicate_registry": [
+            {
+              "action": "registry_predicate_observed",
+              "predicate": "IsOverheating",
+              "arity": 1,
+              "argument_types": [
+                "machine"
+              ],
+              "roles": [
+                "conclusion",
+                "premise"
+              ],
+              "status": "observed"
+            },
+            {
+              "action": "registry_predicate_observed",
+              "predicate": "HasInternalTemperature",
+              "arity": 2,
+              "argument_types": [
+                "machine",
+                "entity"
+              ],
+              "roles": [
+                "premise"
+              ],
+              "status": "observed"
+            },
+            {
+              "action": "registry_predicate_observed",
+              "predicate": "HasTemperatureDuration",
+              "arity": 2,
+              "argument_types": [
+                "machine",
+                "entity"
+              ],
+              "roles": [
+                "premise"
+              ],
+              "status": "observed"
+            },
+            {
+              "action": "registry_predicate_observed",
+              "predicate": "CanTriggerAutomaticShutdown",
+              "arity": 1,
+              "argument_types": [
+                "entity"
+              ],
+              "roles": [
+                "conclusion"
+              ],
+              "status": "observed"
+            },
+            {
+              "action": "registry_predicate_observed",
+              "predicate": "CanIncreaseTemperature",
+              "arity": 1,
+              "argument_types": [
+                "entity"
+              ],
+              "roles": [
+                "conclusion"
+              ],
+              "status": "observed"
+            },
+            {
+              "action": "registry_predicate_observed",
+              "predicate": "HasBlockedVentilationFilter",
+              "arity": 1,
+              "argument_types": [
+                "entity"
+              ],
+              "roles": [
+                "premise",
+                "fact"
+              ],
+              "status": "observed"
+            },
+            {
+              "action": "registry_predicate_observed",
+              "predicate": "Has",
+              "arity": 3,
+              "argument_types": [
+                "entity",
+                "entity",
+                "entity"
+              ],
+              "roles": [
+                "fact"
+              ],
+              "status": "observed"
+            },
+            {
+              "action": "registry_predicate_observed",
+              "predicate": "Activate",
+              "arity": 1,
+              "argument_types": [
+                "entity"
+              ],
+              "roles": [
+                "negated_fact"
+              ],
+              "status": "observed"
+            },
+            {
+              "action": "registry_predicate_observed",
+              "predicate": "Disconnected",
+              "arity": 1,
+              "argument_types": [
+                "entity"
+              ],
+              "roles": [
+                "fact"
+              ],
+              "status": "observed"
+            },
+            {
+              "action": "predicate_cards_upserted",
+              "count": 9
+            },
+            {
+              "status": "added",
+              "reason": "numeric_variable_satisfied",
+              "statement": "(: machine_m7_94celsius_has_internal_temperature_numeric_variable_satisfied (HasInternalTemperature machine_m7 94celsius) (STV 1.0 1.0))"
+            },
+            {
+              "status": "added",
+              "reason": "numeric_variable_satisfied",
+              "statement": "(: 94celsius_90celsius_greater_than_numeric_variable_satisfied (GreaterThan 94celsius 90celsius) (STV 1.0 1.0))"
+            },
+            {
+              "status": "added",
+              "reason": "numeric_variable_satisfied",
+              "statement": "(: machine_m7_12minute_has_temperature_duration_numeric_variable_satisfied (HasTemperatureDuration machine_m7 12minute) (STV 1.0 1.0))"
+            },
+            {
+              "status": "added",
+              "reason": "numeric_variable_satisfied",
+              "statement": "(: 12minute_10minute_greater_than_numeric_variable_satisfied (GreaterThan 12minute 10minute) (STV 1.0 1.0))"
+            },
+            {
+              "status": "added",
+              "reason": "role_type_inferred_from_rule_schema",
+              "statement": "(: machine_m7_machine_is_a_role_type_inferred_from_rule_schema (IsA machine_m7 machine) (STV 1.0 1.0))"
+            }
+          ]
+        }
+      ],
+      "queries": [
+        {
+          "question": "Is machine M7 overheating?",
+          "expected_status": "positive",
+          "observed_status": "positive",
+          "matched": true,
+          "expected_answer": "Yes.",
+          "rationale": "The temperature and duration satisfy the overheating rule.",
+          "answer": "Yes. The proof establishes (IsOverheating machine_m7).",
+          "executed_query": "(: $prf (IsOverheating machine_m7) $tv)",
+          "query_source": "deterministic",
+          "query_status": "well_aligned",
+          "intent_mode": "boolean",
+          "negative_query": "(: $prf (Not (IsOverheating machine_m7)) $tv)",
+          "execution_candidates": [
+            "(: $prf (IsOverheating machine_m7) $tv)"
+          ],
+          "positive_proof": [
+            "(: machine_m7_machine_is_a_role_type_inferred_from_rule_schema (IsA machine_m7 machine) (STV 1.0 1.0))",
+            "(: machine_m7_94celsius_has_internal_temperature_numeric_variable_satisfied (HasInternalTemperature machine_m7 94celsius) (STV 1.0 1.0))",
+            "(: 94celsius_90celsius_greater_than_numeric_variable_satisfied (GreaterThan 94celsius 90celsius) (STV 1.0 1.0))",
+            "(: machine_m7_12minute_has_temperature_duration_numeric_variable_satisfied (HasTemperatureDuration machine_m7 12minute) (STV 1.0 1.0))",
+            "(: 12minute_10minute_greater_than_numeric_variable_satisfied (GreaterThan 12minute 10minute) (STV 1.0 1.0))",
+            "(: m_is_overheating_rule (Implication (Premises (IsA $m machine) (HasInternalTemperature $m $temp) (GreaterThan $temp 90celsius) (HasTemperatureDuration $m $duration) (GreaterThan $duration 10minute)) (Conclusions (IsOverheating $m))) (STV 1.0 1.0))",
+            "(: machine_m7_isoverheating_derived (IsOverheating machine_m7) (STV 1.0 1.0))"
+          ],
+          "negative_proof": [],
+          "requirements": [],
+          "canonical_proposition": "(IsOverheating machine_m7)",
+          "target_alignment": "exact",
+          "proof_validated": true,
+          "support_kind": "entailed",
+          "unresolved_mentions": [],
+          "normalization_evidence": [],
+          "rejection_reasons": [],
+          "failure_category": "correct",
+          "seconds": 3.563
+        },
+        {
+          "question": "Did M7 shut down automatically?",
+          "expected_status": "negative",
+          "observed_status": "unknown",
+          "matched": false,
+          "expected_answer": "No.",
+          "rationale": "The paragraph explicitly says the shutdown controller did not activate.",
+          "answer": "I couldn't translate this question into a logical query.",
+          "executed_query": "",
+          "query_source": "none",
+          "query_status": "no_query",
+          "intent_mode": "boolean",
+          "negative_query": "",
+          "execution_candidates": [],
+          "positive_proof": [],
+          "negative_proof": [],
+          "requirements": [],
+          "canonical_proposition": "",
+          "target_alignment": "none",
+          "proof_validated": true,
+          "support_kind": "unknown",
+          "unresolved_mentions": [],
+          "normalization_evidence": [],
+          "rejection_reasons": [
+            "no_semantically_compatible_query"
+          ],
+          "failure_category": "no_query",
+          "seconds": 7.682
+        },
+        {
+          "question": "Is the blocked ventilation filter alone sufficient to prove overheating?",
+          "expected_status": "unanswered",
+          "observed_status": "unanswered",
+          "matched": true,
+          "expected_answer": "No proof of sufficiency.",
+          "rationale": "The text says a blocked filter can increase temperature, not that it proves overheating by itself.",
+          "answer": "No proof establishes sufficiency from that condition alone. The relevant rules also require: (IsA $m machine), (HasInternalTemperature $m $temp), (GreaterThan $temp 90celsius), (HasTemperatureDuration $m $duration), (GreaterThan $duration 10minute).",
+          "executed_query": "",
+          "query_source": "none",
+          "query_status": "well_aligned",
+          "intent_mode": "sufficiency",
+          "negative_query": "",
+          "execution_candidates": [],
+          "positive_proof": [],
+          "negative_proof": [],
+          "requirements": [
+            {
+              "target": "(IsOverheating $m)",
+              "rule": "(: m_is_overheating_rule (Implication (Premises (IsA $m machine) (HasInternalTemperature $m $temp) (GreaterThan $temp 90celsius) (HasTemperatureDuration $m $duration) (GreaterThan $duration 10minute)) (Conclusions (IsOverheating $m))) (STV 1.0 1.0))",
+              "requirements": [
+                {
+                  "kind": "literal",
+                  "atom": "(IsA $m machine)",
+                  "status": "unknown"
+                },
+                {
+                  "kind": "literal",
+                  "atom": "(HasInternalTemperature $m $temp)",
+                  "status": "unknown"
+                },
+                {
+                  "kind": "literal",
+                  "atom": "(GreaterThan $temp 90celsius)",
+                  "status": "unknown"
+                },
+                {
+                  "kind": "literal",
+                  "atom": "(HasTemperatureDuration $m $duration)",
+                  "status": "unknown"
+                },
+                {
+                  "kind": "literal",
+                  "atom": "(GreaterThan $duration 10minute)",
+                  "status": "unknown"
+                }
+              ]
+            }
+          ],
+          "canonical_proposition": "",
+          "target_alignment": "none",
+          "proof_validated": true,
+          "support_kind": "unknown",
+          "unresolved_mentions": [],
+          "normalization_evidence": [],
+          "rejection_reasons": [],
+          "failure_category": "correct",
+          "seconds": 9.8153
+        }
+      ],
+      "matched": 2,
+      "total": 3,
+      "accuracy": 0.6667,
+      "seconds": 60.6472
+    },
+    {
+      "id": "bench_003_student_scholarship",
+      "topic": "education eligibility",
+      "paragraph": "A student qualifies for the merit scholarship if the student has a GPA of at least 3.8 and has completed at least 40 volunteer hours. A student can be considered for the leadership scholarship if the student led a recognized club, but leadership consideration does not imply merit scholarship qualification. Lena has a GPA of 3.9 and completed 45 volunteer hours. She did not lead a recognized club.",
+      "ingest_status": "success",
+      "ingest_seconds": 21.6016,
+      "atom_count": 8,
+      "chunks": [
+        {
+          "chunk": "A student qualifies for the merit scholarship if the student has a GPA of at least 3.8 and has completed at least 40 volunteer hours. A student can be considered for the leadership scholarship if the student led a recognized club, but leadership consideration does not imply merit scholarship qualification. Lena has a GPA of 3.9 and completed 45 volunteer hours. She did not lead a recognized club.",
+          "atom_count": 8,
+          "atoms": [
+            "(: s_qualify_for_merit_scholarship_rule (Implication (Premises (IsA $s student) (HasGpaAtLeast $s 38) (CompletedAtLeastVolunteerHours $s 40)) (Conclusions (QualifiesForMeritScholarship $s))) (STV 1.0 1.0))",
+            "(: lena_3_9_has_gpa_fact (HasGpa lena 39) (STV 1.0 1.0))",
+            "(: lena_45_completed_volunteer_hour_fact (CompletedVolunteerHours lena 45) (STV 1.0 1.0))",
+            "(: lena_led_recognized_club_neg (Not (LedRecognizedClub lena)) (STV 1.0 1.0))",
+            "(: lena_is_person (IsA lena person) (STV 1.0 1.0))",
+            "(: lena_38_has_gpa_at_least_numeric_threshold_satisfied (HasGpaAtLeast lena 38) (STV 1.0 1.0))",
+            "(: lena_40_completed_at_least_volunteer_hours_numeric_threshold_satisfied (CompletedAtLeastVolunteerHours lena 40) (STV 1.0 1.0))",
+            "(: lena_student_is_a_role_type_inferred_from_rule_schema (IsA lena student) (STV 1.0 1.0))"
+          ],
+          "schema_alignment": [
+            {
+              "action": "registry_predicate_observed",
+              "predicate": "QualifiesForMeritScholarship",
+              "arity": 1,
+              "argument_types": [
+                "student"
+              ],
+              "roles": [
+                "conclusion"
+              ],
+              "status": "observed"
+            },
+            {
+              "action": "registry_predicate_observed",
+              "predicate": "HasGpaAtLeast",
+              "arity": 2,
+              "argument_types": [
+                "student",
+                "entity"
+              ],
+              "roles": [
+                "premise"
+              ],
+              "status": "observed"
+            },
+            {
+              "action": "registry_predicate_observed",
+              "predicate": "CompletedAtLeastVolunteerHours",
+              "arity": 2,
+              "argument_types": [
+                "student",
+                "entity"
+              ],
+              "roles": [
+                "premise"
+              ],
+              "status": "observed"
+            },
+            {
+              "action": "registry_predicate_observed",
+              "predicate": "HasGpa",
+              "arity": 2,
+              "argument_types": [
+                "entity",
+                "entity"
+              ],
+              "roles": [
+                "fact"
+              ],
+              "status": "observed"
+            },
+            {
+              "action": "registry_predicate_observed",
+              "predicate": "CompletedVolunteerHours",
+              "arity": 2,
+              "argument_types": [
+                "entity",
+                "entity"
+              ],
+              "roles": [
+                "fact"
+              ],
+              "status": "observed"
+            },
+            {
+              "action": "registry_predicate_observed",
+              "predicate": "LedRecognizedClub",
+              "arity": 1,
+              "argument_types": [
+                "entity"
+              ],
+              "roles": [
+                "negated_fact"
+              ],
+              "status": "observed"
+            },
+            {
+              "action": "predicate_cards_upserted",
+              "count": 6
+            },
+            {
+              "action": "mapping_candidate_unclassified",
+              "source": "CompletedVolunteerHours",
+              "target": "CompletedAtLeastVolunteerHours",
+              "arity": 2,
+              "candidate_source": "registry_or_current_batch",
+              "retrieval_score": 0.0,
+              "reason": "no_classifier_result"
+            },
+            {
+              "action": "mapping_candidate_unclassified",
+              "source": "HasGpa",
+              "target": "HasGpaAtLeast",
+              "arity": 2,
+              "candidate_source": "registry_or_current_batch",
+              "retrieval_score": 0.0,
+              "reason": "no_classifier_result"
+            },
+            {
+              "status": "added",
+              "reason": "numeric_threshold_satisfied",
+              "statement": "(: lena_38_has_gpa_at_least_numeric_threshold_satisfied (HasGpaAtLeast lena 38) (STV 1.0 1.0))"
+            },
+            {
+              "status": "added",
+              "reason": "numeric_threshold_satisfied",
+              "statement": "(: lena_40_completed_at_least_volunteer_hours_numeric_threshold_satisfied (CompletedAtLeastVolunteerHours lena 40) (STV 1.0 1.0))"
+            },
+            {
+              "status": "added",
+              "reason": "role_type_inferred_from_rule_schema",
+              "statement": "(: lena_student_is_a_role_type_inferred_from_rule_schema (IsA lena student) (STV 1.0 1.0))"
+            },
+            {
+              "action": "semantic_bridges_suppressed",
+              "reason": "proof_authority_disabled",
+              "proof_safe": true
+            }
+          ],
+          "predicate_registry": [
+            {
+              "action": "registry_predicate_observed",
+              "predicate": "QualifiesForMeritScholarship",
+              "arity": 1,
+              "argument_types": [
+                "student"
+              ],
+              "roles": [
+                "conclusion"
+              ],
+              "status": "observed"
+            },
+            {
+              "action": "registry_predicate_observed",
+              "predicate": "HasGpaAtLeast",
+              "arity": 2,
+              "argument_types": [
+                "student",
+                "entity"
+              ],
+              "roles": [
+                "premise"
+              ],
+              "status": "observed"
+            },
+            {
+              "action": "registry_predicate_observed",
+              "predicate": "CompletedAtLeastVolunteerHours",
+              "arity": 2,
+              "argument_types": [
+                "student",
+                "entity"
+              ],
+              "roles": [
+                "premise"
+              ],
+              "status": "observed"
+            },
+            {
+              "action": "registry_predicate_observed",
+              "predicate": "HasGpa",
+              "arity": 2,
+              "argument_types": [
+                "entity",
+                "entity"
+              ],
+              "roles": [
+                "fact"
+              ],
+              "status": "observed"
+            },
+            {
+              "action": "registry_predicate_observed",
+              "predicate": "CompletedVolunteerHours",
+              "arity": 2,
+              "argument_types": [
+                "entity",
+                "entity"
+              ],
+              "roles": [
+                "fact"
+              ],
+              "status": "observed"
+            },
+            {
+              "action": "registry_predicate_observed",
+              "predicate": "LedRecognizedClub",
+              "arity": 1,
+              "argument_types": [
+                "entity"
+              ],
+              "roles": [
+                "negated_fact"
+              ],
+              "status": "observed"
+            },
+            {
+              "action": "predicate_cards_upserted",
+              "count": 6
+            },
+            {
+              "action": "mapping_candidate_unclassified",
+              "source": "CompletedVolunteerHours",
+              "target": "CompletedAtLeastVolunteerHours",
+              "arity": 2,
+              "candidate_source": "registry_or_current_batch",
+              "retrieval_score": 0.0,
+              "reason": "no_classifier_result"
+            },
+            {
+              "action": "mapping_candidate_unclassified",
+              "source": "HasGpa",
+              "target": "HasGpaAtLeast",
+              "arity": 2,
+              "candidate_source": "registry_or_current_batch",
+              "retrieval_score": 0.0,
+              "reason": "no_classifier_result"
+            },
+            {
+              "status": "added",
+              "reason": "numeric_threshold_satisfied",
+              "statement": "(: lena_38_has_gpa_at_least_numeric_threshold_satisfied (HasGpaAtLeast lena 38) (STV 1.0 1.0))"
+            },
+            {
+              "status": "added",
+              "reason": "numeric_threshold_satisfied",
+              "statement": "(: lena_40_completed_at_least_volunteer_hours_numeric_threshold_satisfied (CompletedAtLeastVolunteerHours lena 40) (STV 1.0 1.0))"
+            },
+            {
+              "status": "added",
+              "reason": "role_type_inferred_from_rule_schema",
+              "statement": "(: lena_student_is_a_role_type_inferred_from_rule_schema (IsA lena student) (STV 1.0 1.0))"
+            }
+          ]
+        }
+      ],
+      "queries": [
+        {
+          "question": "Does Lena qualify for the merit scholarship?",
+          "expected_status": "positive",
+          "observed_status": "positive",
+          "matched": true,
+          "expected_answer": "Yes.",
+          "rationale": "Both GPA and volunteer-hour conditions are satisfied.",
+          "answer": "Yes. The proof establishes (QualifiesForMeritScholarship lena).",
+          "executed_query": "(: $prf (QualifiesForMeritScholarship lena) $tv)",
+          "query_source": "deterministic",
+          "query_status": "well_aligned",
+          "intent_mode": "boolean",
+          "negative_query": "(: $prf (Not (QualifiesForMeritScholarship lena)) $tv)",
+          "execution_candidates": [
+            "(: $prf (QualifiesForMeritScholarship lena) $tv)"
+          ],
+          "positive_proof": [
+            "(: lena_student_is_a_role_type_inferred_from_rule_schema (IsA lena student) (STV 1.0 1.0))",
+            "(: lena_38_has_gpa_at_least_numeric_threshold_satisfied (HasGpaAtLeast lena 38) (STV 1.0 1.0))",
+            "(: lena_40_completed_at_least_volunteer_hours_numeric_threshold_satisfied (CompletedAtLeastVolunteerHours lena 40) (STV 1.0 1.0))",
+            "(: s_qualify_for_merit_scholarship_rule (Implication (Premises (IsA $s student) (HasGpaAtLeast $s 38) (CompletedAtLeastVolunteerHours $s 40)) (Conclusions (QualifiesForMeritScholarship $s))) (STV 1.0 1.0))",
+            "(: lena_qualifiesformeritscholarship_derived (QualifiesForMeritScholarship lena) (STV 1.0 1.0))"
+          ],
+          "negative_proof": [],
+          "requirements": [],
+          "canonical_proposition": "(QualifiesForMeritScholarship lena)",
+          "target_alignment": "exact",
+          "proof_validated": true,
+          "support_kind": "entailed",
+          "unresolved_mentions": [],
+          "normalization_evidence": [],
+          "rejection_reasons": [],
+          "failure_category": "correct",
+          "seconds": 3.3556
+        },
+        {
+          "question": "Did Lena lead a recognized club?",
+          "expected_status": "negative",
+          "observed_status": "negative",
+          "matched": true,
+          "expected_answer": "No.",
+          "rationale": "The paragraph explicitly negates recognized club leadership.",
+          "answer": "No. The proof establishes explicit negation of (LedRecognizedClub lena).",
+          "executed_query": "(: $prf (LedRecognizedClub lena) $tv)",
+          "query_source": "deterministic",
+          "query_status": "well_aligned",
+          "intent_mode": "boolean",
+          "negative_query": "(: $prf (Not (LedRecognizedClub lena)) $tv)",
+          "execution_candidates": [
+            "(: $prf (LedRecognizedClub lena) $tv)"
+          ],
+          "positive_proof": [],
+          "negative_proof": [
+            "(: lena_led_recognized_club_neg (Not (LedRecognizedClub lena)) (STV 1.0 1.0))"
+          ],
+          "requirements": [],
+          "canonical_proposition": "(LedRecognizedClub lena)",
+          "target_alignment": "exact",
+          "proof_validated": true,
+          "support_kind": "explicit_negative",
+          "unresolved_mentions": [],
+          "normalization_evidence": [],
+          "rejection_reasons": [],
+          "failure_category": "correct",
+          "seconds": 3.8922
+        },
+        {
+          "question": "Does Lena qualify for the leadership scholarship?",
+          "expected_status": "unknown",
+          "observed_status": "unknown",
+          "matched": true,
+          "expected_answer": "Unknown.",
+          "rationale": "The paragraph defines consideration from club leadership but does not define qualification for the leadership scholarship.",
+          "answer": "I couldn't translate this question into a logical query.",
+          "executed_query": "",
+          "query_source": "none",
+          "query_status": "no_query",
+          "intent_mode": "boolean",
+          "negative_query": "",
+          "execution_candidates": [],
+          "positive_proof": [],
+          "negative_proof": [],
+          "requirements": [],
+          "canonical_proposition": "",
+          "target_alignment": "none",
+          "proof_validated": true,
+          "support_kind": "unknown",
+          "unresolved_mentions": [],
+          "normalization_evidence": [],
+          "rejection_reasons": [
+            "no_semantically_compatible_query"
+          ],
+          "failure_category": "correct",
+          "seconds": 18.776
+        }
+      ],
+      "matched": 3,
+      "total": 3,
+      "accuracy": 1.0,
+      "seconds": 47.7393
+    },
+    {
+      "id": "bench_009_cybersecurity_incident",
+      "topic": "security incident response",
+      "paragraph": "A server is considered compromised if unauthorized login is detected and sensitive files are accessed. A failed login attempt may indicate risk, but it does not prove compromise. Server Atlas recorded an unauthorized login from an unknown IP address. Sensitive payroll files were accessed during the same session. No malware alert was triggered.",
+      "ingest_status": "success",
+      "ingest_seconds": 19.152,
+      "atom_count": 5,
+      "chunks": [
+        {
+          "chunk": "A server is considered compromised if unauthorized login is detected and sensitive files are accessed. A failed login attempt may indicate risk, but it does not prove compromise. Server Atlas recorded an unauthorized login from an unknown IP address. Sensitive payroll files were accessed during the same session. No malware alert was triggered.",
+          "atom_count": 5,
+          "atoms": [
+            "(: s_considered_compromised_rule (Implication (Premises (IsA $s server) (UnauthorizedLoginDetected $s) (SensitiveFilesAccessed $s)) (Conclusions (ConsideredCompromised $s))) (STV 1.0 1.0))",
+            "(: server_atla_unauthorized_login_detected_fact (UnauthorizedLoginDetected server_atla) (STV 1.0 1.0))",
+            "(: server_atla_sensitive_file_accessed_fact (SensitiveFilesAccessed server_atla) (STV 1.0 1.0))",
+            "(: malware_alert_triggered_neg (Not (Triggered malware_alert)) (STV 1.0 1.0))",
+            "(: server_atla_server_is_a_role_type_inferred_from_rule_schema (IsA server_atla server) (STV 1.0 1.0))"
+          ],
+          "schema_alignment": [
+            {
+              "action": "registry_predicate_observed",
+              "predicate": "ConsideredCompromised",
+              "arity": 1,
+              "argument_types": [
+                "server"
+              ],
+              "roles": [
+                "conclusion"
+              ],
+              "status": "observed"
+            },
+            {
+              "action": "registry_predicate_observed",
+              "predicate": "UnauthorizedLoginDetected",
+              "arity": 1,
+              "argument_types": [
+                "server"
+              ],
+              "roles": [
+                "premise",
+                "fact"
+              ],
+              "status": "observed"
+            },
+            {
+              "action": "registry_predicate_observed",
+              "predicate": "SensitiveFilesAccessed",
+              "arity": 1,
+              "argument_types": [
+                "server"
+              ],
+              "roles": [
+                "premise",
+                "fact"
+              ],
+              "status": "observed"
+            },
+            {
+              "action": "registry_predicate_observed",
+              "predicate": "Triggered",
+              "arity": 1,
+              "argument_types": [
+                "entity"
+              ],
+              "roles": [
+                "negated_fact"
+              ],
+              "status": "observed"
+            },
+            {
+              "action": "predicate_cards_upserted",
+              "count": 4
+            },
+            {
+              "status": "added",
+              "reason": "role_type_inferred_from_rule_schema",
+              "statement": "(: server_atla_server_is_a_role_type_inferred_from_rule_schema (IsA server_atla server) (STV 1.0 1.0))"
+            },
+            {
+              "action": "semantic_bridges_suppressed",
+              "reason": "proof_authority_disabled",
+              "proof_safe": true
+            }
+          ],
+          "predicate_registry": [
+            {
+              "action": "registry_predicate_observed",
+              "predicate": "ConsideredCompromised",
+              "arity": 1,
+              "argument_types": [
+                "server"
+              ],
+              "roles": [
+                "conclusion"
+              ],
+              "status": "observed"
+            },
+            {
+              "action": "registry_predicate_observed",
+              "predicate": "UnauthorizedLoginDetected",
+              "arity": 1,
+              "argument_types": [
+                "server"
+              ],
+              "roles": [
+                "premise",
+                "fact"
+              ],
+              "status": "observed"
+            },
+            {
+              "action": "registry_predicate_observed",
+              "predicate": "SensitiveFilesAccessed",
+              "arity": 1,
+              "argument_types": [
+                "server"
+              ],
+              "roles": [
+                "premise",
+                "fact"
+              ],
+              "status": "observed"
+            },
+            {
+              "action": "registry_predicate_observed",
+              "predicate": "Triggered",
+              "arity": 1,
+              "argument_types": [
+                "entity"
+              ],
+              "roles": [
+                "negated_fact"
+              ],
+              "status": "observed"
+            },
+            {
+              "action": "predicate_cards_upserted",
+              "count": 4
+            },
+            {
+              "status": "added",
+              "reason": "role_type_inferred_from_rule_schema",
+              "statement": "(: server_atla_server_is_a_role_type_inferred_from_rule_schema (IsA server_atla server) (STV 1.0 1.0))"
+            }
+          ]
+        }
+      ],
+      "queries": [
+        {
+          "question": "Is server Atlas compromised?",
+          "expected_status": "positive",
+          "observed_status": "positive",
+          "matched": true,
+          "expected_answer": "Yes.",
+          "rationale": "Unauthorized login plus sensitive file access satisfies the compromise rule.",
+          "answer": "Yes. The proof establishes (ConsideredCompromised server_atla).",
+          "executed_query": "(: $prf (ConsideredCompromised server_atla) $tv)",
+          "query_source": "deterministic",
+          "query_status": "well_aligned",
+          "intent_mode": "boolean",
+          "negative_query": "(: $prf (Not (ConsideredCompromised server_atla)) $tv)",
+          "execution_candidates": [
+            "(: $prf (ConsideredCompromised server_atla) $tv)"
+          ],
+          "positive_proof": [
+            "(: server_atla_server_is_a_role_type_inferred_from_rule_schema (IsA server_atla server) (STV 1.0 1.0))",
+            "(: server_atla_unauthorized_login_detected_fact (UnauthorizedLoginDetected server_atla) (STV 1.0 1.0))",
+            "(: server_atla_sensitive_file_accessed_fact (SensitiveFilesAccessed server_atla) (STV 1.0 1.0))",
+            "(: s_considered_compromised_rule (Implication (Premises (IsA $s server) (UnauthorizedLoginDetected $s) (SensitiveFilesAccessed $s)) (Conclusions (ConsideredCompromised $s))) (STV 1.0 1.0))",
+            "(: server_atla_consideredcompromised_derived (ConsideredCompromised server_atla) (STV 1.0 1.0))"
+          ],
+          "negative_proof": [],
+          "requirements": [],
+          "canonical_proposition": "(ConsideredCompromised server_atla)",
+          "target_alignment": "exact",
+          "proof_validated": true,
+          "support_kind": "entailed",
+          "unresolved_mentions": [],
+          "normalization_evidence": [],
+          "rejection_reasons": [],
+          "failure_category": "correct",
+          "seconds": 3.332
+        },
+        {
+          "question": "Was a malware alert triggered on server Atlas?",
+          "expected_status": "negative",
+          "observed_status": "unknown",
+          "matched": false,
+          "expected_answer": "No.",
+          "rationale": "The paragraph explicitly says no malware alert was triggered.",
+          "answer": "I couldn't translate this question into a logical query.",
+          "executed_query": "",
+          "query_source": "none",
+          "query_status": "no_query",
+          "intent_mode": "boolean",
+          "negative_query": "",
+          "execution_candidates": [],
+          "positive_proof": [],
+          "negative_proof": [],
+          "requirements": [],
+          "canonical_proposition": "",
+          "target_alignment": "none",
+          "proof_validated": true,
+          "support_kind": "unknown",
+          "unresolved_mentions": [],
+          "normalization_evidence": [],
+          "rejection_reasons": [
+            "no_semantically_compatible_query"
+          ],
+          "failure_category": "no_query",
+          "seconds": 6.7113
+        },
+        {
+          "question": "Is a failed login attempt alone sufficient to prove Atlas is compromised?",
+          "expected_status": "unanswered",
+          "observed_status": "unanswered",
+          "matched": true,
+          "expected_answer": "No proof of sufficiency.",
+          "rationale": "Failed login attempts indicate risk but do not prove compromise.",
+          "answer": "No proof establishes sufficiency from that condition alone. The relevant rules also require: (IsA atla server), (UnauthorizedLoginDetected atla), (SensitiveFilesAccessed atla).",
+          "executed_query": "",
+          "query_source": "none",
+          "query_status": "well_aligned",
+          "intent_mode": "sufficiency",
+          "negative_query": "",
+          "execution_candidates": [],
+          "positive_proof": [],
+          "negative_proof": [],
+          "requirements": [
+            {
+              "target": "(ConsideredCompromised atla)",
+              "rule": "(: s_considered_compromised_rule (Implication (Premises (IsA $s server) (UnauthorizedLoginDetected $s) (SensitiveFilesAccessed $s)) (Conclusions (ConsideredCompromised $s))) (STV 1.0 1.0))",
+              "requirements": [
+                {
+                  "kind": "literal",
+                  "atom": "(IsA atla server)",
+                  "status": "unknown"
+                },
+                {
+                  "kind": "literal",
+                  "atom": "(UnauthorizedLoginDetected atla)",
+                  "status": "unknown"
+                },
+                {
+                  "kind": "literal",
+                  "atom": "(SensitiveFilesAccessed atla)",
+                  "status": "unknown"
+                }
+              ]
+            }
+          ],
+          "canonical_proposition": "",
+          "target_alignment": "none",
+          "proof_validated": true,
+          "support_kind": "unknown",
+          "unresolved_mentions": [],
+          "normalization_evidence": [],
+          "rejection_reasons": [],
+          "failure_category": "correct",
+          "seconds": 24.9972
+        }
+      ],
+      "matched": 2,
+      "total": 3,
+      "accuracy": 0.6667,
+      "seconds": 54.2308
+    },
+    {
+      "id": "bench_014_agriculture_irrigation",
+      "topic": "crop irrigation",
+      "paragraph": "A field needs irrigation if soil moisture is below 20 percent and no rain is forecast within two days. Yellow leaves can indicate stress, but yellow leaves alone do not prove irrigation is needed. Field Delta has soil moisture of 18 percent. No rain is forecast for the next two days. Some plants have yellow leaves. The irrigation pump is not broken.",
+      "ingest_status": "success",
+      "ingest_seconds": 32.9368,
+      "atom_count": 8,
+      "chunks": [
+        {
+          "chunk": "A field needs irrigation if soil moisture is below 20 percent and no rain is forecast within two days. Yellow leaves can indicate stress, but yellow leaves alone do not prove irrigation is needed. Field Delta has soil moisture of 18 percent. No rain is forecast for the next two days. Some plants have yellow leaves. The irrigation pump is not broken.",
+          "atom_count": 8,
+          "atoms": [
+            "(: f_need_irrigation_rule (Implication (Premises (IsA $f field) (SoilMoistureBelow $f 20percent) (Not (RainForecastWithinTwoDays $f))) (Conclusions (NeedsIrrigation $f))) (STV 1.0 1.0))",
+            "(: yellow_leave_stress_can_indicate_fact (CanIndicate yellow_leave stress) (STV 1.0 1.0))",
+            "(: field_delta_18_percent_has_soil_moisture_fact (HasSoilMoisture field_delta 18percent) (STV 1.0 1.0))",
+            "(: plant_have_yellow_leave_fact (HaveYellowLeaves plant) (STV 1.0 1.0))",
+            "(: irrigation_pump_broken_neg (Not (Broken irrigation_pump)) (STV 1.0 1.0))",
+            "(: field_delta_20percent_soil_moisture_below_numeric_threshold_satisfied (SoilMoistureBelow field_delta 20percent) (STV 1.0 1.0))",
+            "(: constraint_derived (Not (RainForecastWithinTwoDays field_delta)) (STV 1.0 1.0))",
+            "(: field_delta_field_is_a_role_type_inferred_from_rule_schema (IsA field_delta field) (STV 1.0 1.0))"
+          ],
+          "schema_alignment": [
+            {
+              "action": "registry_predicate_observed",
+              "predicate": "NeedsIrrigation",
+              "arity": 1,
+              "argument_types": [
+                "field"
+              ],
+              "roles": [
+                "conclusion"
+              ],
+              "status": "observed"
+            },
+            {
+              "action": "registry_predicate_observed",
+              "predicate": "SoilMoistureBelow",
+              "arity": 2,
+              "argument_types": [
+                "field",
+                "entity"
+              ],
+              "roles": [
+                "premise"
+              ],
+              "status": "observed"
+            },
+            {
+              "action": "registry_predicate_observed",
+              "predicate": "RainForecastWithinTwoDays",
+              "arity": 1,
+              "argument_types": [
+                "field"
+              ],
+              "roles": [
+                "premise"
+              ],
+              "status": "observed"
+            },
+            {
+              "action": "registry_predicate_observed",
+              "predicate": "CanIndicate",
+              "arity": 2,
+              "argument_types": [
+                "entity",
+                "entity"
+              ],
+              "roles": [
+                "fact"
+              ],
+              "status": "observed"
+            },
+            {
+              "action": "registry_predicate_observed",
+              "predicate": "HasSoilMoisture",
+              "arity": 2,
+              "argument_types": [
+                "entity",
+                "entity"
+              ],
+              "roles": [
+                "fact"
+              ],
+              "status": "observed"
+            },
+            {
+              "action": "registry_predicate_observed",
+              "predicate": "HaveYellowLeaves",
+              "arity": 1,
+              "argument_types": [
+                "entity"
+              ],
+              "roles": [
+                "fact"
+              ],
+              "status": "observed"
+            },
+            {
+              "action": "registry_predicate_observed",
+              "predicate": "Broken",
+              "arity": 1,
+              "argument_types": [
+                "entity"
+              ],
+              "roles": [
+                "negated_fact"
+              ],
+              "status": "observed"
+            },
+            {
+              "action": "predicate_cards_upserted",
+              "count": 7
+            },
+            {
+              "action": "mapping_candidate_unclassified",
+              "source": "HasSoilMoisture",
+              "target": "SoilMoistureBelow",
+              "arity": 2,
+              "candidate_source": "registry_or_current_batch",
+              "retrieval_score": 0.0,
+              "reason": "no_classifier_result"
+            },
+            {
+              "status": "added",
+              "reason": "numeric_threshold_satisfied",
+              "statement": "(: field_delta_20percent_soil_moisture_below_numeric_threshold_satisfied (SoilMoistureBelow field_delta 20percent) (STV 1.0 1.0))"
+            },
+            {
+              "status": "added",
+              "reason": "explicit_negative_supported_by_source_text",
+              "statement": "(: constraint_derived (Not (RainForecastWithinTwoDays field_delta)) (STV 1.0 1.0))"
+            },
+            {
+              "status": "added",
+              "reason": "role_type_inferred_from_rule_schema",
+              "statement": "(: field_delta_field_is_a_role_type_inferred_from_rule_schema (IsA field_delta field) (STV 1.0 1.0))"
+            },
+            {
+              "action": "semantic_bridges_suppressed",
+              "reason": "proof_authority_disabled",
+              "proof_safe": true
+            }
+          ],
+          "predicate_registry": [
+            {
+              "action": "registry_predicate_observed",
+              "predicate": "NeedsIrrigation",
+              "arity": 1,
+              "argument_types": [
+                "field"
+              ],
+              "roles": [
+                "conclusion"
+              ],
+              "status": "observed"
+            },
+            {
+              "action": "registry_predicate_observed",
+              "predicate": "SoilMoistureBelow",
+              "arity": 2,
+              "argument_types": [
+                "field",
+                "entity"
+              ],
+              "roles": [
+                "premise"
+              ],
+              "status": "observed"
+            },
+            {
+              "action": "registry_predicate_observed",
+              "predicate": "RainForecastWithinTwoDays",
+              "arity": 1,
+              "argument_types": [
+                "field"
+              ],
+              "roles": [
+                "premise"
+              ],
+              "status": "observed"
+            },
+            {
+              "action": "registry_predicate_observed",
+              "predicate": "CanIndicate",
+              "arity": 2,
+              "argument_types": [
+                "entity",
+                "entity"
+              ],
+              "roles": [
+                "fact"
+              ],
+              "status": "observed"
+            },
+            {
+              "action": "registry_predicate_observed",
+              "predicate": "HasSoilMoisture",
+              "arity": 2,
+              "argument_types": [
+                "entity",
+                "entity"
+              ],
+              "roles": [
+                "fact"
+              ],
+              "status": "observed"
+            },
+            {
+              "action": "registry_predicate_observed",
+              "predicate": "HaveYellowLeaves",
+              "arity": 1,
+              "argument_types": [
+                "entity"
+              ],
+              "roles": [
+                "fact"
+              ],
+              "status": "observed"
+            },
+            {
+              "action": "registry_predicate_observed",
+              "predicate": "Broken",
+              "arity": 1,
+              "argument_types": [
+                "entity"
+              ],
+              "roles": [
+                "negated_fact"
+              ],
+              "status": "observed"
+            },
+            {
+              "action": "predicate_cards_upserted",
+              "count": 7
+            },
+            {
+              "action": "mapping_candidate_unclassified",
+              "source": "HasSoilMoisture",
+              "target": "SoilMoistureBelow",
+              "arity": 2,
+              "candidate_source": "registry_or_current_batch",
+              "retrieval_score": 0.0,
+              "reason": "no_classifier_result"
+            },
+            {
+              "status": "added",
+              "reason": "numeric_threshold_satisfied",
+              "statement": "(: field_delta_20percent_soil_moisture_below_numeric_threshold_satisfied (SoilMoistureBelow field_delta 20percent) (STV 1.0 1.0))"
+            },
+            {
+              "status": "added",
+              "reason": "explicit_negative_supported_by_source_text",
+              "statement": "(: constraint_derived (Not (RainForecastWithinTwoDays field_delta)) (STV 1.0 1.0))"
+            },
+            {
+              "status": "added",
+              "reason": "role_type_inferred_from_rule_schema",
+              "statement": "(: field_delta_field_is_a_role_type_inferred_from_rule_schema (IsA field_delta field) (STV 1.0 1.0))"
+            }
+          ]
+        }
+      ],
+      "queries": [
+        {
+          "question": "Does Field Delta need irrigation?",
+          "expected_status": "positive",
+          "observed_status": "positive",
+          "matched": true,
+          "expected_answer": "Yes.",
+          "rationale": "Low soil moisture and no near-term rain satisfy the irrigation rule.",
+          "answer": "Yes. The proof establishes (NeedsIrrigation field_delta).",
+          "executed_query": "(: $prf (NeedsIrrigation field_delta) $tv)",
+          "query_source": "deterministic",
+          "query_status": "well_aligned",
+          "intent_mode": "boolean",
+          "negative_query": "(: $prf (Not (NeedsIrrigation field_delta)) $tv)",
+          "execution_candidates": [
+            "(: $prf (NeedsIrrigation field_delta) $tv)"
+          ],
+          "positive_proof": [
+            "(: field_delta_field_is_a_role_type_inferred_from_rule_schema (IsA field_delta field) (STV 1.0 1.0))",
+            "(: field_delta_20percent_soil_moisture_below_numeric_threshold_satisfied (SoilMoistureBelow field_delta 20percent) (STV 1.0 1.0))",
+            "(: constraint_derived (Not (RainForecastWithinTwoDays field_delta)) (STV 1.0 1.0))",
+            "(: f_need_irrigation_rule (Implication (Premises (IsA $f field) (SoilMoistureBelow $f 20percent) (Not (RainForecastWithinTwoDays $f))) (Conclusions (NeedsIrrigation $f))) (STV 1.0 1.0))",
+            "(: field_delta_needsirrigation_derived (NeedsIrrigation field_delta) (STV 1.0 1.0))"
+          ],
+          "negative_proof": [],
+          "requirements": [],
+          "canonical_proposition": "(NeedsIrrigation field_delta)",
+          "target_alignment": "exact",
+          "proof_validated": true,
+          "support_kind": "entailed",
+          "unresolved_mentions": [],
+          "normalization_evidence": [],
+          "rejection_reasons": [],
+          "failure_category": "correct",
+          "seconds": 2.9621
+        },
+        {
+          "question": "Is the irrigation pump broken?",
+          "expected_status": "negative",
+          "observed_status": "negative",
+          "matched": true,
+          "expected_answer": "No.",
+          "rationale": "The paragraph explicitly says the pump is not broken.",
+          "answer": "No. The proof establishes explicit negation of (Broken irrigation_pump).",
+          "executed_query": "(: $prf (Broken irrigation_pump) $tv)",
+          "query_source": "deterministic",
+          "query_status": "well_aligned",
+          "intent_mode": "boolean",
+          "negative_query": "(: $prf (Not (Broken irrigation_pump)) $tv)",
+          "execution_candidates": [
+            "(: $prf (Broken irrigation_pump) $tv)"
+          ],
+          "positive_proof": [],
+          "negative_proof": [
+            "(: irrigation_pump_broken_neg (Not (Broken irrigation_pump)) (STV 1.0 1.0))"
+          ],
+          "requirements": [],
+          "canonical_proposition": "(Broken irrigation_pump)",
+          "target_alignment": "exact",
+          "proof_validated": true,
+          "support_kind": "explicit_negative",
+          "unresolved_mentions": [],
+          "normalization_evidence": [],
+          "rejection_reasons": [],
+          "failure_category": "correct",
+          "seconds": 2.864
+        },
+        {
+          "question": "Are yellow leaves alone sufficient to prove Field Delta needs irrigation?",
+          "expected_status": "unanswered",
+          "observed_status": "unanswered",
+          "matched": true,
+          "expected_answer": "No proof of sufficiency.",
+          "rationale": "Yellow leaves can indicate stress, but the text says they do not alone prove irrigation need.",
+          "answer": "No proof establishes sufficiency from that condition alone. The relevant rules also require: (IsA field field), (SoilMoistureBelow field 20percent), (Not (RainForecastWithinTwoDays field)).",
+          "executed_query": "",
+          "query_source": "none",
+          "query_status": "well_aligned",
+          "intent_mode": "sufficiency",
+          "negative_query": "",
+          "execution_candidates": [],
+          "positive_proof": [],
+          "negative_proof": [],
+          "requirements": [
+            {
+              "target": "(NeedsIrrigation field)",
+              "rule": "(: f_need_irrigation_rule (Implication (Premises (IsA $f field) (SoilMoistureBelow $f 20percent) (Not (RainForecastWithinTwoDays $f))) (Conclusions (NeedsIrrigation $f))) (STV 1.0 1.0))",
+              "requirements": [
+                {
+                  "kind": "literal",
+                  "atom": "(IsA field field)",
+                  "status": "unknown"
+                },
+                {
+                  "kind": "literal",
+                  "atom": "(SoilMoistureBelow field 20percent)",
+                  "status": "unknown"
+                },
+                {
+                  "kind": "literal",
+                  "atom": "(Not (RainForecastWithinTwoDays field))",
+                  "status": "unknown"
+                }
+              ]
+            }
+          ],
+          "canonical_proposition": "",
+          "target_alignment": "none",
+          "proof_validated": true,
+          "support_kind": "unknown",
+          "unresolved_mentions": [],
+          "normalization_evidence": [],
+          "rejection_reasons": [],
+          "failure_category": "correct",
+          "seconds": 12.5285
+        }
+      ],
+      "matched": 3,
+      "total": 3,
+      "accuracy": 1.0,
+      "seconds": 51.348
+    },
+    {
+      "id": "bench_015_travel_visa",
+      "topic": "travel documentation",
+      "paragraph": "A traveler is ready for international departure if the traveler has a valid passport and an approved visa. A booked ticket does not by itself make the traveler ready for departure. Hana has a valid passport. Her visa application has been approved. She booked a ticket. She has not completed online check-in.",
+      "ingest_status": "success",
+      "ingest_seconds": 19.424,
+      "atom_count": 6,
+      "chunks": [
+        {
+          "chunk": "A traveler is ready for international departure if the traveler has a valid passport and an approved visa. A booked ticket does not by itself make the traveler ready for departure. Hana has a valid passport. Her visa application has been approved. She booked a ticket. She has not completed online check-in.",
+          "atom_count": 6,
+          "atoms": [
+            "(: traveler_ready_for_international_departure_rule (Implication (Premises (HasValidPassport $traveler) (HasApprovedVisa $traveler)) (Conclusions (ReadyForInternationalDeparture $traveler))) (STV 1.0 1.0))",
+            "(: booked_ticket_traveler_make_ready_for_departure_neg (Not (MakesReadyForDeparture booked_ticket traveler)) (STV 1.0 1.0))",
+            "(: hana_has_valid_passport_fact (HasValidPassport hana) (STV 1.0 1.0))",
+            "(: hana_has_approved_visa_fact (HasApprovedVisa hana) (STV 1.0 1.0))",
+            "(: hana_booked_ticket_fact (BookedTicket hana) (STV 1.0 1.0))",
+            "(: hana_completed_online_check_in_neg (Not (CompletedOnlineCheckIn hana)) (STV 1.0 1.0))"
+          ],
+          "schema_alignment": [
+            {
+              "action": "registry_predicate_observed",
+              "predicate": "ReadyForInternationalDeparture",
+              "arity": 1,
+              "argument_types": [
+                "entity"
+              ],
+              "roles": [
+                "conclusion"
+              ],
+              "status": "observed"
+            },
+            {
+              "action": "registry_predicate_observed",
+              "predicate": "HasValidPassport",
+              "arity": 1,
+              "argument_types": [
+                "entity"
+              ],
+              "roles": [
+                "premise",
+                "fact"
+              ],
+              "status": "observed"
+            },
+            {
+              "action": "registry_predicate_observed",
+              "predicate": "HasApprovedVisa",
+              "arity": 1,
+              "argument_types": [
+                "entity"
+              ],
+              "roles": [
+                "premise",
+                "fact"
+              ],
+              "status": "observed"
+            },
+            {
+              "action": "registry_predicate_observed",
+              "predicate": "MakesReadyForDeparture",
+              "arity": 2,
+              "argument_types": [
+                "entity",
+                "entity"
+              ],
+              "roles": [
+                "negated_fact"
+              ],
+              "status": "observed"
+            },
+            {
+              "action": "registry_predicate_observed",
+              "predicate": "BookedTicket",
+              "arity": 1,
+              "argument_types": [
+                "entity"
+              ],
+              "roles": [
+                "fact"
+              ],
+              "status": "observed"
+            },
+            {
+              "action": "registry_predicate_observed",
+              "predicate": "CompletedOnlineCheckIn",
+              "arity": 1,
+              "argument_types": [
+                "entity"
+              ],
+              "roles": [
+                "negated_fact"
+              ],
+              "status": "observed"
+            },
+            {
+              "action": "predicate_cards_upserted",
+              "count": 6
+            },
+            {
+              "action": "semantic_bridges_suppressed",
+              "reason": "proof_authority_disabled",
+              "proof_safe": true
+            }
+          ],
+          "predicate_registry": [
+            {
+              "action": "registry_predicate_observed",
+              "predicate": "ReadyForInternationalDeparture",
+              "arity": 1,
+              "argument_types": [
+                "entity"
+              ],
+              "roles": [
+                "conclusion"
+              ],
+              "status": "observed"
+            },
+            {
+              "action": "registry_predicate_observed",
+              "predicate": "HasValidPassport",
+              "arity": 1,
+              "argument_types": [
+                "entity"
+              ],
+              "roles": [
+                "premise",
+                "fact"
+              ],
+              "status": "observed"
+            },
+            {
+              "action": "registry_predicate_observed",
+              "predicate": "HasApprovedVisa",
+              "arity": 1,
+              "argument_types": [
+                "entity"
+              ],
+              "roles": [
+                "premise",
+                "fact"
+              ],
+              "status": "observed"
+            },
+            {
+              "action": "registry_predicate_observed",
+              "predicate": "MakesReadyForDeparture",
+              "arity": 2,
+              "argument_types": [
+                "entity",
+                "entity"
+              ],
+              "roles": [
+                "negated_fact"
+              ],
+              "status": "observed"
+            },
+            {
+              "action": "registry_predicate_observed",
+              "predicate": "BookedTicket",
+              "arity": 1,
+              "argument_types": [
+                "entity"
+              ],
+              "roles": [
+                "fact"
+              ],
+              "status": "observed"
+            },
+            {
+              "action": "registry_predicate_observed",
+              "predicate": "CompletedOnlineCheckIn",
+              "arity": 1,
+              "argument_types": [
+                "entity"
+              ],
+              "roles": [
+                "negated_fact"
+              ],
+              "status": "observed"
+            },
+            {
+              "action": "predicate_cards_upserted",
+              "count": 6
+            }
+          ]
+        }
+      ],
+      "queries": [
+        {
+          "question": "Is Hana ready for international departure?",
+          "expected_status": "positive",
+          "observed_status": "positive",
+          "matched": true,
+          "expected_answer": "Yes.",
+          "rationale": "Valid passport and approved visa satisfy the departure-readiness rule.",
+          "answer": "Yes. The proof establishes (ReadyForInternationalDeparture hana).",
+          "executed_query": "(: $prf (ReadyForInternationalDeparture hana) $tv)",
+          "query_source": "deterministic",
+          "query_status": "well_aligned",
+          "intent_mode": "boolean",
+          "negative_query": "(: $prf (Not (ReadyForInternationalDeparture hana)) $tv)",
+          "execution_candidates": [
+            "(: $prf (ReadyForInternationalDeparture hana) $tv)"
+          ],
+          "positive_proof": [
+            "(: hana_has_valid_passport_fact (HasValidPassport hana) (STV 1.0 1.0))",
+            "(: hana_has_approved_visa_fact (HasApprovedVisa hana) (STV 1.0 1.0))",
+            "(: traveler_ready_for_international_departure_rule (Implication (Premises (HasValidPassport $traveler) (HasApprovedVisa $traveler)) (Conclusions (ReadyForInternationalDeparture $traveler))) (STV 1.0 1.0))",
+            "(: hana_readyforinternationaldeparture_derived (ReadyForInternationalDeparture hana) (STV 1.0 1.0))"
+          ],
+          "negative_proof": [],
+          "requirements": [],
+          "canonical_proposition": "(ReadyForInternationalDeparture hana)",
+          "target_alignment": "exact",
+          "proof_validated": true,
+          "support_kind": "entailed",
+          "unresolved_mentions": [],
+          "normalization_evidence": [],
+          "rejection_reasons": [],
+          "failure_category": "correct",
+          "seconds": 2.8595
+        },
+        {
+          "question": "Has Hana completed online check-in?",
+          "expected_status": "negative",
+          "observed_status": "negative",
+          "matched": true,
+          "expected_answer": "No.",
+          "rationale": "The paragraph explicitly negates online check-in completion.",
+          "answer": "No. The proof establishes explicit negation of (CompletedOnlineCheckIn hana).",
+          "executed_query": "(: $prf (CompletedOnlineCheckIn hana) $tv)",
+          "query_source": "deterministic",
+          "query_status": "well_aligned",
+          "intent_mode": "boolean",
+          "negative_query": "(: $prf (Not (CompletedOnlineCheckIn hana)) $tv)",
+          "execution_candidates": [
+            "(: $prf (CompletedOnlineCheckIn hana) $tv)"
+          ],
+          "positive_proof": [],
+          "negative_proof": [
+            "(: hana_completed_online_check_in_neg (Not (CompletedOnlineCheckIn hana)) (STV 1.0 1.0))"
+          ],
+          "requirements": [],
+          "canonical_proposition": "(CompletedOnlineCheckIn hana)",
+          "target_alignment": "exact",
+          "proof_validated": true,
+          "support_kind": "explicit_negative",
+          "unresolved_mentions": [],
+          "normalization_evidence": [],
+          "rejection_reasons": [],
+          "failure_category": "correct",
+          "seconds": 2.9791
+        },
+        {
+          "question": "Is Hana's booked ticket alone sufficient for international departure readiness?",
+          "expected_status": "unanswered",
+          "observed_status": "unanswered",
+          "matched": true,
+          "expected_answer": "No proof of sufficiency.",
+          "rationale": "The paragraph says a booked ticket alone does not make the traveler ready.",
+          "answer": "The relevant rule requirements are proved, but this planner does not treat that as proof that the named condition alone is sufficient.",
+          "executed_query": "",
+          "query_source": "none",
+          "query_status": "well_aligned",
+          "intent_mode": "sufficiency",
+          "negative_query": "",
+          "execution_candidates": [],
+          "positive_proof": [],
+          "negative_proof": [],
+          "requirements": [
+            {
+              "target": "(ReadyForInternationalDeparture hana)",
+              "rule": "(: traveler_ready_for_international_departure_rule (Implication (Premises (HasValidPassport $traveler) (HasApprovedVisa $traveler)) (Conclusions (ReadyForInternationalDeparture $traveler))) (STV 1.0 1.0))",
+              "requirements": [
+                {
+                  "kind": "literal",
+                  "atom": "(HasValidPassport hana)",
+                  "status": "positive"
+                },
+                {
+                  "kind": "literal",
+                  "atom": "(HasApprovedVisa hana)",
+                  "status": "positive"
+                }
+              ]
+            }
+          ],
+          "canonical_proposition": "",
+          "target_alignment": "none",
+          "proof_validated": true,
+          "support_kind": "unknown",
+          "unresolved_mentions": [],
+          "normalization_evidence": [],
+          "rejection_reasons": [],
+          "failure_category": "correct",
+          "seconds": 11.6171
+        }
+      ],
+      "matched": 3,
+      "total": 3,
+      "accuracy": 1.0,
+      "seconds": 36.9393
+    }
+  ]
+}
