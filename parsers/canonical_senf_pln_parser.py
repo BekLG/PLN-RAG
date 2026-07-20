@@ -3,16 +3,13 @@ from core.parser import ParseResult, SemanticParser
 from parsers.canonical_pln_parser import CanonicalPLNParser
 from core.senf import build_senf_from_atoms
 from core.exemplar_registry import ExemplarScorer
+from core.identity_graph import IdentityGraphBuilder
 
 class CanonicalSenfPlnParser(SemanticParser):
-    """
-    Phase 1 & 2 SENF Builder extension.
-    Wraps CanonicalPLNParser to produce SENF objects and Exemplar scores,
-    then serializes them back to MeTTa atoms.
-    """
     def __init__(self):
         self.base_parser = CanonicalPLNParser()
         self.scorer = ExemplarScorer()
+        self.identity_builder = IdentityGraphBuilder()
 
     def parse(self, text: str, context: List[str]) -> ParseResult:
         result = self.base_parser.parse(text, context)
@@ -29,12 +26,14 @@ class CanonicalSenfPlnParser(SemanticParser):
         if result.statements:
             senf = build_senf_from_atoms(result.statements)
             self.scorer.score(senf, context_text)
+            self.identity_builder.build_graph(senf)
             result.statements = senf.to_metta_strings()
 
         # Enrich queries
         if result.queries:
             query_senf = build_senf_from_atoms(result.queries)
             self.scorer.score(query_senf, context_text)
+            self.identity_builder.build_graph(query_senf)
             result.queries = query_senf.to_metta_strings()
 
         return result

@@ -22,10 +22,27 @@ class SENFExemplar:
     distance: float
 
 @dataclass
+class IdentityEdge:
+    e1: str
+    e2: str
+    cost: float
+    reasons: List[str]
+
+@dataclass
+class IdentityEdgePlus(IdentityEdge):
+    pass
+
+@dataclass
+class IdentityEdgeMinus(IdentityEdge):
+    pass
+
+@dataclass
 class SENF:
     frames: List[SENFFrame] = field(default_factory=list)
     entities: Dict[str, SENFEntity] = field(default_factory=dict)
     exemplars: List[SENFExemplar] = field(default_factory=list)
+    id_plus_edges: List[IdentityEdgePlus] = field(default_factory=list)
+    id_minus_edges: List[IdentityEdgeMinus] = field(default_factory=list)
     raw_atoms: List[str] = field(default_factory=list)
     
     def to_metta_strings(self) -> List[str]:
@@ -48,6 +65,15 @@ class SENF:
             for entity_id, exs in entity_exs.items():
                 best_ex = min(exs, key=lambda x: x.distance)
                 atoms.append(f"(nearest-ex {entity_id} {best_ex.kind} {best_ex.prototype})")
+                
+        # Add Identity Edges
+        for edge in self.id_plus_edges:
+            reasons_str = " ".join(edge.reasons)
+            atoms.append(f"(IdPlus {edge.e1} {edge.e2} {edge.cost:.2f} (reasons {reasons_str}))")
+            
+        for edge in self.id_minus_edges:
+            reasons_str = " ".join(edge.reasons)
+            atoms.append(f"(IdMinus {edge.e1} {edge.e2} {edge.cost:.2f} (reasons {reasons_str}))")
                 
         return atoms
 
