@@ -5,6 +5,7 @@ from core.senf import build_senf_from_atoms
 from core.exemplar_registry import ExemplarScorer
 from core.identity_graph import IdentityGraphBuilder
 from core.transweave import TransWeaveAligner
+from core.pln_bridge import PLNBridgeGenerator
 
 class CanonicalSenfPlnParser(SemanticParser):
     def __init__(self):
@@ -12,6 +13,7 @@ class CanonicalSenfPlnParser(SemanticParser):
         self.scorer = ExemplarScorer()
         self.identity_builder = IdentityGraphBuilder()
         self.aligner = TransWeaveAligner()
+        self.bridge_generator = PLNBridgeGenerator()
 
     def parse(self, text: str, context: List[str]) -> ParseResult:
         result = self.base_parser.parse(text, context)
@@ -40,6 +42,9 @@ class CanonicalSenfPlnParser(SemanticParser):
                 weaves = self.aligner.build_weaves(context_senf, senf, weave_id="W_stmt", sa_id="Context", sb_id="Statement")
                 for w in weaves:
                     senf.raw_atoms.extend(w.to_metta_strings())
+                    # Phase 5: PLN Bridge Generation
+                    bridge_atoms = self.bridge_generator.generate_bridges(w)
+                    senf.raw_atoms.extend(bridge_atoms)
                     
             result.statements = senf.to_metta_strings()
 
@@ -54,6 +59,9 @@ class CanonicalSenfPlnParser(SemanticParser):
                 weaves = self.aligner.build_weaves(context_senf, query_senf, weave_id="W_query", sa_id="Context", sb_id="Query")
                 for w in weaves:
                     query_senf.raw_atoms.extend(w.to_metta_strings())
+                    # Phase 5: PLN Bridge Generation
+                    bridge_atoms = self.bridge_generator.generate_bridges(w)
+                    query_senf.raw_atoms.extend(bridge_atoms)
                     
             result.queries = query_senf.to_metta_strings()
 
