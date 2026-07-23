@@ -27,6 +27,10 @@ class Reasoner:
         self._lock = threading.Lock()
         self._handler = PeTTaChainer()
         self._background_files: set[str] = set()
+        
+        # Load Phase 6 TransWeave SimilarityLink logic
+        self.load_background_file(os.path.join(os.path.dirname(os.path.dirname(__file__)), "data", "transweave_rules.metta"))
+        
         self._load_from_disk()
 
     def _load_from_disk(self):
