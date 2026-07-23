@@ -3,7 +3,6 @@ from core.senf import SENF, SENFExemplar, SENFEntity
 
 class ExemplarScorer:
     """
-    Phase 2: Exemplar Scorer.
     For each entity-kind pair, score distances to a small exemplar set.
     """
     

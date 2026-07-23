@@ -7,11 +7,13 @@ from core.parser import ParseResult
 
 def _load_parser_factories() -> dict[str, Callable[[], object]]:
     from parsers.canonical_pln_parser import CanonicalPLNParser
+    from parsers.canonical_senf_pln_parser import CanonicalSenfPlnParser
     from parsers.nl2pln_parser import NL2PLNParser
 
     factories: dict[str, Callable[[], object]] = {
         "nl2pln": NL2PLNParser,
         "canonical_pln": CanonicalPLNParser,
+        "canonical_senf_pln": CanonicalSenfPlnParser,
     }
 
     try:

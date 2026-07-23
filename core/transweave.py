@@ -30,7 +30,6 @@ class Weave:
 
 class TransWeaveAligner:
     """
-    Phase 4: TransWeave.
     Implements a single-shot alignment algorithm (Algorithm 1) to find
     structural and semantic mappings between two SENFs.
     """
