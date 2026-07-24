@@ -16,15 +16,15 @@ class Weave:
     def to_metta_strings(self) -> List[str]:
         """Serialize TransWeave data to MeTTa atoms."""
         atoms = []
-        atoms.append(f"(Weave {self.id} {self.sa_id} {self.sb_id})")
-        atoms.append(f"(WeaveCost {self.id} {self.cost:.2f})")
-        atoms.append(f"(WeaveDistortion {self.id} {self.distortion:.2f})")
+        atoms.append(f"(: weave_{self.id} (Weave {self.id} {self.sa_id} {self.sb_id}) (STV 1.0 1.0))")
+        atoms.append(f"(: weave_cost_{self.id} (WeaveCost {self.id} {self.cost:.2f}) (STV 1.0 1.0))")
+        atoms.append(f"(: weave_dist_{self.id} (WeaveDistortion {self.id} {self.distortion:.2f}) (STV 1.0 1.0))")
         
-        for e_a, e_b in self.entity_map.items():
-            atoms.append(f"(MapEntity {self.id} {e_a} {e_b})")
+        for i, (e_a, e_b) in enumerate(self.entity_map.items()):
+            atoms.append(f"(: map_entity_{self.id}_{i} (MapEntity {self.id} {e_a} {e_b}) (STV 1.0 1.0))")
             
-        for k_a, k_b in self.kind_map.items():
-            atoms.append(f"(MapKind {self.id} {k_a} {k_b})")
+        for i, (k_a, k_b) in enumerate(self.kind_map.items()):
+            atoms.append(f"(: map_kind_{self.id}_{i} (MapKind {self.id} {k_a} {k_b}) (STV 1.0 1.0))")
             
         return atoms
 

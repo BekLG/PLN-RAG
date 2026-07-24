@@ -58,11 +58,18 @@ class CanonicalSenfPlnParser(SemanticParser):
             if context_senf:
                 weaves = self.aligner.build_weaves(context_senf, query_senf, weave_id="W_query", sa_id="Context", sb_id="Query")
                 for w in weaves:
-                    query_senf.raw_atoms.extend(w.to_metta_strings())
+                    # Put the weaves and bridges into STATEMENTS so the reasoner loads them
+                    if not result.statements:
+                        result.statements = []
+                    result.statements.extend(w.to_metta_strings())
                     # Phase 5: PLN Bridge Generation
-                    bridge_atoms = self.bridge_generator.generate_bridges(w)
-                    query_senf.raw_atoms.extend(bridge_atoms)
-                    
-            result.queries = query_senf.to_metta_strings()
+                    result.statements.extend(self.bridge_generator.generate_bridges(w))
 
         return result
+
+    def parse_query(self, text: str, context: List[str]) -> ParseResult:
+        if hasattr(self.base_parser, "parse_query"):
+            result = self.base_parser.parse_query(text, context)
+        else:
+            result = self.base_parser.parse(text, context)
+        return self._enrich_result(result, text, context)

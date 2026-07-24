@@ -67,13 +67,13 @@ class SENF:
                 atoms.append(f"(nearest-ex {entity_id} {best_ex.kind} {best_ex.prototype})")
                 
         # Add Identity Edges
-        for edge in self.id_plus_edges:
+        for i, edge in enumerate(self.id_plus_edges):
             reasons_str = " ".join(edge.reasons)
-            atoms.append(f"(IdPlus {edge.e1} {edge.e2} {edge.cost:.2f} (reasons {reasons_str}))")
+            atoms.append(f"(: id_plus_{i} (IdPlus {edge.e1} {edge.e2} {edge.cost:.2f} (reasons {reasons_str})) (STV 1.0 1.0))")
             
-        for edge in self.id_minus_edges:
+        for i, edge in enumerate(self.id_minus_edges):
             reasons_str = " ".join(edge.reasons)
-            atoms.append(f"(IdMinus {edge.e1} {edge.e2} {edge.cost:.2f} (reasons {reasons_str}))")
+            atoms.append(f"(: id_minus_{i} (IdMinus {edge.e1} {edge.e2} {edge.cost:.2f} (reasons {reasons_str})) (STV 1.0 1.0))")
                 
         return atoms
 
@@ -99,5 +99,13 @@ def build_senf_from_atoms(atoms: List[str]) -> SENF:
                 if not ent_id.startswith("$") and not ent_id.startswith("?"):
                     if ent_id not in senf.entities:
                         senf.entities[ent_id] = SENFEntity(id=ent_id)
+                        
+        # Extract entities from unary predicates like (Healthy football)
+        unary_match = re.search(r"\([A-Z][A-Za-z0-9_]*\s+([a-z0-9_]+)\)", atom)
+        if unary_match:
+            ent_id = unary_match.group(1)
+            if not ent_id.startswith("$") and not ent_id.startswith("?"):
+                if ent_id not in senf.entities:
+                    senf.entities[ent_id] = SENFEntity(id=ent_id)
 
     return senf
