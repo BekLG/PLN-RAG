@@ -81,8 +81,8 @@ def build_senf_from_atoms(atoms: List[str]) -> SENF:
     senf = SENF(raw_atoms=atoms)
     
     for atom in atoms:
-        # Look for (IsA <entity> <Kind>)
-        isa_match = re.search(r"\(IsA\s+([A-Za-z0-9_]+)\s+([A-Za-z0-9_]+)\)", atom)
+        # Look for (IsA <entity> <Kind>) or (Inheritance <entity> <Kind>)
+        isa_match = re.search(r"\((?:IsA|Inheritance)\s+([A-Za-z0-9_]+)\s+([A-Za-z0-9_]+)\)", atom)
         if isa_match:
             ent_id = isa_match.group(1)
             kind = isa_match.group(2)
@@ -91,4 +91,13 @@ def build_senf_from_atoms(atoms: List[str]) -> SENF:
                     senf.entities[ent_id] = SENFEntity(id=ent_id)
                 senf.entities[ent_id].kind = kind
                 
+        # Also extract entities from other simple binary predicates
+        # like (Predicate <ent1> <ent2>) just so they exist in senf.entities
+        binary_match = re.search(r"\([A-Za-z0-9_]+\s+([A-Za-z0-9_]+)\s+([A-Za-z0-9_]+)\)", atom)
+        if binary_match:
+            for ent_id in (binary_match.group(1), binary_match.group(2)):
+                if not ent_id.startswith("$") and not ent_id.startswith("?"):
+                    if ent_id not in senf.entities:
+                        senf.entities[ent_id] = SENFEntity(id=ent_id)
+
     return senf
