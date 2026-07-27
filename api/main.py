@@ -98,5 +98,9 @@ async def health():
         conceptnet_vectors_indexed=info["conceptnet_vectors_indexed"],
         conceptnet_vectors_expected=info["conceptnet_vectors_expected"],
         conceptnet_last_error=info["conceptnet_last_error"],
+        synonym_resolution_enabled=info["synonym_resolution_enabled"],
+        synonym_cached_pairs=info["synonym_cached_pairs"],
+        synonym_cached_synonyms=info["synonym_cached_synonyms"],
+        synonym_last_error=info["synonym_last_error"],
         uptime_seconds=round(time.time() - _start_time, 1),
     )

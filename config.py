@@ -50,6 +50,21 @@ class Settings(BaseSettings):
     # Query execution
     query_fallback_enabled: bool = True
 
+    synonym_resolution_enabled: bool = True
+    synonym_cache_path: str = "data/synonyms/relations.json"
+    synonym_wordnet_enabled: bool = True
+    synonym_conceptnet_lookup_enabled: bool = True
+    synonym_conceptnet_url: str = "https://api.conceptnet.io"
+    synonym_conceptnet_limit: int = 50
+    synonym_embedding_enabled: bool = True
+    synonym_embedding_threshold: float = 0.68
+    synonym_embedding_top_k: int = 3
+    synonym_max_knowledge_terms: int = 64
+    synonym_max_verifications_per_query: int = 6
+    synonym_verifier_model: Optional[str] = None
+    synonym_verifier_min_confidence: float = 0.85
+    synonym_request_timeout: float = 10.0
+
     # Maximum number of query candidates to try before giving up.
     # Applies to all parsers when query_fallback_enabled is true.
     # Set to 0 to disable the cap.

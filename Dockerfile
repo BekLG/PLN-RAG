@@ -65,6 +65,7 @@ WORKDIR /app
 COPY requirements.txt .
 RUN rm -rf /usr/lib/python3/dist-packages/blinker*
 RUN pip3 install --default-timeout=1000 -r requirements.txt
+RUN python3 -m nltk.downloader wordnet omw-1.4
 
 COPY . .
 
