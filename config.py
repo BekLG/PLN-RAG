@@ -9,7 +9,7 @@ class Settings(BaseSettings):
     openai_api_key: str
     openai_model: str = "openai/gpt-4o-mini"
 
-    # Options: "nl2pln" | "canonical_pln" | "manhin" | "langextract"
+    # Options: "nl2pln" | "canonical_pln" | "manhin" | "langextract" | "canonical_senf_pln"
     parser: str = "canonical_pln"
     nl2pln_module_path: str = "data/simba_all.json"
     canonical_pln_nl2pln_module_path: str = "data/simba_canonical_pln.json"
@@ -49,6 +49,21 @@ class Settings(BaseSettings):
 
     # Query execution
     query_fallback_enabled: bool = True
+
+    synonym_resolution_enabled: bool = True
+    synonym_cache_path: str = "data/synonyms/relations.json"
+    synonym_wordnet_enabled: bool = True
+    synonym_conceptnet_lookup_enabled: bool = True
+    synonym_conceptnet_url: str = "https://api.conceptnet.io"
+    synonym_conceptnet_limit: int = 50
+    synonym_embedding_enabled: bool = True
+    synonym_embedding_threshold: float = 0.68
+    synonym_embedding_top_k: int = 3
+    synonym_max_knowledge_terms: int = 64
+    synonym_max_verifications_per_query: int = 6
+    synonym_verifier_model: Optional[str] = None
+    synonym_verifier_min_confidence: float = 0.85
+    synonym_request_timeout: float = 10.0
 
     # Maximum number of query candidates to try before giving up.
     # Applies to all parsers when query_fallback_enabled is true.

@@ -25,8 +25,8 @@ FROM ubuntu:22.04
 ENV DEBIAN_FRONTEND=noninteractive
 ENV PYTHONUNBUFFERED=1
 ENV PYTHONDONTWRITEBYTECODE=1
-ENV PETTA_COMMIT=e1490899cefc67c128d5311ff4861f9997674957
-ENV PETTACHAINER_COMMIT=d21b93b5132a7fc8722f64d57b74fb7c3a8d1faa
+ENV PETTA_COMMIT=6b7f52f064bdbc82fabd0a0998404121fb01d52e
+ENV PETTACHAINER_COMMIT=9f44164dd3252ccf8e9c63a4b84caec59f56080e
 
 RUN apt-get update && apt-get install -y \
     software-properties-common \
@@ -65,6 +65,7 @@ WORKDIR /app
 COPY requirements.txt .
 RUN rm -rf /usr/lib/python3/dist-packages/blinker*
 RUN pip3 install --default-timeout=1000 -r requirements.txt
+RUN python3 -m nltk.downloader wordnet omw-1.4
 
 COPY . .
 

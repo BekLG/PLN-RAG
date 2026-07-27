@@ -3,6 +3,21 @@ import re
 
 NORMALIZATION_VERSION = 1
 
+EQUIVALENT_SYMBOLS = {
+    "aircraft": "plane",
+    "association_football": "soccer",
+    "automobile": "car",
+    "bicycle": "bike",
+    "canine": "dog",
+    "cell_phone": "cellphone",
+    "couch": "sofa",
+    "feline": "cat",
+    "football": "soccer",
+    "infant": "baby",
+    "mobile_phone": "cellphone",
+    "physician": "doctor",
+}
+
 
 def singularize(word: str) -> str:
     if len(word) <= 3:
@@ -36,6 +51,14 @@ def canonical_symbol(token: str, lemmatize: bool = True, protect: bool = False) 
     if lemmatize and token and not protect:
         token = "_".join(singularize(part) for part in token.split("_") if part)
     return token
+
+
+def equivalent_symbol(left: str, right: str) -> bool:
+    left_symbol = canonical_symbol(left)
+    right_symbol = canonical_symbol(right)
+    left_symbol = EQUIVALENT_SYMBOLS.get(left_symbol, left_symbol)
+    right_symbol = EQUIVALENT_SYMBOLS.get(right_symbol, right_symbol)
+    return left_symbol == right_symbol
 
 
 def normalize_text(text: str) -> str:

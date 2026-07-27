@@ -128,6 +128,9 @@ class CanonicalPLNParser(SemanticParser):
                 statements = self._dedupe_preserve_order(
                     statements + self._materialize_grounded_premise_facts(texts, statements)
                 )
+                statements = self._dedupe_preserve_order(
+                    statements + self._materialize_simple_copular_facts(texts, statements)
+                )
 
             question_text = " ".join(texts)
             queries = self._plan_queries(question=question_text, queries=queries, statements=statements, context=context)
@@ -198,6 +201,38 @@ class CanonicalPLNParser(SemanticParser):
         prepared_texts = [" ".join(text.strip().split()) for text in texts]
         enriched_context = self._dedupe_preserve_order(context + hint_lines)
         return prepared_texts, enriched_context
+
+    def _materialize_simple_copular_facts(
+        self,
+        texts: List[str],
+        statements: List[str],
+    ) -> List[str]:
+        existing = {
+            (signature["head"], tuple(signature["args"]))
+            for statement in statements
+            for signature in self._extract_fact_signatures(statement)
+        }
+        facts: List[str] = []
+        for text in texts:
+            normalized = self._normalize_text(text)
+            match = re.fullmatch(
+                r"(?:a |an |the )?([a-z0-9_-]+) (?:is|are|was|were) "
+                r"(?:a |an |the )?([a-z0-9_-]+)",
+                normalized,
+            )
+            if not match:
+                continue
+            subject = self._canonical_symbol(match.group(1))
+            target = self._canonical_symbol(match.group(2))
+            signature = ("IsA", (subject, target))
+            if not subject or not target or signature in existing:
+                continue
+            facts.append(
+                f"(: canonical_{subject}_{target}_fact "
+                f"(IsA {subject} {target}) (STV 1.0 1.0))"
+            )
+            existing.add(signature)
+        return facts
 
     def _build_parser_inputs(
         self, text: str, context: List[str], is_query: bool
@@ -552,6 +587,23 @@ class CanonicalPLNParser(SemanticParser):
             target = self._canonical_phrase(match.group(2))
             if subject and target:
                 queries.append(f"(: $prf ({head} {subject} {target}) $tv)")
+        copular_tokens = normalized.split()
+        if (
+            len(copular_tokens) >= 3
+            and copular_tokens[0] in {"is", "are", "was", "were"}
+        ):
+            subject = self._canonical_phrase(" ".join(copular_tokens[1:-1]))
+            target = self._canonical_phrase(copular_tokens[-1])
+            predicate = "".join(
+                part.capitalize()
+                for part in target.split("_")
+                if part
+            )
+            if subject and target:
+                queries.append(f"(: $prf (IsA {subject} {target}) $tv)")
+            if subject and predicate:
+                queries.append(f"(: $prf ({predicate} {subject}) $tv)")
+                queries.append(f"(: $prf (Is{predicate} {subject}) $tv)")
         return queries
 
     def _canonical_phrase(self, phrase: str) -> str:

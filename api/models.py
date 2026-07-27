@@ -83,4 +83,8 @@ class HealthResponse(BaseModel):
     conceptnet_vectors_indexed: int
     conceptnet_vectors_expected: int
     conceptnet_last_error: str
+    synonym_resolution_enabled: bool
+    synonym_cached_pairs: int
+    synonym_cached_synonyms: int
+    synonym_last_error: str
     uptime_seconds: float

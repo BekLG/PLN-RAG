@@ -281,14 +281,6 @@ class PLNRAGService:
                 answer_generation_seconds=0.0,
             )
 
-        # 3. Add any supporting statements the parser generated for the query
-        if parse_result.statements:
-            valid, rejected_local = self._validate_statements(parse_result.statements)
-            if rejected_local:
-                for item in rejected_local[:2]:
-                    print(f"[Service] Dropping malformed query-support statement: {item.get('error')}")
-            self._reasoner.add_statements(valid)
-
         # 4. Run reasoning via PeTTaChainer against ordered candidates
         t2 = time.perf_counter()
         proof_traces: List[str] = []
@@ -308,7 +300,7 @@ class PLNRAGService:
         for idx, candidate in enumerate(candidates):
             executed_query = candidate
             executed_candidate_index = idx
-            proof_traces = self._reasoner.query(candidate)
+            proof_traces = self._reasoner.query(candidate, question)
             if proof_traces:
                 break
 
@@ -335,7 +327,7 @@ class PLNRAGService:
                     for idx, candidate in enumerate(more, start=(executed_candidate_index or 0) + 1):
                         executed_query = candidate
                         executed_candidate_index = idx
-                        proof_traces = self._reasoner.query(candidate)
+                        proof_traces = self._reasoner.query(candidate, question)
                         if proof_traces:
                             break
             except Exception as exc:
@@ -480,6 +472,7 @@ class PLNRAGService:
 
     def health(self) -> dict:
         conceptnet = self._conceptnet.status()
+        synonyms = self._reasoner.synonym_status
         return {
             "atomspace_size": self._reasoner.size,
             "background_atomspace_size": self._reasoner.background_size,
@@ -490,5 +483,9 @@ class PLNRAGService:
             "conceptnet_vectors_indexed": conceptnet["indexed_count"],
             "conceptnet_vectors_expected": conceptnet["expected_count"],
             "conceptnet_last_error": conceptnet["last_error"],
+            "synonym_resolution_enabled": synonyms["enabled"],
+            "synonym_cached_pairs": synonyms["cached_pairs"],
+            "synonym_cached_synonyms": synonyms["cached_synonyms"],
+            "synonym_last_error": synonyms["last_error"],
             "status": "degraded" if conceptnet["last_error"] else "ok",
         }

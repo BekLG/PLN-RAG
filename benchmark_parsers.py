@@ -136,10 +136,11 @@ def _is_truthy(value: Any) -> bool:
     text = str(value).strip().lower()
     return text in {"1", "true", "yes", "y"}
 
-ACTIVE_PARSERS = ("nl2pln", "canonical_pln")
+ACTIVE_PARSERS = ("nl2pln", "canonical_pln", "canonical_senf_pln")
 AVAILABLE_PARSERS = (
     "nl2pln",
     "canonical_pln",
+    "canonical_senf_pln",
     "langextract",
     "canonical_langextract",
     "canonical_pln_1686527",
@@ -251,6 +252,10 @@ def _get_parser_factory(name: str):
         from parsers.canonical_pln_parser import CanonicalPLNParser
 
         return CanonicalPLNParser
+    if name == "canonical_senf_pln":
+        from parsers.canonical_senf_pln_parser import CanonicalSenfPlnParser
+        
+        return CanonicalSenfPlnParser
     if name == "langextract":
         from parsers.langextract_pln_parser import LangExtractPLNParser
 

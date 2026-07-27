@@ -3,7 +3,9 @@ import re
 import threading
 from typing import List
 from config import get_settings
+from core.horn_fallback import HornFallback
 from core.symbol_normalization import canonical_symbol
+from core.synonym_resolver import SynonymResolver
 
 from pettachainer.pettachainer import PeTTaChainer
 
@@ -24,9 +26,14 @@ class Reasoner:
         cfg = get_settings()
         self._atomspace_path = cfg.atomspace_path
         self._query_timeout = cfg.chaining_timeout
+        self._query_max_steps = cfg.chaining_max_steps
         self._lock = threading.Lock()
         self._handler = PeTTaChainer()
+        self._synonym_resolver = SynonymResolver(cfg)
         self._background_files: set[str] = set()
+        
+        self.load_background_file(os.path.join(os.path.dirname(os.path.dirname(__file__)), "data", "transweave_rules.metta"))
+        
         self._load_from_disk()
 
     def _load_from_disk(self):
@@ -92,7 +99,7 @@ class Reasoner:
                         rejected.append({"stmt": clean, "error": err})
         return added, rejected
 
-    def query(self, pln_query: str) -> List[str]:
+    def query(self, pln_query: str, context: str = "") -> List[str]:
         """
         Run a PLN query and return proof traces.
         Try exact fact lookup first for grounded queries, then fall back to
@@ -101,12 +108,38 @@ class Reasoner:
         exact = self._query_exact_fact(pln_query)
         if exact:
             return exact
+        fallback = self._query_horn_fallback(pln_query, context)
+        if fallback:
+            return fallback
         try:
             result = self._handler.query(pln_query, timeout_sec=self._query_timeout)
             return result if result else []
         except Exception as e:
             print(f"[Reasoner] Query failed for '{pln_query}': {e}")
             return []
+
+    def _query_horn_fallback(self, pln_query: str, context: str = "") -> List[str]:
+        target = self._extract_grounded_query_atom(pln_query)
+        if not target:
+            return []
+        statements: List[str] = []
+        for path in self._fact_sources():
+            with open(path, "r", encoding="utf-8") as handle:
+                statements.extend(
+                    line.strip()
+                    for line in handle
+                    if line.strip() and not line.lstrip().startswith(";")
+                )
+        equivalences = self._synonym_resolver.discover_equivalences(
+            target,
+            statements,
+            context,
+        )
+        return HornFallback(
+            statements,
+            max_steps=self._query_max_steps,
+            additional_equivalences=equivalences,
+        ).prove(target)
 
     def _query_exact_fact(self, pln_query: str) -> List[str]:
         target = self._extract_grounded_query_atom(pln_query)
@@ -215,3 +248,7 @@ class Reasoner:
             with open(path, encoding="utf-8") as handle:
                 total += sum(1 for line in handle if line.strip())
         return total
+
+    @property
+    def synonym_status(self) -> dict:
+        return self._synonym_resolver.status()
