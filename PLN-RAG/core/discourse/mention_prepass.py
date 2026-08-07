@@ -5,6 +5,7 @@ from dataclasses import asdict, dataclass, field
 from typing import Iterable
 
 from core.discourse.coreference import ChunkCorefResult, CorefCluster, CorefMention
+from core.pln.symbol_normalization import singularize as shared_singularize
 
 
 PRONOUNS = {
@@ -341,9 +342,7 @@ class MentionPrepass:
         return self._singularize(value)
 
     def _singularize(self, value: str) -> str:
-        if len(value) > 3 and value.endswith("s") and not value.endswith(("ss", "us")):
-            return value[:-1]
-        return value
+        return shared_singularize(value)
 
     def _is_nominal_token(self, token: str) -> bool:
         return (

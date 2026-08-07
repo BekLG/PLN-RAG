@@ -25,6 +25,55 @@ class ProofOutcome:
         return self.positive_proof + self.negative_proof
 
 
+@dataclass
+class BindingSolution:
+    """One proved instantiation of a variable-bearing target."""
+
+    bindings: dict[str, str] = field(default_factory=dict)
+    atom: str = ""
+    proof: List[str] = field(default_factory=list)
+    support_kind: str = "entailed"
+
+
+@dataclass
+class BindingOutcome:
+    """
+    Answers to an open question, each backed by its own proof.
+
+    Distinct from `ProofOutcome`: a boolean question asks whether one proposition
+    holds, while "which biomarkers predict severity" asks for the set of values that
+    make it hold. Absence of solutions is still not a negative claim.
+    """
+
+    query: str = ""
+    variables: List[str] = field(default_factory=list)
+    solutions: List[BindingSolution] = field(default_factory=list)
+    truncated: bool = False
+
+    @property
+    def status(self) -> str:
+        return "positive" if self.solutions else "unknown"
+
+    @property
+    def support_kind(self) -> str:
+        if not self.solutions:
+            return "unknown"
+        if any(s.support_kind == "probabilistic" for s in self.solutions):
+            return "probabilistic"
+        return "entailed"
+
+    @property
+    def proof(self) -> List[str]:
+        seen: set[str] = set()
+        merged: List[str] = []
+        for solution in self.solutions:
+            for atom in solution.proof:
+                if atom not in seen:
+                    seen.add(atom)
+                    merged.append(atom)
+        return merged
+
+
 class Reasoner:
     """
     Owns all atomspace operations. Nothing else in the system
@@ -48,7 +97,20 @@ class Reasoner:
         self._handler = PeTTaChainer()
         self._background_files: set[str] = set()
         self._atom_keys: set[str] = set()
+        # Backward chaining re-reads the atomspace at every recursion level and
+        # re-parses every rule each time. These caches make that O(1) after the
+        # first touch; they are invalidated whenever the atomspace changes.
+        self._atoms_cache: List[str] | None = None
+        self._rules_cache: List[dict] | None = None
+        self._facts_cache: List[tuple[Any, str]] | None = None
+        self._fact_index_cache: tuple[dict[str, str], dict[tuple, str]] | None = None
         self._load_from_disk()
+
+    def _invalidate_caches(self) -> None:
+        self._atoms_cache = None
+        self._rules_cache = None
+        self._facts_cache = None
+        self._fact_index_cache = None
 
     def _load_from_disk(self):
         if not os.path.exists(self._atomspace_path):
@@ -108,6 +170,8 @@ class Reasoner:
                             )
                     except Exception as e:
                         print(f"[Reasoner] Failed to add atom '{clean}': {e}")
+            if added:
+                self._invalidate_caches()
         return added
 
     def query(self, pln_query: str, seed_terms: List[str] | None = None) -> List[str]:
@@ -197,6 +261,157 @@ class Reasoner:
     def grounded_query_atom(self, pln_query: str) -> str:
         return self._extract_grounded_query_atom(pln_query)
 
+    def query_bindings(
+        self,
+        pln_query: str,
+        max_results: int = 10,
+        max_attempts: int = 60,
+    ) -> BindingOutcome:
+        """
+        Enumerate proved values for a variable-bearing target.
+
+        Boolean proof search answers "does P hold". Open questions — "which
+        biomarkers predict severity", "during which month is daylight greatest" —
+        ask which values make P hold, and no yes/no answer can carry that.
+
+        Two sources, both proof-backed:
+          1. Direct unification against stored ground facts.
+          2. Bounded substitution of knowledge-base constants, each candidate then
+             proved through the normal path so rule-derived answers are included.
+
+        Nothing is returned without a proof, and an empty result is still not a
+        negative claim.
+        """
+        target = self._extract_query_atom(pln_query, allow_variables=True)
+        if not target:
+            return BindingOutcome(query=pln_query)
+        expr = self._parse_single_expr(target)
+        if expr is None:
+            return BindingOutcome(query=pln_query)
+        variables = sorted(self._variables(expr))
+        if not variables:
+            return BindingOutcome(query=pln_query)
+
+        outcome = BindingOutcome(query=pln_query, variables=variables)
+        seen_atoms: set[str] = set()
+
+        # 1. Stored facts that match the pattern directly.
+        for fact_expr, fact_raw in self._fact_exprs():
+            bindings = self._unify(expr, fact_expr, {})
+            if bindings is None:
+                continue
+            grounded = self._apply_bindings_expr(expr, bindings)
+            if self._variables(grounded):
+                continue
+            atom = self._serialize_expr(grounded)
+            if atom in seen_atoms:
+                continue
+            seen_atoms.add(atom)
+            outcome.solutions.append(
+                BindingSolution(
+                    bindings={
+                        var: str(bindings.get(var, "")) for var in variables
+                    },
+                    atom=atom,
+                    proof=[fact_raw],
+                    support_kind=self._support_kind("positive", [fact_raw], []),
+                )
+            )
+            if len(outcome.solutions) >= max_results:
+                outcome.truncated = True
+                return outcome
+
+        # 2. Rule-derived answers: substitute observed constants and prove each.
+        if len(variables) == 1:
+            attempts = 0
+            for constant in self._candidate_constants(expr, variables[0]):
+                if attempts >= max_attempts:
+                    outcome.truncated = True
+                    break
+                grounded = self._apply_bindings_expr(expr, {variables[0]: constant})
+                atom = self._serialize_expr(grounded)
+                if atom in seen_atoms:
+                    continue
+                attempts += 1
+                proof = self.query(f"(: $prf {atom} $tv)")
+                if not proof:
+                    continue
+                seen_atoms.add(atom)
+                outcome.solutions.append(
+                    BindingSolution(
+                        bindings={variables[0]: constant},
+                        atom=atom,
+                        proof=proof,
+                        support_kind=self._support_kind("positive", proof, []),
+                    )
+                )
+                if len(outcome.solutions) >= max_results:
+                    outcome.truncated = True
+                    break
+        return outcome
+
+    def _candidate_constants(self, expr: Any, variable: str) -> List[str]:
+        """
+        Constants worth substituting for `variable`, most plausible first.
+
+        Prefers constants already observed at the same argument position for the
+        same predicate, then any other knowledge-base constant. This keeps the
+        enumeration small on real documents instead of trying every symbol.
+        """
+        position = self._variable_position(expr, variable)
+        head = str(expr[0]) if isinstance(expr, list) and expr else ""
+        positional: List[str] = []
+        others: List[str] = []
+        for fact_expr, _raw in self._fact_exprs():
+            if not isinstance(fact_expr, list) or not fact_expr:
+                continue
+            for index, arg in enumerate(fact_expr[1:]):
+                if not isinstance(arg, str) or self._is_variable(arg):
+                    continue
+                if str(fact_expr[0]) == head and index == position:
+                    if arg not in positional:
+                        positional.append(arg)
+                elif arg not in others:
+                    others.append(arg)
+        for rule in self._rules():
+            for literal in list(rule["premises"]) + list(rule["conclusions"]):
+                if not isinstance(literal, list):
+                    continue
+                for index, arg in enumerate(literal[1:]):
+                    if not isinstance(arg, str) or self._is_variable(arg):
+                        continue
+                    if str(literal[0]) == head and index == position:
+                        if arg not in positional:
+                            positional.append(arg)
+                    elif arg not in others:
+                        others.append(arg)
+        return positional + others
+
+    def _variable_position(self, expr: Any, variable: str) -> int:
+        if isinstance(expr, list):
+            for index, arg in enumerate(expr[1:]):
+                if arg == variable:
+                    return index
+        return -1
+
+    def _extract_query_atom(self, pln_query: str, allow_variables: bool = False) -> str:
+        match = re.fullmatch(
+            r"\(:\s+[$?][^\s]+\s+(\(.+\))\s+[$?][^\s]+\)",
+            pln_query.strip(),
+        )
+        if not match:
+            return ""
+        atom = " ".join(match.group(1).split())
+        if allow_variables:
+            return atom
+        return "" if ("$" in atom or "?" in atom) else atom
+
+    def _parse_single_expr(self, atom: str) -> Any | None:
+        parsed = self._parse_sexpr(atom)
+        if len(parsed) == 1 and isinstance(parsed[0], list):
+            return parsed[0]
+        return parsed if isinstance(parsed, list) and parsed else None
+
     def _explicit_negation_proof(
         self,
         negative_query: str,
@@ -204,9 +419,15 @@ class Reasoner:
     ) -> List[str]:
         if not negative_query:
             return []
-        if hasattr(self, "_atomspace_path"):
-            return self._query_exact_fact(negative_query)
-        return self.query(negative_query, seed_terms=seed_terms)
+        # An explicit negative atom satisfies the goal directly.
+        exact = self._query_exact_fact(negative_query)
+        if exact:
+            return exact
+        # Then chain, so a rule concluding (Not P) can establish it. This branch
+        # was previously unreachable: the guard here was `hasattr(self,
+        # "_atomspace_path")`, which is always true, so negatives only ever got an
+        # exact-fact lookup and every rule-derived negation came back `unknown`.
+        return self._backward_chain(negative_query)
 
     def negated_query(self, pln_query: str) -> str:
         target = self._extract_grounded_query_atom(pln_query)
@@ -228,7 +449,7 @@ class Reasoner:
             "cause", "lead", "risk", "sufficient", "alone",
         }
         domain_terms = set(terms) - generic_terms
-        for rule in self._extract_rules(self.get_atoms()):
+        for rule in self._rules():
             for conclusion in rule["conclusions"]:
                 if not isinstance(conclusion, list) or not conclusion:
                     continue
@@ -352,15 +573,53 @@ class Reasoner:
         if not target:
             return []
 
-        for path in self._fact_sources():
-            match = self._find_exact_atom_in_file(path, target)
-            if match:
-                return [match]
-        for path in self._fact_sources():
-            match = self._find_canonical_atom_in_file(path, target)
+        body_index, canonical_index = self._fact_index()
+        match = body_index.get(target)
+        if match:
+            return [match]
+        signature = self._parse_simple_atom(target)
+        if signature:
+            match = canonical_index.get(self._canonical_key(signature))
             if match:
                 return [match]
         return []
+
+    def _fact_index(self) -> tuple[dict[str, str], dict[tuple, str]]:
+        """
+        Index every stored atom by exact body and by canonical signature.
+
+        Replaces a full file scan per premise lookup. First occurrence wins, in
+        fact-source then line order, matching the previous scan semantics.
+        """
+        if self._fact_index_cache is not None:
+            return self._fact_index_cache
+        body_index: dict[str, str] = {}
+        canonical_index: dict[tuple, str] = {}
+        for path in self._fact_sources():
+            with open(path, "r", encoding="utf-8") as handle:
+                for line in handle:
+                    atom = line.strip()
+                    if not atom:
+                        continue
+                    body = self._extract_statement_body(atom)
+                    if not body:
+                        continue
+                    body_index.setdefault(body, atom)
+                    signature = self._parse_simple_atom(body)
+                    if signature:
+                        canonical_index.setdefault(
+                            self._canonical_key(signature),
+                            atom,
+                        )
+        self._fact_index_cache = (body_index, canonical_index)
+        return self._fact_index_cache
+
+    def _canonical_key(self, signature: dict) -> tuple:
+        return (
+            signature["head"],
+            signature["arity"],
+            tuple(canonical_symbol(arg) for arg in signature["args"]),
+        )
 
     def _extract_grounded_query_atom(self, pln_query: str) -> str:
         match = re.fullmatch(
@@ -437,6 +696,7 @@ class Reasoner:
             self._handler = PeTTaChainer()
             self._background_files = set()
             self._atom_keys = set()
+            self._invalidate_caches()
             if os.path.exists(self._atomspace_path):
                 os.remove(self._atomspace_path)
             if os.path.exists(self._provenance_path):
@@ -453,13 +713,23 @@ class Reasoner:
 
     def get_atoms(self, pattern: str | None = None) -> List[str]:
         """Return all atoms, optionally filtered by pattern substring."""
-        if not os.path.exists(self._atomspace_path):
-            return []
-        with open(self._atomspace_path, "r", encoding="utf-8") as f:
-            atoms = [line.strip() for line in f if line.strip()]
+        atoms = self._atoms_cache
+        if atoms is None:
+            if not os.path.exists(self._atomspace_path):
+                atoms = []
+            else:
+                with open(self._atomspace_path, "r", encoding="utf-8") as f:
+                    atoms = [line.strip() for line in f if line.strip()]
+            self._atoms_cache = atoms
         if pattern:
             return [atom for atom in atoms if pattern in atom]
-        return atoms
+        return list(atoms)
+
+    def _rules(self) -> List[dict]:
+        """Rules parsed from the current atomspace, cached across recursion."""
+        if self._rules_cache is None:
+            self._rules_cache = self._extract_rules(self.get_atoms())
+        return self._rules_cache
 
     def predicate_arities(self) -> dict[str, set[int]]:
         """Return observed predicate arities from facts and rule atoms."""
@@ -485,7 +755,7 @@ class Reasoner:
 
         for fact_expr, _raw in self._fact_exprs():
             record(fact_expr)
-        for rule in self._extract_rules(self.get_atoms()):
+        for rule in self._rules():
             for premise in rule["premises"]:
                 record(premise)
             for conclusion in rule["conclusions"]:
@@ -533,7 +803,7 @@ class Reasoner:
 
         for fact_expr, _raw in self._fact_exprs():
             record(fact_expr, "fact")
-        for rule in self._extract_rules(self.get_atoms()):
+        for rule in self._rules():
             for premise in rule["premises"]:
                 record(premise, "premise")
             for conclusion in rule["conclusions"]:
@@ -650,7 +920,17 @@ class Reasoner:
         bindings = {}
         for i, (q_arg, c_arg) in enumerate(zip(query_expr[1:], conclusion_expr[1:])):
             if isinstance(c_arg, list):
-                # Nested expression in conclusion - can't bind directly
+                # Nested conclusion argument, which is how explicit negation is
+                # shaped: (Not (EligibleForRenewal $x)). Bailing out here meant a
+                # rule concluding (Not P) could never match a (Not P) goal, so
+                # enabling negative chaining without this is a no-op.
+                unified = self._unify(c_arg, q_arg, dict(bindings))
+                if unified is None:
+                    return None
+                bindings = unified
+                continue
+            if isinstance(q_arg, list):
+                # Conclusion expects an atom where the goal has a compound.
                 return None
             if c_arg.startswith(("$", "?")) and c_arg not in {"$prf", "$tv", "?prf", "?tv"}:
                 # Variable in conclusion - bind to query arg
@@ -688,8 +968,7 @@ class Reasoner:
         proofs = []
 
         # Find rules where conclusion matches query
-        atoms = self.get_atoms()
-        rules = self._extract_rules(atoms)
+        rules = self._rules()
 
         for rule in rules:
             for conclusion in rule["conclusions"]:
@@ -813,7 +1092,7 @@ class Reasoner:
         )
 
     def _matching_rule_uses_explicit_negation(self, query: str) -> bool:
-        for rule in self._extract_rules(self.get_atoms()):
+        for rule in self._rules():
             if not any(
                 self._match_conclusion(query, conclusion) is not None
                 for conclusion in rule["conclusions"]
@@ -831,6 +1110,8 @@ class Reasoner:
         return any(self._contains_explicit_negation(item) for item in expr[1:])
 
     def _fact_exprs(self) -> List[tuple[Any, str]]:
+        if self._facts_cache is not None:
+            return self._facts_cache
         facts: List[tuple[Any, str]] = []
         for atom in self.get_atoms():
             body = self._extract_statement_body(atom)
@@ -841,6 +1122,7 @@ class Reasoner:
                 parsed = parsed[0]
             if isinstance(parsed, list) and parsed:
                 facts.append((parsed, atom))
+        self._facts_cache = facts
         return facts
 
     def _apply_bindings_expr(self, expr: Any, bindings: dict) -> Any:

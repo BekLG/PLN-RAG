@@ -1,6 +1,7 @@
 import asyncio
 import re
 import time
+from dataclasses import replace
 from typing import List
 
 from config import get_settings
@@ -9,16 +10,16 @@ from core.query.alignment import (
     build_aligned_queries,
     extract_forward_seed_terms,
     extract_query_targets,
-    filter_queries_by_question_intent,
+    filter_queries_by_question_intent_verbose,
 )
 from core.query.intent import (
     QuestionIntent,
     QuestionMode,
+    evaluate_query_intent,
     parse_question_intent,
     parse_query_signature,
-    query_intent_score,
-    query_matches_intent,
 )
+from core.query.target_gate import SemanticTargetGate
 from core.reasoning.reasoner import ProofOutcome, Reasoner
 from core.pln.symbol_normalization import canonical_symbol
 from core.answering.answer_generator import AnswerGenerator
@@ -69,9 +70,67 @@ class PLNRAGService:
             else None
         )
         self._evidence_outbox_batch_size = cfg.evidence_outbox_batch_size
+        self._proof_equivalent_only = cfg.query_proof_equivalent_only
+        self._target_gate = self._create_target_gate(cfg)
+        # Targets the gate judged to be the negation of what was asked; the
+        # executor runs the negated form for these.
+        self._negation_targets: set[str] = set()
+        # Enumerated answers for the most recent open-question target.
+        self._last_bindings = None
         if self._evidence_ledger and self._evidence_ledger.claim_count:
             self._rebuild_reasoner_from_ledger()
         self._flush_evidence_index()
+
+    def _create_target_gate(self, cfg) -> SemanticTargetGate | None:
+        """
+        Build the semantic gate that decides which targets the question asks about.
+
+        Embeddings reuse the vector store already talking to Ollama. The predicate
+        card lookup is optional: when a card exists its label and definition make a
+        better gloss than the predicate name alone.
+        """
+        if not getattr(cfg, "query_target_gate_enabled", True):
+            print("[TargetGate] disabled; every structural candidate is admitted.")
+            return None
+        gate = SemanticTargetGate(
+            enabled=True,
+            embedder=self._vector_store,
+            card_lookup=self._predicate_card_lookup,
+            gemini_api_key=cfg.gemini_api_key or cfg.langextract_api_key,
+            gemini_model=cfg.gemini_model,
+            openai_api_key=cfg.openai_api_key,
+            openai_model=cfg.openai_model,
+            top_k=cfg.query_target_gate_top_k,
+            timeout_seconds=cfg.query_target_gate_timeout,
+            min_confidence=cfg.query_target_gate_min_confidence,
+            negation_min_confidence=cfg.query_target_gate_negation_min_confidence,
+        )
+        print(
+            "[TargetGate] enabled "
+            f"top_k={gate.top_k} min_confidence={gate.min_confidence} "
+            f"llm={'yes' if gate.llm_available else 'no (embedding rank only)'}"
+        )
+        return gate
+
+    def _predicate_card_lookup(self, predicate: str, arity: int) -> dict | None:
+        registry = getattr(
+            getattr(self._parser, "_postprocessor", None),
+            "_predicate_registry",
+            None,
+        )
+        if not registry or not hasattr(registry, "card_for"):
+            return None
+        try:
+            card = registry.card_for(predicate, arity)
+        except Exception:
+            return None
+        if not card:
+            return None
+        return {
+            "label": (card.labels[0] if card.labels else ""),
+            "definition": card.definition,
+            "argument_types": list(card.argument_types),
+        }
 
     def _create_coreference_resolver(self, cfg) -> CoreferenceResolver:
         if not cfg.coreference_enabled:
@@ -555,18 +614,38 @@ class PLNRAGService:
         qdrant_queries: List[str],
         parser_queries: List[str],
         trusted_queries: List[str] | None = None,
-    ) -> List[tuple[str, str]]:
+    ) -> tuple[List[tuple[str, str]], List[dict]]:
+        """
+        Rank executable query candidates, returning (entries, rejections).
+
+        Structural admissibility is checked first (well-formed target, question
+        mode, KB arity), then the semantic gate decides which surviving targets the
+        question actually asks about and in what order. Every discarded candidate
+        is recorded with the gate that discarded it, so an empty result can be
+        explained instead of surfacing as an opaque
+        `no_semantically_compatible_query`.
+        """
         entries: List[tuple[str, str]] = []
+        rejections: List[dict] = []
         seen: set[str] = set()
         intent = parse_question_intent(question)
-        filtered_parser = filter_queries_by_question_intent(
+        filtered_parser, parser_rejected = filter_queries_by_question_intent_verbose(
             question,
             parser_queries,
         )
-        filtered_qdrant = filter_queries_by_question_intent(
+        filtered_qdrant, qdrant_rejected = filter_queries_by_question_intent_verbose(
             question,
             qdrant_queries,
         )
+        for source, dropped in (
+            ("parser", parser_rejected),
+            ("qdrant_alignment", qdrant_rejected),
+        ):
+            rejections.extend(
+                {"query": query, "source": source, "stage": stage, "detail": detail}
+                for query, stage, detail in dropped
+            )
+
         # Qdrant candidates originate from accepted claim-evidence records.
         # They still pass the same intent and KB arity gates as parser output.
         for source, queries in (
@@ -576,22 +655,102 @@ class PLNRAGService:
         ):
             for query in queries:
                 clean = " ".join(str(query).split())
-                if (
-                    not clean
-                    or clean in seen
-                    or not query_matches_intent(intent, clean)
-                    or not self._query_arity_allowed(clean)
-                ):
+                if not clean or clean in seen:
+                    continue
+                verdict = evaluate_query_intent(intent, clean)
+                if not verdict.accepted:
+                    rejections.append({
+                        "query": clean,
+                        "source": source,
+                        "stage": verdict.stage,
+                        "detail": verdict.detail,
+                    })
+                    continue
+                allowed, arity_stage, arity_detail = self._query_arity_verdict(clean)
+                if not allowed:
+                    rejections.append({
+                        "query": clean,
+                        "source": source,
+                        "stage": arity_stage,
+                        "detail": arity_detail,
+                    })
                     continue
                 seen.add(clean)
                 entries.append((clean, source))
-        entries.sort(
-            key=lambda item: query_intent_score(intent, item[0]),
-            reverse=True,
-        )
-        return entries
 
-    def _deterministic_query_candidates(self, question: str) -> List[str]:
+        return self._apply_semantic_gate(question, entries, rejections)
+
+    def _apply_semantic_gate(
+        self,
+        question: str,
+        entries: List[tuple[str, str]],
+        rejections: List[dict],
+    ) -> tuple[List[tuple[str, str]], List[dict]]:
+        """
+        Order and filter structurally valid candidates by what the question means.
+
+        Ordering comes from the gate, which ranks by embedding similarity before
+        asking the model for a verdict. Candidates the gate marks `asks_negation`
+        are kept and remembered, so the executor can run the negated form.
+        """
+        gate = getattr(self, "_target_gate", None)
+        if not gate or not entries:
+            self._negation_targets = set()
+            return entries, rejections
+
+        source_by_query = {query: source for query, source in entries}
+        # `deterministic` candidates are compiled from atoms the reasoner actually
+        # holds, so they are the only ones that can be proved. Tell the gate.
+        kb_grounded = [
+            query for query, source in entries if source == "deterministic"
+        ]
+        decision = gate.decide(
+            question,
+            [query for query, _source in entries],
+            kb_grounded=kb_grounded,
+        )
+
+        for query, stage, detail in decision.rejections:
+            rejections.append({
+                "query": query,
+                "source": source_by_query.get(query, "unknown"),
+                "stage": stage,
+                "detail": detail,
+            })
+        if not decision.gate_available:
+            rejections.append({
+                "query": "",
+                "source": "semantic_gate",
+                "stage": "gate_unavailable",
+                "detail": (
+                    "semantic target gate did not return verdicts; candidates kept "
+                    "on embedding rank with no veto"
+                ),
+            })
+
+        self._negation_targets = {
+            target
+            for target, verdict in decision.verdicts.items()
+            if verdict.wants_negative_execution
+        }
+        return (
+            [(query, source_by_query.get(query, "unknown")) for query in decision.admitted],
+            rejections,
+        )
+
+    def _deterministic_query_candidates(
+        self,
+        question: str,
+        allow_open_targets: bool = False,
+    ) -> List[str]:
+        """
+        Compile candidate targets from atoms the knowledge base actually holds.
+
+        With `allow_open_targets`, signatures that cannot be fully grounded from the
+        question are also emitted with their variable intact. "Which biomarkers
+        predict severity" has no entity to substitute, so a fully grounded target
+        cannot express it — the open form does, and the reasoner enumerates values.
+        """
         reasoner = getattr(self, "_reasoner", None)
         if not reasoner or not hasattr(reasoner, "proposition_signatures"):
             return []
@@ -612,8 +771,12 @@ class PLNRAGService:
                 ]
             else:
                 grounded_rows = [args]
+            if allow_open_targets and variables and len(set(variables)) == 1:
+                # Keep the variable so the reasoner can enumerate answers.
+                grounded_rows = grounded_rows + [args]
             for grounded in grounded_rows:
-                if any(arg.startswith(("$", "?")) for arg in grounded):
+                has_variable = any(arg.startswith(("$", "?")) for arg in grounded)
+                if has_variable and not allow_open_targets:
                     continue
                 query = (
                     f"(: $prf ({signature['head']} {' '.join(grounded)}) $tv)"
@@ -647,17 +810,33 @@ class PLNRAGService:
         return sorted(entities, key=lambda item: (-len(item), item))
 
     def _query_arity_allowed(self, query: str) -> bool:
+        return self._query_arity_verdict(query)[0]
+
+    def _query_arity_verdict(self, query: str) -> tuple[bool, str, str]:
+        """Check the target head/arity against the KB, reporting why on failure."""
         signature = parse_query_signature(query)
         if not signature:
-            return False
+            return False, "malformed", "query is not a (: $prf (Head args) $tv) form"
         reasoner = getattr(self, "_reasoner", None)
         if not reasoner or not hasattr(reasoner, "predicate_arities"):
-            return True
+            return True, "", ""
         arities = reasoner.predicate_arities()
-        allowed = arities.get(str(signature["head"]))
+        head = str(signature["head"])
+        allowed = arities.get(head)
         if arities and allowed is None:
-            return False
-        return not allowed or int(signature["arity"]) in allowed
+            # An unobserved head used to be rejected outright. It cannot produce a
+            # wrong answer — the proof simply fails — so admit it and let the
+            # semantic gate rank it. Rejecting here made any question whose
+            # predicate the KB had not seen unanswerable by construction.
+            return True, "", ""
+        if not allowed or int(signature["arity"]) in allowed:
+            return True, "", ""
+        return (
+            False,
+            "arity_conflict",
+            f"{head} was observed with arity {sorted(allowed)}, "
+            f"target uses {signature['arity']}",
+        )
 
     async def query(self, question: str) -> QueryResponse:
         cfg = get_settings()
@@ -693,8 +872,11 @@ class PLNRAGService:
         original_query = parse_result.queries[0] if parse_result.queries else (
             qdrant_queries[0] if qdrant_queries else ""
         )
-        trusted_queries = self._deterministic_query_candidates(question)
-        candidate_entries = self._query_candidates(
+        trusted_queries = self._deterministic_query_candidates(
+            question,
+            allow_open_targets=intent.mode == QuestionMode.OPEN,
+        )
+        candidate_entries, candidate_rejections = self._query_candidates(
             question,
             qdrant_queries,
             parse_result.queries,
@@ -731,10 +913,13 @@ class PLNRAGService:
                 answer_generation_seconds=0.0,
             )
         if not candidate_entries:
+            # Report what the parser and alignment actually produced. Reporting
+            # empty lists here hides the fact that a usable candidate existed and
+            # was rejected by a gate, which makes the gate impossible to debug.
             return QueryResponse(
                 question=question,
                 pln_query="",
-                original_query="",
+                original_query=original_query,
                 executed_query="",
                 query_source="none",
                 fallback_used=False,
@@ -747,7 +932,10 @@ class PLNRAGService:
                 intent_mode=intent.mode.value,
                 proof_status="unknown",
                 proof_validated=True,
-                rejection_reasons=["no_semantically_compatible_query"],
+                rejection_reasons=self._rejection_summary(
+                    candidate_rejections,
+                    str(parse_result.metadata.get("provider_error", "")),
+                ),
                 context_retrieval_seconds=round(context_retrieval_seconds, 4),
                 parse_query_seconds=round(parse_query_seconds, 4),
                 reasoning_seconds=0.0,
@@ -762,7 +950,10 @@ class PLNRAGService:
         first_outcome: ProofOutcome | None = None
         executed_query = ""
         executed_source = "none"
-        candidates = self._proof_equivalent_candidates(candidate_entries)
+        candidates = self._proof_equivalent_candidates(
+            candidate_entries,
+            candidate_rejections,
+        )
         if not self._query_fallback_enabled:
             candidates = candidates[:1]
 
@@ -778,10 +969,7 @@ class PLNRAGService:
             executed_query = candidate
             executed_source = source
             executed_candidate_index = idx
-            proof_outcome = self._reasoner.query_polarity(
-                candidate,
-                seed_terms=seed_terms,
-            )
+            proof_outcome = self._prove_candidate(candidate, seed_terms)
             if first_outcome is None:
                 first_outcome = proof_outcome
             proof_traces = proof_outcome.proof
@@ -794,14 +982,13 @@ class PLNRAGService:
                 retry_result = retry(question, context, executed_query)
                 if retry_result and retry_result.queries:
                     retry_used = True
-                    validated_retry = [
-                        candidate
-                        for candidate, _source in self._query_candidates(
-                            question,
-                            [],
-                            retry_result.queries,
-                        )
-                    ]
+                    retry_entries, retry_rejections = self._query_candidates(
+                        question,
+                        [],
+                        retry_result.queries,
+                    )
+                    candidate_rejections.extend(retry_rejections)
+                    validated_retry = [candidate for candidate, _source in retry_entries]
                     more = (
                         validated_retry
                         if self._query_fallback_enabled
@@ -818,10 +1005,7 @@ class PLNRAGService:
                         executed_query = candidate
                         executed_source = "parser"
                         executed_candidate_index = idx
-                        proof_outcome = self._reasoner.query_polarity(
-                            candidate,
-                            seed_terms=seed_terms,
-                        )
+                        proof_outcome = self._prove_candidate(candidate, seed_terms)
                         proof_traces = proof_outcome.proof
                         if proof_outcome.status != "unknown":
                             break
@@ -876,13 +1060,26 @@ class PLNRAGService:
             answer = self._answer_structured_intent(intent, requirements)
             answer_generation_seconds = time.perf_counter() - t4
         elif cfg.answer_generation_enabled:
-            answer = self._answer_gen.generate_from_polarity(
-                question,
-                executed_query,
-                proof_outcome.status,
-                proof_outcome.positive_proof,
-                proof_outcome.negative_proof,
-            )
+            binding_rows = self._binding_rows()
+            if binding_rows or self._query_has_goal_variables(executed_query):
+                # Open question: report the proved values, not a yes/no verdict.
+                answer = self._answer_gen.generate_open_answer(
+                    question,
+                    executed_query,
+                    binding_rows,
+                    truncated=bool(
+                        getattr(getattr(self, "_last_bindings", None), "truncated", False)
+                    ),
+                )
+            else:
+                answer = self._answer_gen.generate_from_polarity(
+                    question,
+                    executed_query,
+                    proof_outcome.status,
+                    proof_outcome.positive_proof,
+                    proof_outcome.negative_proof,
+                    support_kind=proof_outcome.support_kind,
+                )
             answer_generation_seconds = time.perf_counter() - t4
         else:
             answer = ""
@@ -926,6 +1123,7 @@ class PLNRAGService:
             proof_validated=proof_outcome.proof_validated,
             support_kind=proof_outcome.support_kind,
             unresolved_mentions=self._ambiguous_mentions(parse_result.metadata),
+            bindings=self._binding_rows(),
         )
 
     async def debug_query(self, question: str) -> DebugQueryResponse:
@@ -959,8 +1157,11 @@ class PLNRAGService:
         original_query = pln_candidates[0] if pln_candidates else (
             qdrant_queries[0] if qdrant_queries else ""
         )
-        trusted_queries = self._deterministic_query_candidates(question)
-        candidate_entries = self._query_candidates(
+        trusted_queries = self._deterministic_query_candidates(
+            question,
+            allow_open_targets=intent.mode == QuestionMode.OPEN,
+        )
+        candidate_entries, candidate_rejections = self._query_candidates(
             question,
             qdrant_queries,
             pln_candidates,
@@ -994,8 +1195,12 @@ class PLNRAGService:
                 proof_status="unanswered",
                 proof_validated=True,
                 requirements=requirements,
+                candidate_rejections=candidate_rejections,
             )
         if not candidate_entries:
+            # pln_canonicalized_queries must carry the real parser output. It used
+            # to be hardcoded to [], which reported an intent-gate rejection as if
+            # the postprocessor had produced nothing.
             return DebugQueryResponse(
                 question=question,
                 context=context,
@@ -1005,7 +1210,7 @@ class PLNRAGService:
                 langextract_postprocessed=LangExtractQueryPostprocessed(
                     **langextract_info
                 ),
-                pln_canonicalized_queries=[],
+                pln_canonicalized_queries=pln_candidates,
                 supporting_statements=supporting_statements,
                 executed_query="",
                 query_source="none",
@@ -1017,10 +1222,17 @@ class PLNRAGService:
                 intent_mode=intent.mode.value,
                 proof_status="unknown",
                 proof_validated=True,
-                rejection_reasons=["no_semantically_compatible_query"],
+                rejection_reasons=self._rejection_summary(
+                    candidate_rejections,
+                    str(langextract_info.get("provider_error", "")),
+                ),
+                candidate_rejections=candidate_rejections,
             )
 
-        candidates = self._proof_equivalent_candidates(candidate_entries)
+        candidates = self._proof_equivalent_candidates(
+            candidate_entries,
+            candidate_rejections,
+        )
         if not self._query_fallback_enabled:
             candidates = candidates[:1]
         max_tries = int(getattr(cfg, "query_candidate_max_tries", 0) or 0)
@@ -1035,10 +1247,7 @@ class PLNRAGService:
         for candidate, source in candidates:
             executed_query = candidate
             executed_source = source
-            proof_outcome = self._reasoner.query_polarity(
-                candidate,
-                seed_terms=seed_terms,
-            )
+            proof_outcome = self._prove_candidate(candidate, seed_terms)
             if first_outcome is None:
                 first_outcome = proof_outcome
             proof_traces = proof_outcome.proof
@@ -1076,13 +1285,26 @@ class PLNRAGService:
         if requirements:
             answer = self._answer_structured_intent(intent, requirements)
         elif cfg.answer_generation_enabled:
-            answer = self._answer_gen.generate_from_polarity(
-                question,
-                executed_query,
-                proof_outcome.status,
-                proof_outcome.positive_proof,
-                proof_outcome.negative_proof,
-            )
+            binding_rows = self._binding_rows()
+            if binding_rows or self._query_has_goal_variables(executed_query):
+                # Open question: report the proved values, not a yes/no verdict.
+                answer = self._answer_gen.generate_open_answer(
+                    question,
+                    executed_query,
+                    binding_rows,
+                    truncated=bool(
+                        getattr(getattr(self, "_last_bindings", None), "truncated", False)
+                    ),
+                )
+            else:
+                answer = self._answer_gen.generate_from_polarity(
+                    question,
+                    executed_query,
+                    proof_outcome.status,
+                    proof_outcome.positive_proof,
+                    proof_outcome.negative_proof,
+                    support_kind=proof_outcome.support_kind,
+                )
         else:
             answer = ""
         if not proof_traces and query_status == "weakly_aligned":
@@ -1125,33 +1347,155 @@ class PLNRAGService:
             proof_validated=proof_outcome.proof_validated,
             support_kind=proof_outcome.support_kind,
             unresolved_mentions=self._ambiguous_mentions(langextract_info),
+            bindings=self._binding_rows(),
+            candidate_rejections=candidate_rejections,
         )
+
+    def _rejection_summary(
+        self,
+        rejections: List[dict],
+        provider_error: str = "",
+    ) -> List[str]:
+        """Collapse per-candidate rejections into distinct gate names for /query."""
+        stages: List[str] = []
+        if provider_error:
+            stages.extend(["query_generation_failed", provider_error])
+        for rejection in rejections:
+            stage = str(rejection.get("stage") or "unknown")
+            if stage not in stages:
+                stages.append(stage)
+        if not stages:
+            return ["no_query_candidates_produced"]
+        return stages
+
+    def _binding_rows(self) -> List[dict]:
+        """Enumerated answers for an open question, each with its own proof."""
+        outcome = getattr(self, "_last_bindings", None)
+        if not outcome or not outcome.solutions:
+            return []
+        return [
+            {
+                "bindings": solution.bindings,
+                "atom": solution.atom,
+                "proof": solution.proof,
+                "support_kind": solution.support_kind,
+            }
+            for solution in outcome.solutions
+        ]
 
     def _ambiguous_mentions(self, metadata: dict) -> List[dict]:
         mention_data = metadata.get("mention_prepass", metadata)
         ambiguous = mention_data.get("ambiguous_pronouns", []) if isinstance(mention_data, dict) else []
         return [item for item in ambiguous if isinstance(item, dict)]
 
+    def _prove_candidate(
+        self,
+        candidate: str,
+        seed_terms: List[str] | None,
+    ) -> ProofOutcome:
+        """
+        Prove a candidate and orient the result to the question that was asked.
+
+        When the semantic gate judged a target to be the negation of the question
+        — `(NotEligibleForRenewal dawit)` for "Is Dawit eligible for renewal?" —
+        proving it establishes a "no", not a "yes". Without this the system reports
+        a valid proof of the opposite of the question as a confident yes.
+        """
+        if self._query_has_goal_variables(candidate):
+            # Open target: the question asks which values hold, so enumerate them.
+            # A yes/no proof cannot carry that answer.
+            binding_outcome = self._reasoner.query_bindings(candidate)
+            self._last_bindings = binding_outcome
+            return ProofOutcome(
+                status=binding_outcome.status,
+                positive_query=candidate,
+                negative_query="",
+                positive_proof=binding_outcome.proof,
+                negative_proof=[],
+                proof_validated=True,
+                support_kind=binding_outcome.support_kind,
+            )
+        self._last_bindings = None
+        outcome = self._reasoner.query_polarity(candidate, seed_terms=seed_terms)
+        if candidate not in getattr(self, "_negation_targets", set()):
+            return outcome
+        if outcome.status == "positive":
+            return replace(
+                outcome,
+                status="negative",
+                support_kind="explicit_negative",
+                positive_proof=[],
+                negative_proof=outcome.positive_proof,
+            )
+        if outcome.status == "negative":
+            return replace(
+                outcome,
+                status="positive",
+                support_kind="entailed",
+                positive_proof=outcome.negative_proof,
+                negative_proof=[],
+            )
+        return outcome
+
     def _proof_equivalent_candidates(
         self,
         entries: List[tuple[str, str]],
+        rejections: List[dict] | None = None,
     ) -> List[tuple[str, str]]:
         if not entries:
             return []
+        if not getattr(self, "_proof_equivalent_only", False):
+            # Off by default. Collapsing to the top candidate's exact head+args
+            # discarded correct targets whenever a near-duplicate outranked them —
+            # on P3 it dropped (EligibleForRenewal dawit) in favour of the
+            # negation-lexicalized (NotEligibleForRenewal dawit), turning a right
+            # answer into a wrong one. It also made query_candidate_max_tries inert.
+            return entries
         first = parse_query_signature(entries[0][0])
         if not first:
+            self._record_equivalence_drops(entries[1:], rejections, "top candidate is malformed")
             return entries[:1]
         equivalent: List[tuple[str, str]] = []
+        dropped: List[tuple[str, str]] = []
         for entry in entries:
             signature = parse_query_signature(entry[0])
             if not signature:
+                dropped.append(entry)
                 continue
             if (
                 signature["head"] == first["head"]
                 and signature["args"] == first["args"]
             ):
                 equivalent.append(entry)
-        return equivalent or entries[:1]
+            else:
+                dropped.append(entry)
+        if not equivalent:
+            self._record_equivalence_drops(entries[1:], rejections, "no candidate matched the top signature")
+            return entries[:1]
+        self._record_equivalence_drops(
+            dropped,
+            rejections,
+            f"differs from the top-ranked target ({first['head']} {' '.join(first['args'])})",
+        )
+        return equivalent
+
+    def _record_equivalence_drops(
+        self,
+        dropped: List[tuple[str, str]],
+        rejections: List[dict] | None,
+        detail: str,
+    ) -> None:
+        if rejections is None:
+            return
+        rejections.extend(
+            {
+                "query": query,
+                "source": source,
+                "stage": "proof_equivalence",
+                "detail": detail,
+            }
+            for query, source in dropped
+        )
 
     def _answer_structured_intent(
         self,

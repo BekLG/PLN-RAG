@@ -4,6 +4,8 @@ import re
 from dataclasses import dataclass, field
 from typing import Any, Iterable
 
+from core.pln.symbol_normalization import canonical_symbol
+
 
 STOPWORDS = {
     "a",
@@ -49,51 +51,6 @@ STOPWORDS = {
     "with",
     "shall",
     "should",
-}
-GENERIC_INTENT_TERMS = {
-    "at",
-    "become",
-    "becoming",
-    "classification",
-    "classified",
-    "classify",
-    "considered",
-    "elevated",
-    "eligible",
-    "eligibility",
-    "high",
-    "higher",
-    "low",
-    "lower",
-    "qualifies",
-    "qualified",
-    "qualify",
-    "risk",
-    "status",
-}
-RISK_REDUCTION_TERMS = {
-    "decreas",
-    "decrease",
-    "decreased",
-    "decreases",
-    "lower",
-    "lowered",
-    "lowers",
-    "mitigat",
-    "mitigate",
-    "mitigated",
-    "mitigates",
-    "prevent",
-    "prevented",
-    "prevents",
-    "protect",
-    "protected",
-    "protective",
-    "protects",
-    "reduc",
-    "reduce",
-    "reduced",
-    "reduces",
 }
 YES_NO_STARTERS = {
     "is",
@@ -149,7 +106,6 @@ def build_aligned_queries(
 ) -> QueryAlignmentResult:
     question_entities = extract_question_entities(question)
     question_terms = extract_question_terms(question)
-    question_anchors = _question_anchor_terms(question_terms, question_entities)
     is_yes_no = _is_yes_no_question(question)
 
     ranked_queries: list[tuple[float, str]] = []
@@ -166,7 +122,6 @@ def build_aligned_queries(
                     expr,
                     question_entities=question_entities,
                     question_terms=question_terms,
-                    question_anchors=question_anchors,
                     is_yes_no=is_yes_no,
                 )
                 if grounded is None:
@@ -207,38 +162,40 @@ def build_aligned_queries(
 
 
 def filter_queries_by_question_intent(question: str, queries: Iterable[str]) -> list[str]:
-    """
-    Keep only answer targets that match the user's requested predicate/topic.
+    """Structural filter over retrieved targets. Topical fit is the gate's job."""
+    return filter_queries_by_question_intent_verbose(question, queries)[0]
 
-    Qdrant retrieval is deliberately broad so it can supply supporting facts.
-    The final executable target should be narrower: a provable intermediate fact
-    should not answer a different question just because it came from the same
-    retrieved chunk.
-    """
-    question_entities = extract_question_entities(question)
-    question_terms = extract_question_terms(question)
-    question_anchors = _question_anchor_terms(question_terms, question_entities)
-    if not question_anchors:
-        return _dedupe_queries(queries)
 
-    filtered: list[str] = []
+def filter_queries_by_question_intent_verbose(
+    question: str,
+    queries: Iterable[str],
+) -> tuple[list[str], list[tuple[str, str, str]]]:
+    """
+    Drop only malformed targets, returning (kept, rejections).
+
+    This used to be a topical filter: it required every question anchor term to
+    appear in the target's predicate or arguments, using a hardcoded synonym table.
+    Because it ran *before* the service-level gate, anything it discarded was
+    invisible to every later diagnostic — and it discarded correct targets, since
+    `recalibrated` never matched `recalibration`. Deciding what the question is
+    about now happens once, semantically, in `core/query/target_gate.py`.
+
+    Retrieval stays deliberately broad so it can also supply supporting facts;
+    narrowing to the answer target is the gate's responsibility.
+    """
+    kept: list[str] = []
+    rejected: list[tuple[str, str, str]] = []
     seen: set[str] = set()
     for query in queries:
         clean = " ".join(str(query).split())
         if not clean or clean in seen:
             continue
-        target = _query_target_expr(clean)
-        if target is None:
+        if _query_target_expr(clean) is None:
+            rejected.append((clean, "malformed", "not a proof-target s-expression"))
             continue
-        if _target_matches_question_intent(
-            target,
-            question_anchors=question_anchors,
-            question_terms=question_terms,
-            question_entities=question_entities,
-        ):
-            seen.add(clean)
-            filtered.append(clean)
-    return filtered
+        seen.add(clean)
+        kept.append(clean)
+    return kept, rejected
 
 
 def extract_forward_seed_terms(matches: Iterable[dict[str, Any]]) -> list[str]:
@@ -285,7 +242,7 @@ def extract_question_terms(question: str) -> set[str]:
         canonical = _canonical_symbol(lowered)
         if canonical:
             terms.add(canonical)
-    return _expand_terms(terms)
+    return terms
 
 
 def _targets_from_match(match: dict[str, Any]) -> list[str]:
@@ -340,67 +297,50 @@ def _ground_target(
     *,
     question_entities: list[str],
     question_terms: set[str],
-    question_anchors: set[str],
     is_yes_no: bool,
 ) -> SExpr | None:
+    """
+    Ground a retrieved target with entities named in the question.
+
+    Purely structural: can this target be grounded from what the question
+    mentions? The topical vetoes that used to live at each return point were term
+    overlap checks against a hardcoded synonym table, and they rejected correct
+    targets. Producing a groundable candidate here and letting the semantic gate
+    judge it keeps one decision in one place.
+
+    `question_terms` is retained because `build_aligned_queries` still uses it to
+    rank candidates; ranking is advisory, unlike the vetoes that were removed.
+    """
     if not _is_query_target(expr):
         return None
 
     variables = sorted(_variables(expr))
 
-    # Grounded facts: query is fully grounded with question entities
+    # Fully grounded target: usable when it mentions every question entity.
     if not variables:
-        constants = _constants(expr)
-        if question_entities and not set(question_entities).issubset(constants):
-            return None
-        if question_terms and constants and not question_terms.intersection(constants):
-            head_terms = _predicate_terms(expr)
-            if not question_terms.intersection(head_terms):
-                return None
-        if not _target_matches_question_intent(
-            expr,
-            question_anchors=question_anchors,
-            question_terms=question_terms,
-            question_entities=question_entities,
-        ):
+        if question_entities and not set(question_entities).issubset(_constants(expr)):
             return None
         return expr
 
-    # Partial grounding: single variable + question entity → bind
+    # Single variable and a single question entity: bind them.
     if len(variables) == 1 and len(question_entities) == 1:
         grounded = _replace_symbol(expr, variables[0], question_entities[0])
         if not _grounded_contains_entities(grounded, question_entities):
             return None
-        if not _target_matches_question_intent(
-            grounded,
-            question_anchors=question_anchors,
-            question_terms=question_terms,
-            question_entities=question_entities,
-        ):
-            return None
         return grounded
 
-    # Yes/no question with multiple variables but has question entities to ground
+    # Yes/no with several variables: bind as many as the question supplies.
     if is_yes_no and question_entities and variables:
-        # Ground as many variables as possible with question entities
         result = expr
         remaining_entities = list(question_entities)
         for var in variables:
-            if remaining_entities:
-                result = _replace_symbol(result, var, remaining_entities[0])
-                remaining_entities = remaining_entities[1:]
-            else:
+            if not remaining_entities:
                 break
+            result = _replace_symbol(result, var, remaining_entities[0])
+            remaining_entities = remaining_entities[1:]
         if not _constants(result):
             return None
         if not _grounded_contains_entities(result, question_entities):
-            return None
-        if not _target_matches_question_intent(
-            result,
-            question_anchors=question_anchors,
-            question_terms=question_terms,
-            question_entities=question_entities,
-        ):
             return None
         return result
 
@@ -448,49 +388,6 @@ def _payload_is_rule(expr: SExpr) -> bool:
     return isinstance(expr, list) and bool(expr) and expr[0] == "Implication"
 
 
-def _predicate_terms(expr: SExpr) -> set[str]:
-    if not isinstance(expr, list) or not expr or not isinstance(expr[0], str):
-        return set()
-    head = _canonical_symbol(expr[0])
-    return _expand_terms({part for part in head.split("_") if part})
-
-
-def _target_terms(expr: SExpr, question_entities: list[str]) -> set[str]:
-    constants = _constants(expr) - set(question_entities)
-    return _predicate_terms(expr) | constants
-
-
-def _target_matches_question_intent(
-    expr: SExpr,
-    *,
-    question_anchors: set[str],
-    question_terms: set[str],
-    question_entities: list[str],
-) -> bool:
-    target_terms = _target_terms(expr, question_entities)
-    if (
-        target_terms.intersection(RISK_REDUCTION_TERMS)
-        and not question_terms.intersection(RISK_REDUCTION_TERMS)
-    ):
-        return False
-    if not question_anchors:
-        return True
-    return _covers_required_terms(question_anchors, target_terms)
-
-
-def _question_anchor_terms(
-    question_terms: set[str],
-    question_entities: list[str],
-) -> set[str]:
-    entity_terms = set(question_entities)
-    for entity in question_entities:
-        entity_terms.update(part for part in entity.split("_") if part)
-    anchors = set(question_terms)
-    anchors.difference_update(entity_terms)
-    anchors.difference_update(GENERIC_INTENT_TERMS)
-    return anchors or (set(question_terms) - entity_terms)
-
-
 def _query_target_expr(query: str) -> SExpr | None:
     roots = _parse_sexprs(query)
     if len(roots) != 1:
@@ -513,6 +410,14 @@ def _dedupe_queries(queries: Iterable[str]) -> list[str]:
     return result
 
 
+def _head_terms(expr: SExpr) -> set[str]:
+    """Canonical parts of a target's predicate name, for ranking only."""
+    if not isinstance(expr, list) or not expr or not isinstance(expr[0], str):
+        return set()
+    head = _canonical_symbol(expr[0])
+    return {part for part in head.split("_") if part}
+
+
 def _score_grounded_target(
     expr: SExpr,
     *,
@@ -522,7 +427,7 @@ def _score_grounded_target(
     match_index: int,
 ) -> float:
     constants = _constants(expr)
-    head_terms = _predicate_terms(expr)
+    head_terms = _head_terms(expr)
     entity_fit = len(set(question_entities).intersection(constants))
     head_overlap = len(question_terms.intersection(head_terms))
     constant_overlap = len(question_terms.intersection(constants))
@@ -536,77 +441,6 @@ def _score_grounded_target(
         - structural_penalty
         - match_index * 0.01
     )
-
-
-def _expand_terms(terms: set[str]) -> set[str]:
-    expanded = set(terms)
-    for term in list(terms):
-        if "_" in term:
-            expanded.update(part for part in term.split("_") if part and part not in STOPWORDS)
-        if term.endswith("ing") and len(term) > 5:
-            base = term[:-3]
-            expanded.add(base)
-            expanded.add(base + "e")
-        if term.endswith("ed") and len(term) > 4:
-            expanded.add(term[:-2])
-        if term in {"carb", "carbs"}:
-            expanded.add("carbohydrate")
-        if term == "carbohydrate":
-            expanded.add("carb")
-        if term == "obese":
-            expanded.add("obesity")
-        if term == "obesity":
-            expanded.add("obese")
-        if term in {"high", "higher", "excessive"}:
-            expanded.update({"high", "higher", "excessive"})
-        if term in {"waived", "waiv"}:
-            expanded.add("waive")
-        if term in {"qualified", "qualifies"}:
-            expanded.add("qualify")
-        if term in {"triggered", "trigger"}:
-            expanded.update({"trigger", "triggered"})
-    return expanded
-
-
-def _covers_required_terms(required_terms: set[str], target_terms: set[str]) -> bool:
-    normalized_target: set[str] = set()
-    for term in target_terms:
-        normalized_target.update(_term_alternates(term))
-    for term in required_terms:
-        if not _term_alternates(term).intersection(normalized_target):
-            return False
-    return True
-
-
-def _term_alternates(term: str) -> set[str]:
-    alternates = {term}
-    if "_" in term:
-        alternates.update(part for part in term.split("_") if part and part not in STOPWORDS)
-    if term.endswith("ing") and len(term) > 5:
-        base = term[:-3]
-        alternates.update({base, base + "e"})
-    if term.endswith("ed") and len(term) > 4:
-        alternates.add(term[:-2])
-        if term[:-1].endswith("e"):
-            alternates.add(term[:-1])
-    groups = [
-        {"consume", "consumes", "consuming", "consumed", "consum"},
-        {"high", "higher", "excessive"},
-        {"obese", "obesity"},
-        {"qualify", "qualifies", "qualified", "eligible", "eligibility"},
-        {"classify", "classified", "classification", "classifi"},
-        {"deny", "denied", "deni"},
-        {"waive", "waived", "waiv"},
-        {"lead", "led", "leading"},
-        {"trigger", "triggered", "triggering", "triggers"},
-        {"pollute", "polluted", "pollution"},
-        {"reject", "rejected", "rejecting"},
-        {"authorize", "authorized", "authorization"},
-    ]
-    for group in groups:
-        if term in group:
-            alternates.update(group)
-    return alternates
 
 
 def _replace_symbol(expr: SExpr, old: str, new: str) -> SExpr:
@@ -653,27 +487,8 @@ def _serialize(expr: SExpr) -> str:
     return "(" + " ".join(_serialize(item) for item in expr) + ")"
 
 
+# Canonicalization lives in core.pln.symbol_normalization so ingestion and query
+# planning cannot drift apart. This module previously carried its own copy that
+# disagreed on invariant plurals (`series` -> `sery`).
 def _canonical_symbol(token: str, lemmatize: bool = True) -> str:
-    token = token.strip()
-    if not token:
-        return token
-    token = re.sub(r"(?<=[a-z0-9])(?=[A-Z])", "_", token)
-    token = token.replace("-", "_")
-    token = re.sub(r"[^A-Za-z0-9_]", "_", token)
-    token = re.sub(r"_+", "_", token).strip("_")
-    token = token.lower()
-    if lemmatize:
-        token = "_".join(_singularize(part) for part in token.split("_") if part)
-    return token
-
-
-def _singularize(word: str) -> str:
-    if len(word) <= 3:
-        return word
-    if word.endswith("ies") and len(word) > 4:
-        return word[:-3] + "y"
-    if word.endswith("ses") and len(word) > 4:
-        return word[:-2]
-    if word.endswith("s") and not word.endswith(("ss", "us", "is")):
-        return word[:-1]
-    return word
+    return canonical_symbol(token, lemmatize=lemmatize)

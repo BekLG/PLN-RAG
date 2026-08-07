@@ -1,3 +1,23 @@
+"""
+Structural question analysis: what *kind* of question is this, and is a candidate
+query well-formed?
+
+Deciding whether a candidate target is what the question asks about is a semantic
+judgment and lives in `core/query/target_gate.py`. This module used to make that
+judgment with hardcoded English — synonym groups for `obesity`/`obese`,
+`carb`/`carbohydrate`, `waive`/`waived`, plus term sets named `OPPOSITE_TERMS` and
+`STATUS_QUALIFIER_TERMS` — and required every question content word to appear in
+the target. That passed the bundled benchmark and rejected correct targets in every
+other domain, so it is gone.
+
+What remains is genuinely structural: yes/no vs. open vs. factors mode detection,
+and `parse_query_signature`.
+
+`direction`, `causal`, and `terms` survive as inputs to the separate
+`Reasoner.explain_requirements` feature, which answers "which factors matter"
+questions from rule premises rather than by proving a target.
+"""
+
 from __future__ import annotations
 
 import re
@@ -35,15 +55,8 @@ STOPWORDS = {
     "where", "which", "who", "why", "with", "can", "could", "may",
     "might", "must", "shall", "should",
 }
-GENERIC_QUERY_TERMS = {
-    "alone", "become", "becoming", "current", "currently", "factor",
-    "risk", "sufficient", "sufficiency", "may", "might", "must", "shall",
-    "should", "qualify", "qualified", "qualifies", "eligible", "eligibility",
-    "classification", "classified", "classify", "considered", "status",
-}
-STATUS_QUALIFIER_TERMS = {
-    "clinically", "diagnosed", "diagnosis", "evidence", "known", "reported",
-}
+# Used only to derive `direction` and `causal` for explain_requirements, never to
+# admit or reject a proof target.
 CAUSAL_TERMS = {
     "cause", "causes", "caused", "causing", "contribute", "contributes",
     "lead", "leads", "leading", "result", "results", "sufficient",
@@ -56,16 +69,12 @@ REDUCE_TERMS = {
     "decrease", "decreases", "lower", "lowers", "mitigate", "mitigates",
     "prevent", "prevents", "protect", "protects", "reduce", "reduces",
 }
-OPPOSITE_TERMS = {
-    "deny", "denied", "deni", "forbid", "forbidden", "invalid",
-    "expired", "prevent", "prevented", "prohibit", "prohibited",
-}
 
 
 def parse_question_intent(question: str) -> QuestionIntent:
     normalized = " ".join(str(question).strip().lower().split())
     tokens = re.findall(r"\b[A-Za-z0-9][A-Za-z0-9_-]*\b", normalized)
-    terms = frozenset(_expanded_terms(tokens))
+    terms = frozenset(_content_terms(tokens))
     entities = tuple(_question_entities(question))
 
     has_factor_request = bool({"factor", "factors", "reason", "reasons"} & set(tokens))
@@ -99,63 +108,47 @@ def parse_question_intent(question: str) -> QuestionIntent:
     )
 
 
-def query_matches_intent(intent: QuestionIntent, query: str) -> bool:
-    """Proof gate for executable atomic queries."""
+@dataclass(frozen=True)
+class QueryIntentVerdict:
+    """Why a candidate query was accepted or rejected by the structural gate."""
+
+    accepted: bool
+    stage: str = ""
+    detail: str = ""
+
+    def __bool__(self) -> bool:
+        return self.accepted
+
+
+_ACCEPTED = QueryIntentVerdict(accepted=True)
+
+
+def evaluate_query_intent(intent: QuestionIntent, query: str) -> QueryIntentVerdict:
+    """
+    Structural admissibility only: is this a well-formed atomic proof target, and
+    does the question mode execute one at all?
+
+    Topical fit is the semantic gate's job. Keeping the two separate is what makes
+    a rejection explainable — a structural rejection is always a real defect in the
+    candidate, never a vocabulary mismatch.
+    """
     if intent.mode in {QuestionMode.FACTORS, QuestionMode.SUFFICIENCY}:
-        return False
-
-    signature = parse_query_signature(query)
-    if not signature:
-        return False
-    if intent.entities and not all(
-        _entity_is_represented(entity, signature["args"])
-        for entity in intent.entities
-    ):
-        return False
-
-    predicate_terms = _predicate_terms(signature["head"])
-    if predicate_terms & OPPOSITE_TERMS and not set(intent.terms) & OPPOSITE_TERMS:
-        return False
-    if predicate_terms.intersection(STATUS_QUALIFIER_TERMS):
-        question_status_terms = set(intent.terms).intersection(STATUS_QUALIFIER_TERMS)
-        if not question_status_terms:
-            return False
-
-    target_terms = set(predicate_terms)
-    for arg in signature["args"]:
-        canonical = canonical_symbol(str(arg))
-        if canonical in set(intent.entities):
-            continue
-        target_terms.update(_expanded_terms(canonical.split("_")))
-    required_terms = _required_content_terms(intent)
-    if not required_terms:
-        return True
-
-    if intent.direction == "reduce" and not predicate_terms.intersection(REDUCE_TERMS):
-        return False
-    if intent.causal and not predicate_terms.intersection(
-        CAUSAL_TERMS | INCREASE_TERMS | {"risk", "obesity", "diabetes"}
-    ):
-        return False
-    return _covers_required_terms(required_terms, target_terms)
+        return QueryIntentVerdict(
+            False,
+            "intent_mode",
+            f"{intent.mode.value} questions do not execute atomic proof targets",
+        )
+    if not parse_query_signature(query):
+        return QueryIntentVerdict(
+            False,
+            "malformed",
+            "query is not a (: $prf (Head args) $tv) form",
+        )
+    return _ACCEPTED
 
 
-def query_intent_score(intent: QuestionIntent, query: str) -> int:
-    signature = parse_query_signature(query)
-    if not signature:
-        return 0
-    predicate_terms = _predicate_terms(signature["head"])
-    arg_terms: set[str] = set()
-    for arg in signature["args"]:
-        canonical = canonical_symbol(str(arg))
-        if canonical in set(intent.entities):
-            continue
-        arg_terms.update(_expanded_terms(canonical.split("_")))
-    content_terms = _required_content_terms(intent)
-    return (
-        3 * len(predicate_terms.intersection(content_terms))
-        + len(arg_terms.intersection(content_terms))
-    )
+def query_matches_intent(intent: QuestionIntent, query: str) -> bool:
+    return evaluate_query_intent(intent, query).accepted
 
 
 def parse_query_signature(query: str) -> dict[str, object] | None:
@@ -181,7 +174,15 @@ def _question_entities(question: str) -> list[str]:
     return entities
 
 
-def _expanded_terms(tokens: list[str]) -> set[str]:
+def _content_terms(tokens: list[str]) -> set[str]:
+    """
+    Canonical content terms with light, language-general morphology.
+
+    Previously this also applied a table of benchmark-specific synonyms
+    (`carb`->`carbohydrate`, `obese`->`obesity`, `waived`->`waive`). Those made
+    the bundled cases pass and generalized to nothing, so only the mechanical
+    variants remain.
+    """
     result: set[str] = set()
     for token in tokens:
         if token in STOPWORDS:
@@ -191,100 +192,12 @@ def _expanded_terms(tokens: list[str]) -> set[str]:
             continue
         result.add(term)
         if "_" in term:
-            result.update(part for part in term.split("_") if part and part not in STOPWORDS)
+            result.update(
+                part for part in term.split("_") if part and part not in STOPWORDS
+            )
         if term.endswith("ing") and len(term) > 5:
             result.add(term[:-3])
             result.add(term[:-3] + "e")
         if term.endswith("ed") and len(term) > 4:
             result.add(term[:-2])
-        if term == "led":
-            result.add("lead")
-        if term in {"denied", "deni"}:
-            result.add("deny")
-        if term == "automatically":
-            result.add("automatic")
-        if term in {"carb", "carbs"}:
-            result.add("carbohydrate")
-        if term == "carbohydrate":
-            result.add("carb")
-        if term == "obese":
-            result.add("obesity")
-        if term == "obesity":
-            result.add("obese")
-        if term in {"high", "higher", "excessive"}:
-            result.update({"high", "higher", "excessive"})
-        if term in {"waived", "waiv"}:
-            result.add("waive")
-        if term in {"qualified", "qualifies"}:
-            result.add("qualify")
-        if term in {"triggered", "trigger"}:
-            result.update({"trigger", "triggered"})
     return result
-
-
-def _entity_is_represented(entity: str, args: object) -> bool:
-    canonical_entity = canonical_symbol(entity)
-    for arg in args if isinstance(args, list) else []:
-        canonical_arg = canonical_symbol(str(arg))
-        if canonical_arg == canonical_entity:
-            return True
-        if canonical_entity in canonical_arg.split("_"):
-            return True
-    return False
-
-
-def _predicate_terms(predicate: str) -> set[str]:
-    spaced = re.sub(r"(?<=[a-z0-9])(?=[A-Z])", "_", predicate)
-    return _expanded_terms(
-        [part.lower() for part in re.split(r"[^A-Za-z0-9]+", spaced) if part]
-    )
-
-
-def _required_content_terms(intent: QuestionIntent) -> set[str]:
-    entity_terms = set(intent.entities)
-    for entity in intent.entities:
-        entity_terms.update(part for part in entity.split("_") if part)
-    return set(intent.terms) - entity_terms - GENERIC_QUERY_TERMS
-
-
-def _covers_required_terms(required_terms: set[str], target_terms: set[str]) -> bool:
-    if not required_terms:
-        return True
-    normalized_target: set[str] = set()
-    for term in target_terms:
-        normalized_target.update(_term_alternates(term))
-    for term in required_terms:
-        if not _term_alternates(term).intersection(normalized_target):
-            return False
-    return True
-
-
-def _term_alternates(term: str) -> set[str]:
-    alternates = {term}
-    if "_" in term:
-        alternates.update(part for part in term.split("_") if part and part not in STOPWORDS)
-    if term.endswith("ing") and len(term) > 5:
-        base = term[:-3]
-        alternates.update({base, base + "e"})
-    if term.endswith("ed") and len(term) > 4:
-        alternates.add(term[:-2])
-        if term[:-1].endswith("e"):
-            alternates.add(term[:-1])
-    groups = [
-        {"consume", "consumes", "consuming", "consumed", "consum"},
-        {"high", "higher", "excessive"},
-        {"obese", "obesity"},
-        {"qualify", "qualifies", "qualified", "eligible", "eligibility"},
-        {"classify", "classified", "classification", "classifi"},
-        {"deny", "denied", "deni"},
-        {"waive", "waived", "waiv"},
-        {"lead", "led", "leading"},
-        {"trigger", "triggered", "triggering", "triggers"},
-        {"pollute", "polluted", "pollution"},
-        {"reject", "rejected", "rejecting"},
-        {"authorize", "authorized", "authorization"},
-    ]
-    for group in groups:
-        if term in group:
-            alternates.update(group)
-    return alternates

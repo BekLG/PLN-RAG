@@ -66,6 +66,7 @@ Answer only from the proof trace. Do not add unstated domain knowledge."""
         status: str,
         positive_proof: List[str],
         negative_proof: List[str],
+        support_kind: str = "unknown",
     ) -> str:
         target = self._extract_query_target(executed_query) or "the requested proposition"
         if status == "both":
@@ -74,10 +75,57 @@ Answer only from the proof trace. Do not add unstated domain knowledge."""
                 "and its explicit negation."
             )
         if status == "positive":
+            if support_kind == "probabilistic":
+                # The proof traversed a rule with strength below 1.0, which is how
+                # LLM-derived predicate bridges enter a proof. Reporting that as a
+                # flat "yes" would present a similarity judgment as entailment.
+                return (
+                    f"Probably yes. The proof supports {target}, but it relies on at "
+                    "least one probabilistic step rather than strict entailment."
+                )
             return f"Yes. The proof establishes {target}."
         if status == "negative":
             return f"No. The proof establishes explicit negation of {target}."
         return "I don't know - neither the proposition nor its explicit negation was proved."
+
+    def generate_open_answer(
+        self,
+        question: str,
+        executed_query: str,
+        bindings: List[dict],
+        truncated: bool = False,
+    ) -> str:
+        """
+        Answer an open question by listing the values that were proved.
+
+        `generate_from_polarity` can only say yes, no, or I-don't-know, which cannot
+        answer "which biomarkers predict severity". Every value here came back with
+        its own proof, so listing them adds no claim beyond what was proved.
+        """
+        target = self._extract_query_target(executed_query) or "the requested pattern"
+        if not bindings:
+            return (
+                "I don't know - no value could be proved for "
+                f"{target}."
+            )
+        values: List[str] = []
+        for row in bindings:
+            bound = row.get("bindings") or {}
+            rendered = ", ".join(str(v) for v in bound.values() if str(v).strip())
+            if rendered and rendered not in values:
+                values.append(rendered)
+        listed = "; ".join(values)
+        probabilistic = any(
+            row.get("support_kind") == "probabilistic" for row in bindings
+        )
+        prefix = (
+            "Proved, with at least one probabilistic step: "
+            if probabilistic
+            else "Proved: "
+        )
+        suffix = " (more answers may exist; results were capped)" if truncated else ""
+        noun = "answer" if len(values) == 1 else "answers"
+        return f"{prefix}{len(values)} {noun} for {target} - {listed}.{suffix}"
 
     def _call_gemini(self, user_prompt: str) -> str:
         try:

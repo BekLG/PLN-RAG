@@ -1304,14 +1304,74 @@ identity argument order
 no conflict with explicit negation
 ```
 
-Even then, bridge emission is disabled by default:
+Bridge emission is now enabled by default:
 
 ```text
-PREDICATE_MAPPING_EMIT_BRIDGES=false
+PREDICATE_MAPPING_ONLINE_ENABLED=true
+PREDICATE_MAPPING_EMIT_BRIDGES=true
 ```
 
-This means the project favors correctness over making the architecture look
-smart. That is the right tradeoff for proof safety.
+It was off, and that had a measurable cost. Within a single paragraph LangExtract
+routinely names one concept two ways — a rule concluding `BecomesUnbalanced` while
+the next rule requires `Unbalanced` — which severs the chain inside the knowledge
+base. No amount of proof search repairs a missing link, in either direction.
+
+Enabling it does not weaken the proof story, because a bridge is emitted with the
+classifier's confidence as its strength:
+
+```text
+(: becomesunbalanced_to_unbalanced_bridge
+   (Implication (Premises (BecomesUnbalanced $x))
+                (Conclusions (Unbalanced $x))) (STV 0.93 0.80))
+```
+
+Strength below 1.0 means `Reasoner._support_kind` reports any proof crossing that
+bridge as `support_kind="probabilistic"` rather than `"entailed"`, and the answer
+reads "Probably yes … relies on at least one probabilistic step" instead of a flat
+"Yes". LLM-derived inference is visible in the response rather than disguised as
+entailment. An explicit negative fact still vetoes a bridge outright, regardless of
+confidence.
+
+## Non-Boolean Questions Are Not Yet Answered By Proof
+
+A known architectural gap, not a filtering bug.
+
+Non-boolean questions are **not** blocked from proof execution, and it is worth being
+precise about that because it is easy to get wrong. Only `factors` and `sufficiency`
+mode questions are routed away entirely (`evaluate_query_intent` returns
+`intent_mode`). `open` ("how", "what", "which") and `explanation` ("why") questions
+are admitted and do attempt proof targets.
+
+Measured on `benchmark/stress25_v1.json`: 7 boolean, 14 open, 4 explanation, and
+**zero** factors/sufficiency. So every question in that suite reaches the reasoner.
+
+What they cannot do is *answer* the question, for three separate reasons:
+
+1. **Variable-bearing targets never execute.** `_deterministic_query_candidates`
+   skips any grounded row still containing a variable
+   ([service.py](../core/orchestration/service.py)). So "Which biomarkers predict
+   COVID-19 severity?" can never run `(Predicts $x covid_severity)` and return the
+   bindings, which is the answer being asked for.
+2. **Fallback candidates are yes/no only.** `plan_queries` builds its extra
+   candidates only when `is_yes_no`, so open questions get a thinner candidate set.
+3. **The answer generator has no non-boolean output.** `generate_from_polarity`
+   can return only "Yes. The proof establishes X", "No. …explicit negation…",
+   "Probably yes…", or "I don't know". There is no path that returns a list, a
+   comparison, or a mechanism.
+
+So for "How does semaglutide compare with other GLP-1 receptor agonists?" the best
+available outcome is a proof of one specific grounded proposition, reported as
+"Yes. The proof establishes (…)" — safe, and not the comparison that was requested.
+
+`why` questions get one extra path: `Reasoner.explain_requirements` lists the
+premises of rules whose conclusion terms overlap the question, each with its own
+proved/unproved status. That is a genuine proof-backed explanation, but it only
+fires when such rules were extracted; on biomedical abstracts few are, so it usually
+reports that no proof-backed factors were found.
+
+Closing this means executing variable-bearing targets and rendering bindings as an
+answer. The semantic target gate makes it tractable — it can judge a non-boolean
+target as readily as a boolean one — but it is a separate change, not attempted here.
 
 ## Common Failure Points
 

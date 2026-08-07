@@ -1,6 +1,6 @@
 {
-  "statement_prompt": "Extract semantic facts, type declarations, inheritance relationships, rules, and negations.\n\nThe output is not PLN text. Return LangExtract objects with these extraction classes:\n- fact: a predicate with one or more arguments. Attributes: predicate, plus either arguments or subject/object.\n- type_decl: declares that an entity belongs to a type. Attributes: entity, type.\n- property: assigns a property value to an entity. Attributes: entity, property, value.\n- inheritance: subtype or kind-of relationship. Attributes: child, parent.\n- rule: a conditional implication. Attributes: head_predicate, head_args, body.\n- negation: explicit negation of a unary or binary fact. Attributes: predicate, plus either arguments or subject/object.\n\nRules:\n- Use lowercase hyphen-separated predicate names, such as eats or can-fly.\n- Entity and type names may preserve source casing.\n- Hyphens and digits inside source identifiers are preserved, such as Object-77 and Rack-01.\n- Variables in rules must start with $, such as $x.\n- rule.head_args must be a space-separated argument string.\n- rule.body must be a valid S-expression using the same predicate names.\n- Use (and ...) for multi-premise rule bodies.\n- Definitional sentences become rules with a single-atom body.\n- Emit each causal/transitive link as a separate rule.\n- Use exact source spans for extraction_text; do not paraphrase.\n- For binary predicates (e.g., eats, consumes, owns, teaches), include both subject and object when the object is present in the text.\n- Do not bake objects into predicate names when an object is present; keep the object in subject/object or arguments.\n- If a sentence adds an adverb like \"frequently\", keep the object and encode the adverb in the predicate name only if needed (e.g., eats-frequently with subject+object).\n- Portion-size phrases (e.g., \"large portions\", \"small portions\") should become facts like eats-large-portions or eats-small-portions.\n- If the portion-size phrase modifies a known food/object in the same clause or sentence, include that object too, e.g., subject=Jordan, predicate=eats-large-portions, object=rice.\n- Use unary portion-size facts only when no object can be recovered from the sentence.\n- Ensure every dependent clause and comma-separated phrase (e.g., \", often in large portions,\") emits its own distinct fact. Do not skip details.\n- IMPORTANT: When a proper name (capitalized word that is not at sentence start) appears as an actor in facts or rules, emit a type_decl extraction declaring that entity as a 'person' unless context clearly indicates otherwise (e.g., company names, place names). This helps the reasoner understand entity types.",
-  "query_prompt": "Extract one or more executable logical queries from the question.\n\nReturn LangExtract objects with extraction_class=query.\nAttributes:\n- predicate: lowercase hyphen-separated predicate name.\n- arguments: ordered argument list.\n\nRules:\n- Yes/no questions should use grounded arguments from the question.\n- Who/what/which questions should use variables such as $who, $what, or $x.\n- \"is a kind of\", \"is a\", and type/class questions should use predicate=isa.\n- Property questions may use predicate=has with arguments [entity, property, value].\n- Reuse predicate names from the provided context when possible.\n- Do not output PLN syntax directly.",
+  "statement_prompt": "Extract semantic facts, type declarations, inheritance relationships, rules, and negations.\n\nThe output is not PLN text. Return LangExtract objects with these extraction classes:\n- fact: a predicate with one or more arguments. Attributes: predicate, plus either arguments or subject/object.\n- type_decl: declares that an entity belongs to a type. Attributes: entity, type.\n- property: assigns a property value to an entity. Attributes: entity, property, value.\n- inheritance: subtype or kind-of relationship. Attributes: child, parent.\n- rule: a conditional implication. Attributes: head_predicate, head_args, body,\n  and polarity (positive or negative; default positive).\n- negation: explicit negation of a unary or binary fact. Attributes: predicate, plus either arguments or subject/object.\n\nRules:\n- Use lowercase hyphen-separated predicate names, such as eats or can-fly.\n- Entity and type names may preserve source casing.\n- Hyphens and digits inside source identifiers are preserved, such as Object-77 and Rack-01.\n- Variables in rules must start with $, such as $x.\n- rule.head_args must be a space-separated argument string.\n- rule.body must be a valid S-expression using the same predicate names.\n- Use (and ...) for multi-premise rule bodies.\n- Definitional sentences become rules with a single-atom body.\n- Emit each causal/transitive link as a separate rule.\n- When a rule concludes that something is NOT the case, set polarity=negative and\n  give head_predicate as the POSITIVE predicate. Write head_predicate=eligible-for-renewal\n  with polarity=negative, never head_predicate=not-eligible-for-renewal. Baking the\n  negation into the predicate name makes the conclusion indistinguishable from an\n  ordinary positive one.\n- Reuse the same positive predicate name across positive and negative mentions of the\n  same property so they can be compared.\n- Use exact source spans for extraction_text; do not paraphrase.\n- For binary predicates (e.g., eats, consumes, owns, teaches), include both subject and object when the object is present in the text.\n- Do not bake objects into predicate names when an object is present; keep the object in subject/object or arguments.\n- If a sentence adds an adverb like \"frequently\", keep the object and encode the adverb in the predicate name only if needed (e.g., eats-frequently with subject+object).\n- Portion-size phrases (e.g., \"large portions\", \"small portions\") should become facts like eats-large-portions or eats-small-portions.\n- If the portion-size phrase modifies a known food/object in the same clause or sentence, include that object too, e.g., subject=Jordan, predicate=eats-large-portions, object=rice.\n- Use unary portion-size facts only when no object can be recovered from the sentence.\n- Ensure every dependent clause and comma-separated phrase (e.g., \", often in large portions,\") emits its own distinct fact. Do not skip details.\n- IMPORTANT: When a proper name (capitalized word that is not at sentence start) appears as an actor in facts or rules, emit a type_decl extraction declaring that entity as a 'person' unless context clearly indicates otherwise (e.g., company names, place names). This helps the reasoner understand entity types.",
+  "query_prompt": "Extract one or more executable logical queries from the question.\n\nReturn LangExtract objects with extraction_class=query.\nAttributes:\n- predicate: lowercase hyphen-separated predicate name.\n- arguments: ordered argument list.\n\nRules:\n- Yes/no questions should use grounded arguments from the question.\n- Who/what/which questions should use variables such as $who, $what, or $x.\n- \"is a kind of\", \"is a\", and type/class questions should use predicate=isa.\n- Property questions may use predicate=has with arguments [entity, property, value].\n- Reuse predicate names from the provided context when possible.\n- Name only the proposition being asked about. Do not fold adverbial or temporal\n  clauses into the predicate: for \"Did the shuttle enter safe mode after losing\n  network contact?\" the predicate is enters-safe-mode, never\n  enters-safe-mode-after-losing-network-contact.\n- Drop leading articles from arguments: use turbine, not \"the turbine\".\n- Do not output PLN syntax directly.",
   "statement_examples": [
     {
       "text": "People who eat fish are smart. Kebede eats fish.",
@@ -343,6 +343,46 @@
             "head_predicate": "at-elevated-risk",
             "head_args": "",
             "body": "(and (isa  person) (obese ) (or (sedentary ) (has-family-history )))"
+          }
+        }
+      ]
+    },
+    {
+      "text": "Every member is a borrower. If a borrower has unpaid fines, the borrower is not eligible for renewal. Dawit has unpaid fines.",
+      "extractions": [
+        {
+          "class": "rule",
+          "text": "Every member is a borrower",
+          "attributes": {
+            "head_predicate": "isa",
+            "head_args": "$m borrower",
+            "body": "(isa $m member)"
+          }
+        },
+        {
+          "class": "rule",
+          "text": "If a borrower has unpaid fines, the borrower is not eligible for renewal",
+          "attributes": {
+            "head_predicate": "eligible-for-renewal",
+            "head_args": "$x",
+            "polarity": "negative",
+            "body": "(and (isa $x borrower) (has-unpaid-fines $x))"
+          }
+        },
+        {
+          "class": "type_decl",
+          "text": "Dawit",
+          "attributes": {
+            "entity": "Dawit",
+            "type": "person"
+          }
+        },
+        {
+          "class": "fact",
+          "text": "Dawit has unpaid fines",
+          "attributes": {
+            "subject": "Dawit",
+            "predicate": "has-unpaid-fines"
           }
         }
       ]

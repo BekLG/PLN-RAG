@@ -11,6 +11,31 @@ _LOCAL_ENV = Path(__file__).resolve().parent / ".env"
 # Use root .env if it exists, otherwise fall back to PLN-RAG/.env
 _ENV_FILE = str(_ROOT_ENV) if _ROOT_ENV.exists() else str(_LOCAL_ENV)
 
+# Provider prefixes some SDKs accept but LangExtract's router does not. Its
+# patterns are anchored, so "^gemini" happens to match "gemini/gemini-2.5-flash"
+# while "^gpt-4" cannot match "openai/gpt-4o-mini" — the same prefix style works
+# for one provider and fails for the other. Normalize centrally instead.
+PROVIDER_PREFIXES = frozenset({"gemini", "google", "openai", "azure", "ollama"})
+
+
+def normalize_model_id(model: str | None) -> str | None:
+    """
+    Strip a leading `<provider>/` prefix when the provider is one we recognize.
+
+    Only allow-listed prefixes are stripped, so legitimate ids that contain a
+    slash are left intact: Ollama tags (`gemma2:2b`), HuggingFace repositories
+    (`Qwen/Qwen2.5-7B`, `meta-llama/Llama-3-8B`), and anything else.
+    """
+    if model is None:
+        return None
+    value = str(model).strip()
+    if "/" not in value:
+        return value
+    prefix, remainder = value.split("/", 1)
+    if prefix.lower() in PROVIDER_PREFIXES and remainder.strip():
+        return remainder.strip()
+    return value
+
 
 class Settings(BaseSettings):
     # LLM — provide either OpenAI or Gemini credentials
@@ -85,13 +110,35 @@ class Settings(BaseSettings):
     answer_generation_enabled: bool = True
     source_lookup_max_atoms: int = 0
 
+    # Semantic target gate. Replaces hardcoded term matching when deciding which
+    # proof targets a question asks about. Disabling it admits every structurally
+    # valid candidate, which is looser, not stricter.
+    query_target_gate_enabled: bool = True
+    query_target_gate_top_k: int = 5
+    query_target_gate_timeout: int = 12
+    query_target_gate_min_confidence: float = 0.7
+    # Higher bar for asks_negation: that verdict inverts the answer, so a bad
+    # call yields a confident wrong result instead of an honest unknown.
+    query_target_gate_negation_min_confidence: float = 0.85
+    # Keep only candidates sharing the top candidate's head and args. Left off:
+    # it discarded correct targets whenever a negation-lexicalized variant
+    # happened to rank first, and made query_candidate_max_tries inert.
+    query_proof_equivalent_only: bool = False
+
     # Predicate registry / mapping graph
     predicate_registry_enabled: bool = True
     predicate_registry_path: str = "data/predicate_registry.json"
     predicate_mapping_enabled: bool = True
     predicate_mapping_llm_enabled: bool = True
-    predicate_mapping_online_enabled: bool = False
-    predicate_mapping_emit_bridges: bool = False
+    # Ask the LLM classifier about predicate pairs at ingest time, and turn the
+    # approved mappings into bridge rules. Both were off, which left intra-document
+    # predicate drift unrepaired: a rule concluding `BecomesUnbalanced` could not
+    # satisfy another rule's `Unbalanced` premise, severing the chain inside the KB.
+    # Bridges carry the classifier's confidence as their STV strength, so any proof
+    # that traverses one is reported as support_kind="probabilistic", never
+    # "entailed". An explicit negative fact still vetoes a bridge.
+    predicate_mapping_online_enabled: bool = True
+    predicate_mapping_emit_bridges: bool = True
     predicate_mapping_collection: str = "pln_rag_predicates"
     predicate_mapping_top_k: int = 6
     predicate_mapping_max_candidates: int = 6
@@ -105,6 +152,11 @@ class Settings(BaseSettings):
         env_file_encoding="utf-8",
         extra="ignore",
     )
+
+    @field_validator("openai_model", "gemini_model", "langextract_model_id")
+    @classmethod
+    def _normalize_model_id(cls, value):
+        return normalize_model_id(value)
 
     @field_validator("coreference_backend")
     @classmethod

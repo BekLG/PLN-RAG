@@ -951,7 +951,7 @@ def _batch_response_schema() -> dict[str, Any]:
 
 
 def _strip_provider_prefix(model: str) -> str:
-    value = str(model or "").strip()
-    if "/" in value and value.split("/", 1)[0] in {"gemini", "openai"}:
-        return value.split("/", 1)[1]
-    return value
+    """Kept as an alias; normalization lives in config so every consumer shares it."""
+    from config import normalize_model_id
+
+    return normalize_model_id(model) or ""

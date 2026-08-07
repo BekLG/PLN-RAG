@@ -7,6 +7,10 @@ from typing import List
 from core.pln.constraint_normalizer import PLNConstraintNormalizer
 from core.pln.schema_alignment import PLNSchemaAligner
 from core.pln.predicate_registry import PredicateRegistry
+from core.pln.symbol_normalization import (
+    canonical_symbol as shared_canonical_symbol,
+    singularize as shared_singularize,
+)
 
 
 @dataclass
@@ -124,9 +128,6 @@ class PLNPostprocessor:
             processed_queries,
             property_predicates,
         )
-        processed_statements = self.repair_portion_size_fact_arity(
-            processed_statements
-        )
         processed_statements = [
             self.repair_missing_universal_variable(stmt)
             for stmt in processed_statements
@@ -150,10 +151,6 @@ class PLNPostprocessor:
         processed_statements = [
             self.prune_generic_sortal_premises(stmt) for stmt in processed_statements
         ]
-
-        # Infer types for proper names that appear in statements
-        inferred_types = self.infer_entity_types(processed_statements, proper_name_map)
-        processed_statements.extend(inferred_types)
 
         processed_statements, constraint_decisions = self._constraint_normalizer.normalize(
             processed_statements,
@@ -268,143 +265,8 @@ class PLNPostprocessor:
         return concepts
 
     def singularize(self, word: str) -> str:
-        if len(word) <= 3:
-            return word
-        if word.endswith("ies") and len(word) > 4:
-            return word[:-3] + "y"
-        if word.endswith("ses") and len(word) > 4:
-            return word[:-2]
-        if word.endswith("s") and not word.endswith(("ss", "us", "is")):
-            return word[:-1]
-        return word
-    def generate_universal_identity(self, statements: List[str]) -> List[str]:
-        """
-        Extract all lowercase terms from statements and generate (IsA term term).
-        This helps logic reasoners unify self-identity constraints easily.
-        """
-        import re
-        terms = set()
-        for stmt in statements:
-            s_clean = stmt.replace("(", " ").replace(")", " ")
-            for token in s_clean.split():
-                if token.islower() and not re.match(r'^[0-9.]+$', token):
-                    if token not in {"and", "or", "not", "stv"}:
-                        terms.add(token)
-        
-        return [f"(IsA {t} {t})" for t in terms]
-    def infer_entity_types(self, statements, proper_name_map):
-        """
-        Infer (IsA entity person) for proper names that appear as the FIRST argument
-        (subject/actor) of predicates in statements, but have no explicit type declaration.
-        Uses proper_name_map from source text as the candidate set.
-        Entities that only appear as objects (2nd+ arg) are not inferred as persons.
-        """
-        candidate_entities = set(proper_name_map.values())
-        # Exclude identifiers containing digits (Object-77, Unit-12, Rack-01, etc.)
-        non_person = re.compile("[0-9]")
-        person_candidates = {
-            e for e in candidate_entities
-            if len(e) > 1 and not non_person.search(e)
-        }
+        return shared_singularize(word)
 
-        # Collect entities that already have explicit type declarations
-        entities_with_types = set()
-        for stmt in statements:
-            for match in re.finditer("\\(IsA\\s+(\\S+)\\s+\\S+\\)", stmt):
-                entities_with_types.add(match.group(1))
-
-        # Collect entities that appear as the FIRST argument of a predicate
-        # Pattern: (PredicateName first_arg ...) where PredicateName starts uppercase
-        entities_as_subject = set()
-        for stmt in statements:
-            for match in re.finditer("\\(([A-Z][A-Za-z0-9_]*)\\s+(\\S+)", stmt):
-                pred = match.group(1)
-                first_arg = match.group(2)
-                # Skip structural keywords and variables
-                if pred in self.STRUCTURAL_HEADS:
-                    continue
-                if first_arg.startswith("$") or first_arg.startswith("?"):
-                    continue
-                entities_as_subject.add(first_arg)
-
-        inferred = []
-        for entity in sorted(person_candidates):
-            if entity in entities_with_types:
-                continue
-            if entity not in entities_as_subject:
-                continue
-            inferred.append(
-                "(: " + entity + "_is_person (IsA " + entity + " person) (STV 1.0 1.0))"
-            )
-        return inferred
-
-    def repair_portion_size_fact_arity(self, statements: List[str]) -> List[str]:
-        """
-        Replace a unary portion-size fact when extraction emitted one
-        fact but the same subject has an explicit eating fact with an object.
-
-        Example:
-          (EatsFrequently abebe pasta) + (EatsLargePortions abebe)
-          -> (EatsLargePortions abebe pasta)
-
-        Keeping both arities would create an unstable predicate schema, so the
-        repair is applied only when exactly one food object is recoverable.
-        """
-        eating_objects_by_subject: dict[str, list[str]] = {}
-        existing_atoms: set[str] = set()
-
-        repaired_statements: List[str] = []
-        for statement in statements:
-            repaired = statement
-            for head, args in self._simple_fact_atoms(statement):
-                atom = f"({head} {' '.join(args)})"
-                existing_atoms.add(atom)
-                if head in {"Eats", "EatsFrequently"} and len(args) >= 2:
-                    eating_objects_by_subject.setdefault(args[0], [])
-                    if args[1] not in eating_objects_by_subject[args[0]]:
-                        eating_objects_by_subject[args[0]].append(args[1])
-
-        for statement in statements:
-            repaired = statement
-            for head, args in self._simple_fact_atoms(statement):
-                if not self._is_portion_size_head(head) or len(args) != 1:
-                    continue
-                subject = args[0]
-                objects = eating_objects_by_subject.get(subject, [])
-                if len(objects) != 1:
-                    continue
-                repaired_atom = f"({head} {subject} {objects[0]})"
-                repaired = re.sub(
-                    rf"\({re.escape(head)}\s+{re.escape(subject)}\)",
-                    repaired_atom,
-                    repaired,
-                    count=1,
-                )
-                existing_atoms.add(repaired_atom)
-            repaired_statements.append(repaired)
-
-        return self.dedupe_preserve_order(repaired_statements)
-
-    def _simple_fact_atoms(self, statement: str) -> List[tuple[str, List[str]]]:
-        if "Implication" in statement or "(Not " in statement:
-            return []
-        atoms: List[tuple[str, List[str]]] = []
-        for match in re.finditer(
-            r"\(([A-Z][A-Za-z0-9_]*)\s+([^()]+?)\)\s+\(STV",
-            statement,
-        ):
-            head = match.group(1)
-            if head in self.STRUCTURAL_HEADS:
-                continue
-            args = [arg for arg in match.group(2).split() if arg]
-            if args:
-                atoms.append((head, args))
-        return atoms
-
-    def _is_portion_size_head(self, head: str) -> bool:
-        return bool(
-            re.search(r"(Large|Small|Moderate|Huge|Tiny)Portions$", head)
-        )
 
     def repair_missing_universal_variable(self, statement: str) -> str:
         """
@@ -696,19 +558,7 @@ class PLNPostprocessor:
         lemmatize: bool = True,
         protect: bool = False,
     ) -> str:
-        token = token.strip()
-        if not token:
-            return token
-        token = re.sub(r"(?<=[a-z0-9])(?=[A-Z])", "_", token)
-        token = token.replace("-", "_")
-        token = re.sub(r"[^A-Za-z0-9_]", "_", token)
-        token = re.sub(r"_+", "_", token).strip("_")
-        token = token.lower()
-        if lemmatize and token and not protect:
-            token = "_".join(
-                self.singularize(part) for part in token.split("_") if part
-            )
-        return token
+        return shared_canonical_symbol(token, lemmatize=lemmatize, protect=protect)
 
     def extract_protected_constants(self, text: str) -> set[str]:
         protected: set[str] = set()
@@ -865,9 +715,8 @@ class PLNPostprocessor:
                     facts,
                     conclusions,
                 )
-                heuristic = self.build_heuristic_question_queries(question)
                 return self.filter_query_candidates(
-                    self.dedupe_preserve_order(semantic_fallback + heuristic)
+                    self.dedupe_preserve_order(semantic_fallback)
                 )
             return queries
 
@@ -913,9 +762,6 @@ class PLNPostprocessor:
                 conclusions,
             )
             ordered = semantic_fallback + ordered + fallback
-            # Add heuristic query patterns (colleague's approach)
-            heuristic = self.build_heuristic_question_queries(question)
-            ordered.extend(heuristic)
         return self.filter_query_candidates(self.dedupe_preserve_order(ordered))
 
     def filter_query_candidates(self, queries: List[str]) -> List[str]:
@@ -1071,48 +917,7 @@ class PLNPostprocessor:
                 constants.append(canonical)
         return constants
 
-    def build_heuristic_question_queries(self, question: str) -> List[str]:
-        """
-        Generate PLN queries from question patterns (colleague's approach).
-        Patterns like "Does X have Y?" → (: $prf (HasA X Y) $tv)
-        """
-        normalized = self.normalize_text(question).strip("? ")
-        patterns = [
-            # (regex pattern, predicate head) - more specific first, generic last
-            (r"^(?:is|are|was|were)\s+(.+?)\s+(?:consuming|consume)\s+(.+)$", "Consumes"),
-            (r"^(?:does|do|did|has|have|had)\s+(.+?)\s+consume\s+(.+)$", "Consumes"),
-            (r"^(?:does|do|did|has|have|had)\s+(.+?)\s+(?:eat|eats)\s+(.+)$", "Eats"),
-            (r"^(?:does|do|did|has|have|had)\s+(.+?)\s+(?:have|has|get)\s+(.+)$", "HasA"),
-            (r"^(?:is|are|was|were)\s+(.+?)\s+(?:a|an)\s+([a-z][a-z0-9_]*)\s*$", "IsA"),  # "Is X a Y"
-            (r"^(?:is|are)\s+(.+?)\s+(?:smart|intelligent|capable|able|mortal)$", "IsA"),
-        ]
 
-        queries: List[str] = []
-        for pattern, head in patterns:
-            match = re.match(pattern, normalized)
-            if not match:
-                continue
-            subject = self.canonical_phrase(match.group(1))
-            target = self.canonical_phrase(match.group(2)) if match.lastindex >= 2 else None
-            if subject:
-                if target:
-                    queries.append(f"(: $prf ({head} {subject} {target}) $tv)")
-                else:
-                    queries.append(f"(: $prf ({head} {subject}) $tv)")
-        return queries
-
-    def canonical_phrase(self, phrase: str) -> str:
-        """Convert a phrase to canonical underscore-separated form."""
-        tokens = [
-            token
-            for token in self.normalize_text(phrase).split()
-            if token not in {"a", "an", "the", "of", "in", "on", "at", "is", "are", "was", "were",
-                           "do", "does", "did", "have", "has", "had", "consuming", "consume",
-                           "eating", "eat", "eats", "smart", "intelligent", "capable", "able",
-                           "mortal"}
-        ]
-        normalized = [self.canonical_symbol(token, lemmatize=True) for token in tokens if token]
-        return "_".join(token for token in normalized if token)
 
     def score_query_candidate(
         self,
@@ -1219,303 +1024,6 @@ class PLNPostprocessor:
             "have",
             "had",
         }
-
-    def build_query_hints(
-        self,
-        original: str,
-        normalized: str,
-        predicates: List[str],
-    ) -> List[str]:
-        hints: List[str] = []
-        tokens = normalized.split()
-        if not tokens:
-            return hints
-
-        if tokens[0] in {
-            "is",
-            "are",
-            "was",
-            "were",
-            "does",
-            "do",
-            "did",
-            "can",
-            "could",
-            "may",
-            "might",
-            "must",
-            "shall",
-            "should",
-            "has",
-            "have",
-            "had",
-        }:
-            hints.append(
-                "; query intent: yes/no question - prefer a direct provable query"
-            )
-        elif any(marker in tokens for marker in self.QUERY_MARKERS):
-            hints.append(
-                "; query intent: open question - prefer a variable-bearing query"
-            )
-
-        if any(
-            token in {"any", "anything", "someone", "somebody", "something"}
-            for token in tokens
-        ):
-            hints.append(
-                "; existential wording may justify a helper predicate when a direct query shape is not derivable"
-            )
-
-        if "not" in tokens or "never" in tokens:
-            hints.append(
-                "; use negation only if it is directly supported by explicit facts or rules"
-            )
-
-        if predicates:
-            hints.append(
-                f"; prioritize these predicate heads first: {', '.join(predicates[:5])}"
-            )
-
-        if original.endswith("?"):
-            hints.append(
-                "; preserve the question semantics while keeping the final query executable"
-            )
-
-        return hints
-
-    def _materialize_grounded_premise_facts(
-        self, text: str, statements: List[str]
-    ) -> List[str]:
-        """
-        Materialize grounded premises AND conclusions from rules.
-
-        Premise materialization:
-          "People who eat fish are smart. Kebede eats fish."
-          → materializes (EatsFish kebede) as direct fact.
-
-        Conclusion materialization (when all premises are grounded):
-          Rule: EatsFrequently($x, pasta) → ConsumesExcessiveCarbs($x)
-          Fact: EatsFrequently(abebe, pasta) exists
-          → materializes (ConsumesExcessiveCarbs abebe) directly.
-        """
-        # Retained temporarily for compatibility with external callers. Premise
-        # invention is proof-unsafe and this method must never emit atoms.
-        return []
-
-        normalized = self.normalize_text(text)
-        # Skip materialization for purely definitional rules
-        conditional_phrases = (" indicate ", " indicates ", " implies ",
-                              " suggest ", " suggests ", " if ", " when ",
-                              " should ", " would ", " could ")
-        skip_materialization = any(phrase in normalized for phrase in conditional_phrases)
-
-        tokens = set(normalized.split())
-        facts: List[str] = []
-
-        # First pass: collect all existing grounded facts from statements
-        existing_facts: set[str] = set()
-        negated_facts: set[str] = set()  # Atoms that are negated (NOT True)
-        for stmt in statements:
-            # Skip rules/implications
-            if "Implication" in stmt:
-                continue
-            # Check for negated atoms: (Not (Predicate ...))
-            not_match = re.search(r"\(Not\s+\(([A-Za-z][A-Za-z0-9_]*)\s+([^\)]+)\)\)", stmt)
-            if not_match:
-                pred = not_match.group(1)
-                args = not_match.group(2).strip()
-                negated_facts.add(f"({pred} {args})")
-                continue
-            # Match typed facts: (: name (Predicate arg1 arg2) (STV ...))
-            m = re.search(r"\(:\s+\S+\s+\(([A-Za-z][A-Za-z0-9_]*)\s+([^\)]+)\)\s+\(", stmt)
-            if m:
-                pred = m.group(1)
-                args = m.group(2).strip()
-                existing_facts.add(f"({pred} {args})")
-                continue
-            # Match bare atoms: (IsA X Y) or (Predicate arg1 arg2)
-            bare_match = re.match(r"^\(([A-Za-z][A-Za-z0-9_]*)\s+([^\)]+)\)$", stmt.strip())
-            if bare_match:
-                pred = bare_match.group(1)
-                args = bare_match.group(2).strip()
-                existing_facts.add(f"({pred} {args})")
-
-        for stmt in statements:
-            # Extract (Implication (Premises ...) (Conclusions ...))
-            # Note: Conclusions may have ) from STV following it, so we match conservatively
-            m = re.search(r"\(Implication\s+\(Premises\s+(.+?)\)\s+\(Conclusions\s+((?:[^()]|\([^()]*\))+)\)\)", stmt)
-            if not m:
-                continue
-
-            premises_blob = m.group(1)
-            conclusions_blob = m.group(2)
-
-            # Parse premises to extract atoms, variables, and negation
-            premise_atoms: List[tuple[str, List[str], bool]] = []  # [(predicate, [args], negated)]
-            bindings: dict[str, str] = {}  # variable -> grounded term
-            all_grounded = True
-
-            # Parse premises with negation awareness
-            # Pattern to match atoms: optionally preceded by (Not ...)
-            # Simple atoms: (Predicate arg1 arg2)
-            # Negated atoms: (Not (Predicate arg1 arg2))
-            pos = 0
-            while pos < len(premises_blob):
-                # Try to match (Not (Predicate ...))
-                not_match = re.match(r"\s*\(Not\s+\(([A-Za-z][A-Za-z0-9_]*)\s+([^\)]+)\)\)", premises_blob[pos:])
-                if not_match:
-                    head = not_match.group(1)
-                    arg_blob = not_match.group(2).strip()
-                    args = [a for a in arg_blob.split() if a]
-                    premise_atoms.append((head, args, True))  # True = negated
-                    pos += not_match.end()
-                    continue
-
-                # Try to match (Predicate ...)
-                atom_match = re.match(r"\s*\(([A-Za-z][A-Za-z0-9_]*)\s+([^\)]+)\)", premises_blob[pos:])
-                if atom_match:
-                    head = atom_match.group(1)
-                    arg_blob = atom_match.group(2).strip()
-                    args = [a for a in arg_blob.split() if a]
-                    if args:  # Only add if we have args
-                        premise_atoms.append((head, args, False))  # False = not negated
-                    pos += atom_match.end()
-                    continue
-
-                # Skip this character
-                pos += 1
-
-            if not premise_atoms:
-                continue
-
-            # Build predicate -> patterns from existing facts
-            # e.g., "EatsFrequently abebe pasta" → pattern for EatsFrequently = [abebe, pasta]
-            fact_predicate_patterns: dict[str, List[str]] = {}
-            for fact in existing_facts:
-                m = re.match(r"\(([A-Za-z][A-Za-z0-9_]*)\s+(.+)\)", fact)
-                if m:
-                    pred = m.group(1)
-                    args = [a.strip() for a in m.group(2).split() if a.strip()]
-                    if pred not in fact_predicate_patterns:
-                        fact_predicate_patterns[pred] = args
-
-            # Bind variables based on patterns and tokens
-            all_grounded = True
-            for head, args, negated in premise_atoms:
-                for a in args:
-                    if a.startswith(("$", "?")):
-                        var_name = a[1:]  # strip $ or ?
-                        if a in bindings:
-                            continue  # already bound
-
-                        # Strategy 1: check tokens directly
-                        canonical_var = self.canonical_symbol(var_name, lemmatize=True)
-                        if canonical_var in tokens:
-                            bindings[a] = canonical_var
-                            continue
-
-                        # Strategy 2: check existing facts for matching predicate patterns
-                        if head in fact_predicate_patterns:
-                            patterns = fact_predicate_patterns[head]
-                            # Find position of variable in premise (0-indexed)
-                            var_pos = args.index(a) if a in args else -1
-                            if var_pos >= 0 and var_pos < len(patterns):
-                                entity = patterns[var_pos]
-                                if entity in tokens or self.canonical_symbol(entity) in tokens:
-                                    bindings[a] = entity
-                                    continue
-
-                        # Strategy 3: look for any entity in text that could fill this role
-                        for token in tokens:
-                            skip_words = (
-                                self.STOPWORDS
-                                | self.GENERIC_SORTALS
-                                | self._schema_alignment.generic_terms
-                                | {
-                                    "almost",
-                                    "any",
-                                    "each",
-                                    "every",
-                                    "many",
-                                    "much",
-                                    "only",
-                                }
-                            )
-                            if token.lower() in skip_words or len(token) < 3:
-                                continue
-                            # Check if this entity appears in any existing fact with this predicate
-                            for fact in existing_facts:
-                                if head in fact and token in fact:
-                                    bindings[a] = token
-                                    break
-                            if a in bindings:
-                                break
-
-                        if a not in bindings:
-                            all_grounded = False
-                    else:
-                        canon = self.canonical_symbol(a)
-                        if a != canon:
-                            bindings[a] = canon
-
-            if not all_grounded:
-                continue
-
-            # Check if all premise atoms are satisfied
-            premises_satisfied = True
-            for head, args, negated in premise_atoms:
-                bound_args = [bindings.get(a, self.canonical_symbol(a)) for a in args]
-                fact_atom = f"({head} {' '.join(bound_args)})"
-                if negated:
-                    if fact_atom not in negated_facts:
-                        premises_satisfied = False
-                        break
-                else:
-                    if fact_atom not in existing_facts:
-                        premises_satisfied = False
-                        break
-
-            if not premises_satisfied:
-                # Materialize premises (colleague's approach)
-                if not skip_materialization:
-                    for head, args, negated in premise_atoms:
-                        if negated:
-                            continue  # Don't materialize negated premises as positive facts
-                        bound_args = [bindings.get(a, self.canonical_symbol(a)) for a in args]
-                        fact_atom = f"({head} {' '.join(bound_args)})"
-                        fact_name = f"materialized_{self.canonical_symbol(head)}_fact"
-                        facts.append(f"(: {fact_name} {fact_atom} (STV 1.0 1.0))")
-                continue
-
-            # All premises satisfied → materialize conclusions
-            for conc_match in re.finditer(r"\(([A-Za-z][A-Za-z0-9_]*)\s+([^()]+?)\)", conclusions_blob):
-                conc_head = conc_match.group(1)
-                conc_args_raw = conc_match.group(2).strip()
-                conc_args = [a for a in conc_args_raw.split() if a]
-
-                bound_args = []
-                for a in conc_args:
-                    if a.startswith(("$", "?")):
-                        # Look up binding for this variable
-                        if a in bindings:
-                            bound_args.append(bindings[a])
-                        else:
-                            name = self.canonical_symbol(a[1:])
-                            if name in tokens:
-                                bound_args.append(name)
-                            else:
-                                bound_args = []
-                                break
-                    else:
-                        bound_args.append(self.canonical_symbol(a))
-
-                if bound_args:
-                    conc_atom = f"({conc_head} {' '.join(bound_args)})"
-                    if conc_atom not in existing_facts:
-                        conc_name = f"materialized_{self.canonical_symbol(conc_head)}_fact"
-                        facts.append(f"(: {conc_name} {conc_atom} (STV 1.0 1.0))")
-
-        return self.dedupe_preserve_order(facts)
 
     def dedupe_preserve_order(self, items: List[str]) -> List[str]:
         seen = set()

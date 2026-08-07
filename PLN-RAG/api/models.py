@@ -67,6 +67,9 @@ class QueryResponse(BaseModel):
         "entailed", "probabilistic", "explicit_negative", "conflict", "unknown"
     ] = "unknown"
     unresolved_mentions: List[Dict[str, Any]] = Field(default_factory=list)
+    # Proved values for an open (which/what/who) question. Empty for boolean
+    # questions, which are answered by proof_status instead.
+    bindings: List[Dict[str, Any]] = Field(default_factory=list)
     normalization_evidence: List[Dict[str, Any]] = Field(default_factory=list)
     rejection_reasons: List[str] = Field(default_factory=list)
 
@@ -111,6 +114,9 @@ class LangExtractPostprocessed(BaseModel):
     mention_prepass: Dict[str, Any] = Field(default_factory=dict)
     mention_prompt_hint: str = ""
     statement_sources: Dict[str, Dict[str, Any]] = Field(default_factory=dict)
+    # Set when the LangExtract provider call failed. Empty output plus an empty
+    # provider_error means the model genuinely extracted nothing.
+    provider_error: str = ""
 
 
 class LangExtractQueryPostprocessed(BaseModel):
@@ -120,6 +126,7 @@ class LangExtractQueryPostprocessed(BaseModel):
     mention_prepass: Dict[str, Any] = Field(default_factory=dict)
     mention_prompt_hint: str = ""
     query_sources: Dict[str, Dict[str, Any]] = Field(default_factory=dict)
+    provider_error: str = ""
 
 
 class DebugIngestRequest(BaseModel):
@@ -186,8 +193,13 @@ class DebugQueryResponse(BaseModel):
         "entailed", "probabilistic", "explicit_negative", "conflict", "unknown"
     ] = "unknown"
     unresolved_mentions: List[Dict[str, Any]] = Field(default_factory=list)
+    # Proved values for an open (which/what/who) question. Empty for boolean
+    # questions, which are answered by proof_status instead.
+    bindings: List[Dict[str, Any]] = Field(default_factory=list)
     normalization_evidence: List[Dict[str, Any]] = Field(default_factory=list)
     rejection_reasons: List[str] = Field(default_factory=list)
+    # One entry per discarded query candidate: query, source, gate stage, detail.
+    candidate_rejections: List[Dict[str, Any]] = Field(default_factory=list)
 
 
 class DebugQdrantPoint(BaseModel):

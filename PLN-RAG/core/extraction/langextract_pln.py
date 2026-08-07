@@ -5,6 +5,12 @@ import re
 from dataclasses import dataclass, field
 from typing import Any, Iterable, Optional, Sequence
 
+from core.pln.symbol_normalization import (
+    is_identifier_like,
+    singularize as _singularize,
+    split_symbol_parts,
+)
+
 logger = logging.getLogger(__name__)
 
 
@@ -39,19 +45,6 @@ _PLN_STRUCTURAL_HEADS = {
     "Or",
     "Not",
     "IsA",
-}
-_SINGULAR_INVARIANT_SUFFIXES = ("ics", "ous", "ness", "ship", "ment")
-_SINGULAR_INVARIANT_WORDS = {
-    "series",
-    "species",
-    "rabies",
-    "news",
-    "physics",
-    "mathematics",
-    "economics",
-    "electronics",
-    "ethics",
-    "politics",
 }
 _MODAL_HEAD_TERMS = {
     "can",
@@ -300,6 +293,16 @@ def is_safe_statement_extraction(ext: Any) -> tuple[bool, str]:
             return False, "rule has empty head_predicate"
         if not _has_nonempty(attrs, "body"):
             return False, "rule has empty body"
+        if _rule_head_hides_negation(attrs):
+            # Guards the polarity repair above: if a head still carries a negation
+            # word after stripping, the intended proposition is unclear, and
+            # guessing would risk asserting the opposite of the source.
+            return (
+                False,
+                "rule head lexicalizes negation that could not be resolved into "
+                "an explicit (Not ...) conclusion; set polarity=negative and give "
+                "the positive predicate",
+            )
         if _has_unencoded_possibility_modal(ext):
             return False, "modal rule requires modal predicate"
         try:
@@ -308,6 +311,52 @@ def is_safe_statement_extraction(ext: Any) -> tuple[bool, str]:
             return False, f"rule body unparseable: {exc}"
 
     return True, ""
+
+
+_NEGATION_PREFIXES = ("not-", "no-", "non-", "never-", "not_", "no_", "never_")
+_NEGATIVE_POLARITY_VALUES = {"negative", "negated", "false", "no"}
+
+
+def _resolve_conclusion_polarity(
+    attrs: dict[str, Any],
+    head_predicate: str,
+) -> tuple[bool, str]:
+    """
+    Decide whether a rule concludes a negation, and return the bare predicate.
+
+    Two signals, in order: an explicit `polarity` attribute, then a negation word
+    leading the predicate name. The second exists because a model that has not been
+    told about `polarity` will reliably write `not-eligible-for-renewal` instead,
+    and silently accepting that as a positive predicate is how a proof of the
+    opposite of the question gets reported as a "yes".
+    """
+    polarity = str(attrs.get("polarity", "") or "").strip().lower()
+    normalized = _normalize_predicate(head_predicate)
+    lexical_negation = normalized.startswith(_NEGATION_PREFIXES)
+
+    negated = polarity in _NEGATIVE_POLARITY_VALUES or lexical_negation
+    if not negated:
+        return False, head_predicate
+
+    if lexical_negation:
+        for prefix in _NEGATION_PREFIXES:
+            if normalized.startswith(prefix):
+                stripped = normalized[len(prefix):].strip("-_")
+                if stripped:
+                    return True, stripped
+                break
+    return True, head_predicate
+
+
+def _rule_head_hides_negation(attrs: dict[str, Any]) -> bool:
+    """True when a rule head still lexicalizes negation after polarity handling."""
+    head = str(attrs.get("head_predicate", "") or "")
+    if not head.strip():
+        return False
+    negated, resolved = _resolve_conclusion_polarity(attrs, head)
+    if not negated:
+        return False
+    return _normalize_predicate(resolved).startswith(_NEGATION_PREFIXES)
 
 
 def _is_epistemic_negation_without_status(ext: Any) -> bool:
@@ -403,6 +452,7 @@ def _statement_payload_from_extraction(
 
     if cls == "rule":
         head_predicate = _required(attrs, "head_predicate")
+        negated, head_predicate = _resolve_conclusion_polarity(attrs, head_predicate)
         head_args = _coerce_argument_list(attrs.get("head_args", "$x"), split_strings=True)
         head_expr = [head_predicate, *head_args]
         body_expr = _parse_sexp(_required(attrs, "body"))
@@ -411,11 +461,19 @@ def _statement_payload_from_extraction(
             raise PLNTranslationError("rule body produced no premises")
         premise_block = " ".join(premises)
         conclusion = _translate_predicate_expr(head_expr, ctx)
+        if negated:
+            # Rule conclusions could not express negation before, so "the borrower
+            # is not eligible for renewal" became the predicate
+            # `NotEligibleForRenewal`. Nothing downstream could tell that apart
+            # from an ordinary predicate, and the system answered "yes" to
+            # "is the borrower eligible?" while citing a valid proof.
+            conclusion = f"(Not {conclusion})"
         payload = (
             f"(Implication (Premises {premise_block}) "
             f"(Conclusions {conclusion}))"
         )
-        return _statement_name(head_expr, index, "rule", ctx), payload
+        name = _statement_name(head_expr, index, "neg_rule" if negated else "rule", ctx)
+        return name, payload
 
     raise PLNTranslationError(f"unsupported statement class '{cls}'")
 
@@ -549,6 +607,9 @@ def _normalize_predicate(value: str) -> str:
     return text.lower().replace(" ", "-")
 
 
+_LEADING_DETERMINERS = {"the", "a", "an", "this", "that", "these", "those"}
+
+
 def _normalize_value(value: str, *, ctx: Optional[dict[str, Any]]) -> str:
     text = value.strip()
     if not text:
@@ -556,6 +617,11 @@ def _normalize_value(value: str, *, ctx: Optional[dict[str, Any]]) -> str:
     if text.startswith(("(", '"', "$", "?")):
         return text
     parts = text.split()
+    # A leading determiner is grammar, not identity: "the turbine" and "turbine"
+    # name the same entity, but produced `the_turbine` and `turbine` as distinct
+    # symbols, so a question about one could not reach a fact about the other.
+    while len(parts) > 1 and parts[0].lower() in _LEADING_DETERMINERS:
+        parts = parts[1:]
     canonical = [_canonicalize_token(part, ctx) for part in parts]
     return "-".join(part for part in canonical if part)
 
@@ -565,28 +631,12 @@ def _canonicalize_token(token: str, ctx: Optional[dict[str, Any]]) -> str:
         return token
     if token.startswith(("$", "?")):
         return token
-    if "-" in token or any(ch.isdigit() for ch in token):
+    if "-" in token or is_identifier_like(token):
         return token
     lower = token.lower()
     if ctx and lower in ctx.get("proper", {}):
         return ctx["proper"][lower]
     return _singularize(lower)
-
-
-def _singularize(word: str) -> str:
-    if len(word) <= 3:
-        return word
-    if word in _SINGULAR_INVARIANT_WORDS:
-        return word
-    if word.endswith("ies") and len(word) > 4:
-        return word[:-3] + "y"
-    if word.endswith("ses") and len(word) > 4:
-        return word[:-2]
-    if word.endswith(_SINGULAR_INVARIANT_SUFFIXES):
-        return word
-    if word.endswith("s") and not word.endswith(("ss", "us", "is")):
-        return word[:-1]
-    return word
 
 
 def _parse_sexp(text: str) -> Any:
@@ -755,10 +805,14 @@ def _snake_symbol(value: str, *, preserve_case: bool = False) -> str:
     value = value.strip()
     if not value:
         return value
-    value = re.sub(r"(?<=[a-z0-9])(?=[A-Z])", "_", value)
-    value = re.sub(r"[^A-Za-z0-9_]+", "_", value)
-    value = re.sub(r"_+", "_", value).strip("_")
-    return value if preserve_case else value.lower()
+    if preserve_case:
+        # Rule variables ($x, $Item) keep their casing; splitting them would
+        # break the binding names the reasoner matches on.
+        value = re.sub(r"[^A-Za-z0-9_]+", "_", value)
+        return re.sub(r"_+", "_", value).strip("_")
+    # Shared with query-side canonicalization so `HbA1c` yields the same symbol
+    # from either direction. See core/pln/symbol_normalization.
+    return "_".join(part.lower() for part in split_symbol_parts(value))
 
 
 def _kebab_symbol(value: str) -> str:

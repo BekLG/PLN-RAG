@@ -120,6 +120,13 @@ def run_case(api_base: str, case: dict[str, Any]) -> dict[str, Any]:
                 "unresolved_mentions": response.get("unresolved_mentions", []),
                 "normalization_evidence": response.get("normalization_evidence", []),
                 "rejection_reasons": response.get("rejection_reasons", []),
+                # Per-candidate gate audit. Without this a no_query result cannot
+                # be attributed to the gate that caused it.
+                "candidate_rejections": response.get("candidate_rejections", []),
+                "translator_queries": (
+                    response.get("langextract_postprocessed", {}) or {}
+                ).get("queries", []),
+                "pln_canonicalized_queries": response.get("pln_canonicalized_queries", []),
                 "failure_category": failure_category(expected, observed, response),
                 "seconds": round(query_seconds, 4),
             }
@@ -182,7 +189,22 @@ def benchmark_metrics(results: list[dict[str, Any]]) -> dict[str, Any]:
     validated_proofs = [
         query for query in decisive if query.get("proof_validated") is True
     ]
+    # Which gate discarded candidates, and how often a usable parser query was
+    # produced but no candidate survived to execution.
+    stages: dict[str, int] = {}
+    for query in queries:
+        for rejection in query.get("candidate_rejections", []) or []:
+            stage = str(rejection.get("stage") or "unknown")
+            stages[stage] = stages.get(stage, 0) + 1
+    suppressed = [
+        query
+        for query in queries
+        if query.get("translator_queries")
+        and not query.get("execution_candidates")
+    ]
     return {
+        "rejection_stages": dict(sorted(stages.items(), key=lambda kv: -kv[1])),
+        "suppressed_candidate_count": len(suppressed),
         "by_expected_status": expected_groups,
         "macro_status_accuracy": round(statistics.mean(populated), 4) if populated else 0.0,
         "direct_query_count": len(direct),

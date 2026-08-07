@@ -31,6 +31,29 @@ Run all cases with:
 python benchmark\run_benchmark.py
 ```
 
+## stress25_v1 (discovery suite, no labels)
+
+`stress25_v1.json` holds 25 real-world cases: 15 paper abstracts, 7 web snippet
+bundles, and 3 EntailmentBank items, each with a single `user_query`.
+
+It carries **no `expected_status` labels**, so it cannot measure accuracy. Run it
+to measure whether the query path reaches an executable target on real text, and
+which gate discards candidates when it does not:
+
+```powershell
+python benchmark\run_stress_suite.py
+python benchmark\run_stress_suite.py --case-id A01 --case-id A02
+```
+
+Reported: `executed_rate`, `no_query_rate`, `weakly_aligned_rate`,
+`proof_found_rate`, `rejection_stages`, and `suppressed_candidate_count` — cases
+where the parser produced a query that no execution candidate survived from. That
+last number is the direct measure of over-aggressive candidate filtering.
+
+Because `cases.json` is hand-written and its vocabulary is reflected in the query
+gates, treat it as a regression guard and use this suite plus fresh probe cases to
+measure progress.
+
 Run focused cases while developing with one or more `--case-id` arguments. The
 report separates direct-query accuracy from `unanswered` routing and records
 overclaims, invalid targets, no-query failures, validated-proof rate, and p50/p95

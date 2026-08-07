@@ -1,14 +1,10 @@
-fastapi>=0.111.0
-uvicorn[standard]>=0.29.0
-pydantic>=2.0.0
-pydantic-settings>=2.0.0
-dspy-ai>=2.4.0
-openai>=1.0.0
-google-generativeai>=0.8.0
-langextract>=1.0.0
-spacy>=3.7.0
-faiss-cpu>=1.8.0
-numpy>=1.26.0
-httpx>=0.27.0
-python-dotenv>=1.0.0
-git+https://github.com/rTreutlein/NL2PLN.git@feature/pln-premises-conclusions
+# Default install for this branch: the LangExtract parser stack.
+#
+# This file used to pull NL2PLN, spacy, faiss-cpu, and dspy-ai. None are imported
+# on this branch (the only mention of faiss is a config field marked "no longer
+# used"), and NL2PLN is a git dependency that slows or breaks a plain
+# `pip install -r requirements.txt`. Docker Compose already builds with
+# requirements.langextract.txt, so make the default match what actually runs.
+#
+# For the older NL2PLN-based parser path, install requirements.pln.txt instead.
+-r requirements.langextract.txt

@@ -1,6 +1,8 @@
 import time
+import traceback
 from contextlib import asynccontextmanager
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, Request
+from fastapi.responses import JSONResponse
 
 from api.models import (
     IngestRequest, IngestResponse,
@@ -36,6 +38,24 @@ app = FastAPI(
     version="0.1.0",
     lifespan=lifespan,
 )
+
+
+@app.exception_handler(Exception)
+async def unhandled_exception_handler(request: Request, exc: Exception) -> JSONResponse:
+    """
+    Backstop so an unexpected failure returns a structured body instead of an
+    opaque traceback. Provider failures are handled upstream and degrade to a
+    no_query result; anything reaching here is a genuine bug worth surfacing.
+    """
+    traceback.print_exc()
+    return JSONResponse(
+        status_code=500,
+        content={
+            "error": type(exc).__name__,
+            "detail": str(exc),
+            "path": str(request.url.path),
+        },
+    )
 
 
 def get_service() -> PLNRAGService:

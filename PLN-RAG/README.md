@@ -35,9 +35,11 @@ never establishes truth by similarity.
 | `parsers/` | LangExtract parser integration |
 | `storage/` | SQLite evidence ledger and Qdrant/Ollama index adapters |
 | `debug_ui/` | Streamlit inspection UI |
-| `tests/` | Automatic unit and safety tests |
-| `tests/manual/` | Manual experiments that may require live LLM/Ollama/Qdrant services |
+| `benchmark/` | Accuracy cases, the stress25_v1 discovery suite, and their runners |
 | `docs/` | Architecture notes, fix notes, and research references |
+
+There is no automated test suite yet. Correctness is currently checked with the
+runners in `benchmark/` against a live API.
 
 ### Dynamic predicate mapping
 

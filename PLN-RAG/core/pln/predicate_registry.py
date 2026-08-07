@@ -475,6 +475,23 @@ class PredicateRegistry:
             )
         return cards
 
+    def card_for(self, predicate: str, arity: int) -> PredicateCard | None:
+        """Look up one observed predicate card, or None if it was never seen."""
+        entry = self.entries.get(f"{predicate}/{int(arity)}")
+        if not entry:
+            return None
+        return PredicateCard(
+            predicate=entry.predicate,
+            arity=entry.arity,
+            argument_types=entry.argument_types or ["entity"] * entry.arity,
+            definition=(entry.definitions[0] if entry.definitions else ""),
+            labels=entry.labels,
+            examples=entry.examples,
+            source_atoms=entry.source_atoms,
+            roles=entry.roles,
+            origin="registry",
+        )
+
     def all_signatures(self, statements: List[str]) -> List[dict]:
         facts, conclusions = self.schema_aligner.collect_available_signatures(
             statements,

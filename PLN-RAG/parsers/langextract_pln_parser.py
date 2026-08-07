@@ -5,7 +5,7 @@ import re
 from typing import Any, List
 from dataclasses import dataclass, field
 
-from config import get_settings
+from config import PROVIDER_PREFIXES, get_settings, normalize_model_id
 from core.discourse import ChunkCorefResult, MentionPrepass, MentionPrepassResult
 from core.extraction.langextract_chunker import LangExtractChunker
 from core.extraction.langextract_examples import load_langextract_prompt_spec
@@ -26,6 +26,15 @@ from core.pln.schema_alignment import PLNSchemaAligner
 from core.pln.predicate_registry import PredicateRegistry
 
 
+class ParserProviderError(RuntimeError):
+    """
+    The LangExtract provider call failed (auth, quota, timeout, bad model id).
+
+    Distinct from a translation error: nothing is wrong with the input, so callers
+    should degrade to an explicit no-query result rather than fail the request.
+    """
+
+
 @dataclass
 class ParseResult:
     """Result of parsing natural language into PLN."""
@@ -44,10 +53,13 @@ class LangExtractPLNParser:
 
     def __init__(self):
         cfg = get_settings()
-        self._model_id = _first_nonempty(
-            cfg.langextract_model_id,
-            os.environ.get("LANGEXTRACT_MODEL_ID"),
-            "gemini-2.5-flash",
+        # The env fallback bypasses Settings, so normalize it here too.
+        self._model_id = normalize_model_id(
+            _first_nonempty(
+                cfg.langextract_model_id,
+                os.environ.get("LANGEXTRACT_MODEL_ID"),
+                "gemini-2.5-flash",
+            )
         )
         self._model_url = _first_nonempty(
             cfg.langextract_model_url,
@@ -123,11 +135,46 @@ class LangExtractPLNParser:
                 "or GEMINI_API_KEY, or set LANGEXTRACT_MODEL_URL for a local model."
             )
 
+        self._preflight_model_id()
+
         spec = load_langextract_prompt_spec(cfg.langextract_examples_path)
         self._statement_prompt = spec.statement_prompt
         self._query_prompt = spec.query_prompt
         self._statement_examples = spec.statement_examples
         self._query_examples = spec.query_examples
+
+    def _preflight_model_id(self) -> None:
+        """
+        Resolve the model id against LangExtract's provider router at startup.
+
+        Without this, a misconfigured id fails on every extraction call instead,
+        which surfaces as empty results or a 500 per request rather than as an
+        obvious configuration error.
+        """
+        if self._model_url:
+            # An explicit endpoint bypasses the router entirely.
+            return
+        try:
+            from langextract import providers
+
+            # Providers register lazily; without this the registry is empty and
+            # every id looks unresolvable.
+            providers.load_builtins_once()
+            providers.load_plugins_once()
+            router = providers.router
+        except Exception as exc:  # pragma: no cover - defensive import
+            print(f"[LangExtractPLNParser] provider router unavailable, skipping preflight: {exc}")
+            return
+        try:
+            router.resolve(self._model_id)
+        except Exception as exc:
+            raise ValueError(
+                f"LANGEXTRACT_MODEL_ID={self._model_id!r} is not resolvable by "
+                f"LangExtract ({exc}). Provider prefixes are stripped "
+                f"automatically for {sorted(PROVIDER_PREFIXES)}, so pass a bare "
+                "model id such as 'gemini-2.5-flash' or 'gpt-4o-mini', or set "
+                "LANGEXTRACT_MODEL_URL for a local endpoint."
+            ) from exc
 
     def create_chunker(self) -> LangExtractChunker:
         return LangExtractChunker()
@@ -193,7 +240,7 @@ class LangExtractPLNParser:
             )
         except Exception as exc:
             print(f"[LangExtractPLNParser] Failed for '{text}': {exc}")
-            return ParseResult()
+            return ParseResult(metadata=_failure_metadata(exc))
 
     def debug_parse(
         self,
@@ -206,7 +253,11 @@ class LangExtractPLNParser:
             context,
             self._predicate_heads,
         ) + self._mention_hint(mention_prepass)
-        extractions = self._extract(text, prompt, self._statement_examples)
+        try:
+            extractions = self._extract(text, prompt, self._statement_examples)
+        except ParserProviderError as exc:
+            print(f"[LangExtractPLNParser] debug_parse provider failure: {exc}")
+            return self._empty_debug_statements(mention_prepass, str(exc))
         self._remember_predicates(collect_predicate_heads(extractions))
 
         translated = translate_extractions_to_pln(
@@ -292,7 +343,7 @@ class LangExtractPLNParser:
             )
         except Exception as exc:
             print(f"[LangExtractPLNParser] Query failed for '{text}': {exc}")
-            return ParseResult()
+            return ParseResult(metadata=_failure_metadata(exc))
 
     def debug_parse_query(self, text: str, context: list[str]) -> dict[str, Any]:
         mention_prepass = self._build_mention_prepass(text)
@@ -300,7 +351,11 @@ class LangExtractPLNParser:
             context,
             self._predicate_heads,
         ) + self._mention_hint(mention_prepass)
-        extractions = self._extract(text, prompt, self._query_examples)
+        try:
+            extractions = self._extract(text, prompt, self._query_examples)
+        except ParserProviderError as exc:
+            print(f"[LangExtractPLNParser] debug_parse_query provider failure: {exc}")
+            return self._empty_debug_queries(mention_prepass, str(exc))
         translated = translate_query_extractions_to_pln(
             extractions,
             source_text=text,
@@ -335,6 +390,47 @@ class LangExtractPLNParser:
             "predicate_registry": processed.registry_decisions,
         }
 
+    def _empty_debug_statements(
+        self,
+        mention_prepass: MentionPrepassResult,
+        provider_error: str,
+    ) -> dict[str, Any]:
+        return {
+            "langextract_postprocessed": {
+                "statements": [],
+                "rejected": [],
+                "canonicalization_context": {},
+                "mention_prepass": mention_prepass.to_dict(),
+                "mention_prompt_hint": self._mention_hint(mention_prepass).strip(),
+                "statement_sources": {},
+                "provider_error": provider_error,
+            },
+            "pln_canonicalized": [],
+            "schema_alignment": [],
+            "predicate_registry": [],
+        }
+
+    def _empty_debug_queries(
+        self,
+        mention_prepass: MentionPrepassResult,
+        provider_error: str,
+    ) -> dict[str, Any]:
+        return {
+            "langextract_postprocessed": {
+                "queries": [],
+                "rejected": [],
+                "canonicalization_context": {},
+                "mention_prepass": mention_prepass.to_dict(),
+                "mention_prompt_hint": self._mention_hint(mention_prepass).strip(),
+                "query_sources": {},
+                "provider_error": provider_error,
+            },
+            "pln_canonicalized": [],
+            "supporting_statements": [],
+            "schema_alignment": [],
+            "predicate_registry": [],
+        }
+
     def _extract(self, text: str, prompt: str, examples: list[Any]) -> list[Any]:
         import langextract as lx
 
@@ -343,18 +439,25 @@ class LangExtractPLNParser:
         if cached is not None:
             return list(cached)
 
-        result = lx.extract(
-            text_or_documents=text,
-            prompt_description=prompt,
-            examples=examples,
-            model_id=self._model_id,
-            model_url=self._model_url,
-            api_key=self._api_key,
-            extraction_passes=self._extraction_passes,
-            max_char_buffer=max(len(text) + 1, 1000),
-            max_workers=self._max_workers,
-            show_progress=False,
-        )
+        try:
+            result = lx.extract(
+                text_or_documents=text,
+                prompt_description=prompt,
+                examples=examples,
+                model_id=self._model_id,
+                model_url=self._model_url,
+                api_key=self._api_key,
+                extraction_passes=self._extraction_passes,
+                max_char_buffer=max(len(text) + 1, 1000),
+                max_workers=self._max_workers,
+                show_progress=False,
+            )
+        except Exception as exc:
+            # Single choke point for provider failures so every caller degrades
+            # the same way instead of some raising and some returning empty.
+            raise ParserProviderError(
+                f"{type(exc).__name__}: {exc}"
+            ) from exc
         extracted = list(result.extractions) if hasattr(result, "extractions") else []
         if self._cache_enabled:
             if len(self._extraction_cache) >= self._cache_max_entries:
@@ -397,6 +500,14 @@ class LangExtractPLNParser:
 
     def _mention_hint(self, result: MentionPrepassResult) -> str:
         return result.prompt_hint()
+
+
+def _failure_metadata(exc: Exception) -> dict[str, Any]:
+    """Carry the failure reason out of parse/parse_query instead of losing it."""
+    message = f"{type(exc).__name__}: {exc}"
+    if isinstance(exc, ParserProviderError):
+        return {"provider_error": str(exc)}
+    return {"parse_error": message}
 
 
 def _first_nonempty(*values: Any) -> str | None:
