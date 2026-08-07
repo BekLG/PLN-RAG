@@ -1,0 +1,10 @@
+# Default install for this branch: the LangExtract parser stack.
+#
+# This file used to pull NL2PLN, spacy, faiss-cpu, and dspy-ai. None are imported
+# on this branch (the only mention of faiss is a config field marked "no longer
+# used"), and NL2PLN is a git dependency that slows or breaks a plain
+# `pip install -r requirements.txt`. Docker Compose already builds with
+# requirements.langextract.txt, so make the default match what actually runs.
+#
+# For the older NL2PLN-based parser path, install requirements.pln.txt instead.
+-r requirements.langextract.txt

@@ -1,0 +1,2 @@
+-r requirements.common.txt
+git+https://github.com/rTreutlein/NL2PLN.git@feature/pln-premises-conclusions

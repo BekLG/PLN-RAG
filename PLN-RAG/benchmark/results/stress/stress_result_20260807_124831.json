@@ -1,0 +1,2759 @@
+{
+  "created_at": "2026-08-07T12:22:34.587236+00:00",
+  "api_base": "http://localhost:8000",
+  "suite_file": "stress.json",
+  "labels_available": false,
+  "metrics": {
+    "case_count": 25,
+    "executed_rate": 0.92,
+    "no_query_rate": 0.08,
+    "weakly_aligned_rate": 0.0,
+    "proof_found_rate": 0.2,
+    "suppressed_candidate_count": 2,
+    "suppressed_case_ids": [
+      "A09",
+      "E02"
+    ],
+    "request_error_count": 0,
+    "request_error_case_ids": [],
+    "rejection_stages": {
+      "semantic_gate_not_considered": 195,
+      "semantic_gate": 88,
+      "arity_conflict": 2
+    },
+    "by_category": {
+      "direct_factual_relation": {
+        "total": 3,
+        "executed": 3,
+        "no_query": 0
+      },
+      "comparative_claim": {
+        "total": 3,
+        "executed": 3,
+        "no_query": 0
+      },
+      "causal_mechanistic_claim": {
+        "total": 3,
+        "executed": 2,
+        "no_query": 1
+      },
+      "indicator_proxy_language": {
+        "total": 3,
+        "executed": 3,
+        "no_query": 0
+      },
+      "multi_sentence_implicit_inference": {
+        "total": 2,
+        "executed": 2,
+        "no_query": 0
+      },
+      "ambiguous_hard_scientific_phrasing": {
+        "total": 1,
+        "executed": 1,
+        "no_query": 0
+      },
+      "short_noisy_snippet": {
+        "total": 2,
+        "executed": 2,
+        "no_query": 0
+      },
+      "multi_source_redundant_snippets": {
+        "total": 2,
+        "executed": 2,
+        "no_query": 0
+      },
+      "conflicting_or_partially_overlapping_snippets": {
+        "total": 1,
+        "executed": 1,
+        "no_query": 0
+      },
+      "underspecified_entity_context": {
+        "total": 2,
+        "executed": 2,
+        "no_query": 0
+      },
+      "simple_2_step_entailment": {
+        "total": 1,
+        "executed": 1,
+        "no_query": 0
+      },
+      "three_step_entailment": {
+        "total": 1,
+        "executed": 0,
+        "no_query": 1
+      },
+      "harder_multi_intermediate_entailment": {
+        "total": 1,
+        "executed": 1,
+        "no_query": 0
+      }
+    },
+    "intent_modes": {
+      "open": 14,
+      "boolean": 7,
+      "explanation": 4
+    },
+    "proof_status_counts": {
+      "unknown": 20,
+      "positive": 4,
+      "negative": 1
+    },
+    "latency_seconds": {
+      "ingest_p50": 37.2095,
+      "ingest_p95": 95.2121,
+      "query_p50": 9.1836,
+      "query_p95": 20.6437
+    }
+  },
+  "cases": [
+    {
+      "id": "A01",
+      "name": "A01_digital_diabetes_logbook",
+      "category": "direct_factual_relation",
+      "source_type": "abstract",
+      "question": "Did the digital diabetes logbook improve glycemic control?",
+      "ingest_error": "",
+      "ingest_seconds": 287.5237,
+      "atom_count": 12,
+      "quarantined_count": 4,
+      "query_error": "",
+      "translator_queries": [
+        "(: $prf (ImproveGlycemicControl digital_diabete_logbook) $tv)"
+      ],
+      "provider_error": "",
+      "pln_canonicalized_queries": [
+        "(: $prf (ImproveGlycemicControl digital_diabete_logbook) $tv)"
+      ],
+      "qdrant_aligned_queries": [
+        "(: $prf (DemonstratedSignificantIncreaseInLikelihoodOfAchievingOptimalGlycemicControl secondary_analysis_of_rct) $tv)",
+        "(: $prf (ShowedSignificantReductionsIn observational_real_world_data mean_blood_glucose) $tv)"
+      ],
+      "execution_candidates": [
+        "(: $prf (ImproveGlycemicControl digital_diabete_logbook) $tv)"
+      ],
+      "executed_query": "(: $prf (ImproveGlycemicControl digital_diabete_logbook) $tv)",
+      "query_source": "parser",
+      "query_status": "well_aligned",
+      "intent_mode": "boolean",
+      "proof_status": "unknown",
+      "support_kind": "unknown",
+      "candidate_rejections": [
+        {
+          "query": "(: $prf (DemonstratedSignificantIncreaseInLikelihoodOfAchievingOptimalGlycemicControl secondary_analysis_of_rct) $tv)",
+          "source": "deterministic",
+          "stage": "semantic_gate",
+          "detail": "related (confidence 0.80): This target is about a 'secondary analysis of RCT' demonstrating an increase in likelihood of achieving optimal glycemic control, which is related to the topic but not directly about the digital diabetes logbook itself improving glycemic control. It's a study finding, not the logbook's direct action."
+        },
+        {
+          "query": "(: $prf (ShowedGreatestReductionsInMeanBloodGlucose participant_with_hba1c_above_8_5_at_baseline) $tv)",
+          "source": "deterministic",
+          "stage": "semantic_gate",
+          "detail": "related (confidence 0.70): This target is about 'participants with hba1c above 8 5 at baseline' showing reductions in blood glucose, which is a related outcome but not directly about the digital diabetes logbook improving glycemic control. It focuses on a specific subgroup and a specific measure, not the logbook's overall effect on glycemic control."
+        },
+        {
+          "query": "(: $prf (OccurredAfter significant_increase_in_likelihood_of_achieving_optimal_glycemic_control 3month_of_using_my_sugr_logbook) $tv)",
+          "source": "deterministic",
+          "stage": "semantic_gate",
+          "detail": "related (confidence 0.60): This target describes an event ('significant increase in likelihood of achieving optimal glycemic control') occurring after '3 months of using my sugr logbook'. While related to the topic of glycemic control and logbooks, it describes a temporal relationship rather than directly stating whether the digital diabetes logbook improved glycemic control."
+        },
+        {
+          "query": "(: $prf (ShowedSignificantReductionsIn observational_real_world_data mean_blood_glucose) $tv)",
+          "source": "deterministic",
+          "stage": "semantic_gate",
+          "detail": "related (confidence 0.70): This target states that 'observational real world data' showed significant reductions in 'mean blood glucose'. While related to glycemic control, it attributes the reduction to data, not directly to the digital diabetes logbook, and is a more general statement."
+        },
+        {
+          "query": "(: $prf (Has sustained_reduction_in_mean_blood_glucose mean_decrease 198_mg_dl) $tv)",
+          "source": "deterministic",
+          "stage": "semantic_gate_not_considered",
+          "detail": "ranked below top 5 by embedding similarity (score 0.621)"
+        },
+        {
+          "query": "(: $prf (Has reduction_in_mean_blood_glucose type_1_value 822_mg_dl) $tv)",
+          "source": "deterministic",
+          "stage": "semantic_gate_not_considered",
+          "detail": "ranked below top 5 by embedding similarity (score 0.618)"
+        },
+        {
+          "query": "(: $prf (Has reduction_in_mean_blood_glucose type_2_value 1046_mg_dl) $tv)",
+          "source": "deterministic",
+          "stage": "semantic_gate_not_considered",
+          "detail": "ranked below top 5 by embedding similarity (score 0.617)"
+        },
+        {
+          "query": "(: $prf (RevealedSustainedReductionIn long_term_analys mean_blood_glucose) $tv)",
+          "source": "deterministic",
+          "stage": "semantic_gate_not_considered",
+          "detail": "ranked below top 5 by embedding similarity (score 0.617)"
+        },
+        {
+          "query": "(: $prf (OccurredAfter significant_reduction_in_mean_blood_glucose 3and_12_month_of_app_use) $tv)",
+          "source": "deterministic",
+          "stage": "semantic_gate_not_considered",
+          "detail": "ranked below top 5 by embedding similarity (score 0.583)"
+        },
+        {
+          "query": "(: $prf (OccurredAfter sustained_reduction_in_mean_blood_glucose 12month_of_app_use) $tv)",
+          "source": "deterministic",
+          "stage": "semantic_gate_not_considered",
+          "detail": "ranked below top 5 by embedding similarity (score 0.568)"
+        },
+        {
+          "query": "(: $prf (HadEstimatedHba1cAbove85AtBaseline participants) $tv)",
+          "source": "deterministic",
+          "stage": "semantic_gate_not_considered",
+          "detail": "ranked below top 5 by embedding similarity (score 0.562)"
+        },
+        {
+          "query": "(: $prf (OccurredAmong significant_reduction_in_mean_blood_glucose individual_with_elevated_baseline_hba1c_level) $tv)",
+          "source": "deterministic",
+          "stage": "semantic_gate_not_considered",
+          "detail": "ranked below top 5 by embedding similarity (score 0.551)"
+        }
+      ],
+      "rejection_reasons": [],
+      "answer": "I don't know - neither the proposition nor its explicit negation was proved.",
+      "seconds": 8.3907
+    },
+    {
+      "id": "A02",
+      "name": "A02_iot_glycemic_control_type2_diabetes",
+      "category": "direct_factual_relation",
+      "source_type": "abstract",
+      "question": "Did the IoT-based intervention reduce HbA1c?",
+      "ingest_error": "",
+      "ingest_seconds": 37.2095,
+      "atom_count": 18,
+      "quarantined_count": 11,
+      "query_error": "",
+      "translator_queries": [
+        "(: $prf (Reduced iot_based_intervention hba1c) $tv)"
+      ],
+      "provider_error": "",
+      "pln_canonicalized_queries": [
+        "(: $prf (Reduced iot_based_intervention hba1c) $tv)"
+      ],
+      "qdrant_aligned_queries": [],
+      "execution_candidates": [
+        "(: $prf (Reduced iot_based_intervention hba1c) $tv)",
+        "(: $prf (Reduced iot_based_approach hba1c_in_patient_with_type_2_diabete) $tv)"
+      ],
+      "executed_query": "(: $prf (Reduced iot_based_approach hba1c_in_patient_with_type_2_diabete) $tv)",
+      "query_source": "deterministic",
+      "query_status": "well_aligned",
+      "intent_mode": "boolean",
+      "proof_status": "negative",
+      "support_kind": "explicit_negative",
+      "candidate_rejections": [
+        {
+          "query": "(: $prf (MayBeRequiredToImprove iot_based_intervention_using_data_on_daily_glycemic_control_and_hba1c_level glycemic_control) $tv)",
+          "source": "deterministic",
+          "stage": "semantic_gate",
+          "detail": "related (confidence 0.80): This target is about whether an IoT-based intervention 'may be required to improve' glycemic control, which is related to HbA1c but is a different property (requirement for improvement vs. actual reduction)."
+        },
+        {
+          "query": "(: $prf (IsControversial utilization_of_long_term_effect_of_internet_of_thing_iot_on_glycemic_control) $tv)",
+          "source": "deterministic",
+          "stage": "semantic_gate",
+          "detail": "related (confidence 0.70): This target states that the 'utilization of long term effect of internet of thing iot on glycemic control' is controversial. While related to IoT and glycemic control, it's about the controversy of its utilization, not whether it reduced HbA1c."
+        },
+        {
+          "query": "(: $prf (AimedToExamine trial effect_of_an_iot_based_approach_for_type_2_diabete) $tv)",
+          "source": "deterministic",
+          "stage": "semantic_gate",
+          "detail": "related (confidence 0.70): This target states that a 'trial' 'aimed to examine' the 'effect of an iot based approach for type 2 diabete'. This is about the aim of a trial, not the actual outcome of whether HbA1c was reduced."
+        },
+        {
+          "query": "(: $prf (Has itg_in_per_protocol_set hba1c_change_52_week 0098_0_579) $tv)",
+          "source": "deterministic",
+          "stage": "semantic_gate_not_considered",
+          "detail": "ranked below top 5 by embedding similarity (score 0.595)"
+        },
+        {
+          "query": "(: $prf (Has hba1c_change_comparison_between_itg_and_ctg_in_per_protocol_set p_value 00201) $tv)",
+          "source": "deterministic",
+          "stage": "semantic_gate_not_considered",
+          "detail": "ranked below top 5 by embedding similarity (score 0.586)"
+        },
+        {
+          "query": "(: $prf (Has itg hba1c_change_52_week 0000_0_6225) $tv)",
+          "source": "deterministic",
+          "stage": "semantic_gate_not_considered",
+          "detail": "ranked below top 5 by embedding similarity (score 0.584)"
+        },
+        {
+          "query": "(: $prf (Has ctg_in_per_protocol_set hba1c_change_52_week 0027_0_571) $tv)",
+          "source": "deterministic",
+          "stage": "semantic_gate_not_considered",
+          "detail": "ranked below top 5 by embedding similarity (score 0.579)"
+        },
+        {
+          "query": "(: $prf (Has hba1c_change_comparison_between_itg_and_ctg p_value 08766) $tv)",
+          "source": "deterministic",
+          "stage": "semantic_gate_not_considered",
+          "detail": "ranked below top 5 by embedding similarity (score 0.578)"
+        },
+        {
+          "query": "(: $prf (Has ctg hba1c_change_52_week 0006_0_6449) $tv)",
+          "source": "deterministic",
+          "stage": "semantic_gate_not_considered",
+          "detail": "ranked below top 5 by embedding similarity (score 0.566)"
+        },
+        {
+          "query": "(: $prf (SupervisedToUtilize itg iot_automated_system) $tv)",
+          "source": "deterministic",
+          "stage": "semantic_gate_not_considered",
+          "detail": "ranked below top 5 by embedding similarity (score 0.533)"
+        },
+        {
+          "query": "(: $prf (Has 1159_adult hba1c 60_8_9_42_74_mmol_mol) $tv)",
+          "source": "deterministic",
+          "stage": "semantic_gate_not_considered",
+          "detail": "ranked below top 5 by embedding similarity (score 0.529)"
+        },
+        {
+          "query": "(: $prf (UsedSmartphone 1159_adult daily_basis) $tv)",
+          "source": "deterministic",
+          "stage": "semantic_gate_not_considered",
+          "detail": "ranked below top 5 by embedding similarity (score 0.515)"
+        },
+        {
+          "query": "(: $prf (HasCondition 1159_adult type_2_diabete) $tv)",
+          "source": "deterministic",
+          "stage": "semantic_gate_not_considered",
+          "detail": "ranked below top 5 by embedding similarity (score 0.508)"
+        },
+        {
+          "query": "(: $prf (Enrolled randomized_controlled_trial 1159_adult) $tv)",
+          "source": "deterministic",
+          "stage": "semantic_gate_not_considered",
+          "detail": "ranked below top 5 by embedding similarity (score 0.494)"
+        },
+        {
+          "query": "(: $prf (RandomlyAssignedTo 1159_adult iot_based_approach_group_itg) $tv)",
+          "source": "deterministic",
+          "stage": "semantic_gate_not_considered",
+          "detail": "ranked below top 5 by embedding similarity (score 0.488)"
+        },
+        {
+          "query": "(: $prf (Has 1159_adult age 2074_year) $tv)",
+          "source": "deterministic",
+          "stage": "semantic_gate_not_considered",
+          "detail": "ranked below top 5 by embedding similarity (score 0.432)"
+        },
+        {
+          "query": "(: $prf (RandomlyAssignedTo 1159_adult control_group_ctg) $tv)",
+          "source": "deterministic",
+          "stage": "semantic_gate_not_considered",
+          "detail": "ranked below top 5 by embedding similarity (score 0.417)"
+        }
+      ],
+      "rejection_reasons": [],
+      "answer": "No. The proof establishes explicit negation of (Reduced iot_based_approach hba1c_in_patient_with_type_2_diabete).",
+      "seconds": 6.6029
+    },
+    {
+      "id": "A03",
+      "name": "A03_cas9_aav6_beta_globin_hsc",
+      "category": "direct_factual_relation",
+      "source_type": "abstract",
+      "question": "What does Cas9-AAV6 correction improve in sickle cell disease cells?",
+      "ingest_error": "",
+      "ingest_seconds": 34.0695,
+      "atom_count": 10,
+      "quarantined_count": 0,
+      "query_error": "",
+      "translator_queries": [
+        "(: $prf (Improves cas9_aav6_correction $what sickle_cell_disease_cell) $tv)"
+      ],
+      "provider_error": "",
+      "pln_canonicalized_queries": [
+        "(: $prf (Improves cas9_aav6_correction $what sickle_cell_disease_cell) $tv)"
+      ],
+      "qdrant_aligned_queries": [],
+      "execution_candidates": [
+        "(: $prf (Improves cas9_aav6_correction $what sickle_cell_disease_cell) $tv)"
+      ],
+      "executed_query": "(: $prf (Improves cas9_aav6_correction $what sickle_cell_disease_cell) $tv)",
+      "query_source": "parser",
+      "query_status": "well_aligned",
+      "intent_mode": "open",
+      "proof_status": "unknown",
+      "support_kind": "unknown",
+      "candidate_rejections": [
+        {
+          "query": "(: $prf (Study we cas9_aav6_mediated_hbb_correction_in_functional_hsc_within_the_context_of_autologous_transplantation) $tv)",
+          "source": "deterministic",
+          "stage": "semantic_gate",
+          "detail": "unrelated (confidence 0.90): This target is about a study of Cas9-AAV6 mediated HBB correction, not what it improves."
+        },
+        {
+          "query": "(: $prf (Represents crispr_cas9_mediated_beta_globin_hbb_gene_correction_of_sickle_cell_disease_scd_patient_derived_hematopoietic_stem_cell_hsc_in_combination_with_autologous_transplantation recent_paradigm_in_gene_therapy) $tv)",
+          "source": "deterministic",
+          "stage": "semantic_gate",
+          "detail": "unrelated (confidence 0.90): This target states that CRISPR-Cas9 mediated beta-globin gene correction represents a recent paradigm in gene therapy, which is not what the question is asking about improvements."
+        },
+        {
+          "query": "(: $prf (GeneCorrectedExVivo long_term_multipotent_hsc) $tv)",
+          "source": "deterministic",
+          "stage": "semantic_gate",
+          "detail": "unrelated (confidence 0.90): This target states that long-term multipotent HSC are gene corrected ex vivo, which is not what the question is asking about improvements by Cas9-AAV6 correction."
+        },
+        {
+          "query": "(: $prf (Proposed several_cas9_based_hbb_correction_approache) $tv)",
+          "source": "deterministic",
+          "stage": "semantic_gate",
+          "detail": "unrelated (confidence 0.90): This target states that several Cas9-based HBB correction approaches were proposed, which is not what the question is asking about improvements."
+        },
+        {
+          "query": "(: $prf (Enables hbb_corrected_hsc_following_autologous_transplantation stable_hemoglobin_a_production_in_vivo) $tv)",
+          "source": "deterministic",
+          "stage": "semantic_gate_not_considered",
+          "detail": "ranked below top 5 by embedding similarity (score 0.598)"
+        },
+        {
+          "query": "(: $prf (DirectlyCorrelatesWith increased_hbb_corrected_myeloid_chimerism normalized_in_vivo_red_blood_cell_rbc_feature) $tv)",
+          "source": "deterministic",
+          "stage": "semantic_gate_not_considered",
+          "detail": "ranked below top 5 by embedding similarity (score 0.593)"
+        },
+        {
+          "query": "(: $prf (InvestigatedPreviously functional_correction_of_in_vivo_erythropoiesis) $tv)",
+          "source": "deterministic",
+          "stage": "semantic_gate_not_considered",
+          "detail": "ranked below top 5 by embedding similarity (score 0.582)"
+        },
+        {
+          "query": "(: $prf (ResultedIn low_level_of_chimerism robust_hemoglobin_a_level) $tv)",
+          "source": "deterministic",
+          "stage": "semantic_gate_not_considered",
+          "detail": "ranked below top 5 by embedding similarity (score 0.576)"
+        },
+        {
+          "query": "(: $prf (Use we humanized_globin_cluster_scd_mouse_model) $tv)",
+          "source": "deterministic",
+          "stage": "semantic_gate_not_considered",
+          "detail": "ranked below top 5 by embedding similarity (score 0.542)"
+        },
+        {
+          "query": "(: $prf (OffersPlatformFor study gene_editing_of_mouse_hsc_for_both_basic_and_translational_research) $tv)",
+          "source": "deterministic",
+          "stage": "semantic_gate_not_considered",
+          "detail": "ranked below top 5 by embedding similarity (score 0.535)"
+        }
+      ],
+      "rejection_reasons": [],
+      "answer": "I don't know - no value could be proved for (Improves cas9_aav6_correction $what sickle_cell_disease_cell).",
+      "seconds": 14.0829
+    },
+    {
+      "id": "A04",
+      "name": "A04_semaglutide_comparative_outcomes",
+      "category": "comparative_claim",
+      "source_type": "abstract",
+      "question": "How does semaglutide compare with other GLP-1 receptor agonists?",
+      "ingest_error": "",
+      "ingest_seconds": 79.8344,
+      "atom_count": 26,
+      "quarantined_count": 12,
+      "query_error": "",
+      "translator_queries": [
+        "(: $prf (ComparedTo semaglutide other_glp_1_receptor_agonist) $tv)"
+      ],
+      "provider_error": "",
+      "pln_canonicalized_queries": [
+        "(: $prf (ComparedTo semaglutide other_glp_1_receptor_agonist) $tv)"
+      ],
+      "qdrant_aligned_queries": [],
+      "execution_candidates": [
+        "(: $prf (ComparedTo semaglutide other_glp_1_receptor_agonist) $tv)",
+        "(: $prf (ComparedTo semaglutide_at_usual_dos most_glp_1_ras) $tv)"
+      ],
+      "executed_query": "(: $prf (ComparedTo semaglutide_at_usual_dos most_glp_1_ras) $tv)",
+      "query_source": "deterministic",
+      "query_status": "well_aligned",
+      "intent_mode": "open",
+      "proof_status": "positive",
+      "support_kind": "entailed",
+      "candidate_rejections": [
+        {
+          "query": "(: $prf (IsA semaglutide glucose_lowering_drug) $tv)",
+          "source": "deterministic",
+          "stage": "semantic_gate",
+          "detail": "unrelated (confidence 1.00): The question asks for a comparison, not for the classification of semaglutide as a glucose-lowering drug."
+        },
+        {
+          "query": "(: $prf (AcknowledgedInRecentYears medical_decision_maker semaglutide) $tv)",
+          "source": "deterministic",
+          "stage": "semantic_gate",
+          "detail": "unrelated (confidence 1.00): The question asks for a comparison of semaglutide, not whether it has been acknowledged by medical decision makers."
+        },
+        {
+          "query": "(: $prf (AssociatedWithSuperiorReductionsIn semaglutide_at_usual_dos hba1c) $tv)",
+          "source": "deterministic",
+          "stage": "semantic_gate",
+          "detail": "related (confidence 0.80): This target describes a specific outcome associated with semaglutide, which could be part of a comparison, but it doesn't explicitly state a comparison with other GLP-1 receptor agonists. It's a related fact that might be used in a comparison, but not the comparison itself."
+        },
+        {
+          "query": "(: $prf (ComparedTo rct_based_meta_analys_mas_and_systematic_review_srs_of_cost_effectiveness_analy_cea other_glucagon_like_peptide_1_receptor_agonist_glp_1_ras) $tv)",
+          "source": "deterministic",
+          "stage": "semantic_gate_not_considered",
+          "detail": "ranked below top 5 by embedding similarity (score 0.668)"
+        },
+        {
+          "query": "(: $prf (ResultedInSignificantReductionIn once_weekly_semaglutide hba1c_level) $tv)",
+          "source": "deterministic",
+          "stage": "semantic_gate_not_considered",
+          "detail": "ranked below top 5 by embedding similarity (score 0.631)"
+        },
+        {
+          "query": "(: $prf (ForPrescribingTo evidence_base semaglutide_patient_with_t2dm) $tv)",
+          "source": "deterministic",
+          "stage": "semantic_gate_not_considered",
+          "detail": "ranked below top 5 by embedding similarity (score 0.612)"
+        },
+        {
+          "query": "(: $prf (ComparedTo rct_based_meta_analys_mas_and_systematic_review_srs_of_cost_effectiveness_analy_cea placebo) $tv)",
+          "source": "deterministic",
+          "stage": "semantic_gate_not_considered",
+          "detail": "ranked below top 5 by embedding similarity (score 0.555)"
+        },
+        {
+          "query": "(: $prf (DrugNaive patient) $tv)",
+          "source": "deterministic",
+          "stage": "semantic_gate_not_considered",
+          "detail": "ranked below top 5 by embedding similarity (score 0.505)"
+        },
+        {
+          "query": "(: $prf (ForTreatmentOf clinical_recommendation type_2_diabete_mellitus_t2dm) $tv)",
+          "source": "deterministic",
+          "stage": "semantic_gate_not_considered",
+          "detail": "ranked below top 5 by embedding similarity (score 0.498)"
+        },
+        {
+          "query": "(: $prf (Includes outcome_of_interest hemoglobin_a1c_hba1c) $tv)",
+          "source": "deterministic",
+          "stage": "semantic_gate_not_considered",
+          "detail": "ranked below top 5 by embedding similarity (score 0.478)"
+        },
+        {
+          "query": "(: $prf (BecomeCommerciallyAvailable innovative_drug) $tv)",
+          "source": "deterministic",
+          "stage": "semantic_gate_not_considered",
+          "detail": "ranked below top 5 by embedding similarity (score 0.469)"
+        },
+        {
+          "query": "(: $prf (AimsToProvide rapid_review evidence_based_clinical_recommendation) $tv)",
+          "source": "deterministic",
+          "stage": "semantic_gate_not_considered",
+          "detail": "ranked below top 5 by embedding similarity (score 0.467)"
+        },
+        {
+          "query": "(: $prf (IsA 1publication sr_of_cea) $tv)",
+          "source": "deterministic",
+          "stage": "semantic_gate_not_considered",
+          "detail": "ranked below top 5 by embedding similarity (score 0.450)"
+        },
+        {
+          "query": "(: $prf (Has patient t2dm) $tv)",
+          "source": "deterministic",
+          "stage": "semantic_gate_not_considered",
+          "detail": "ranked below top 5 by embedding similarity (score 0.449)"
+        },
+        {
+          "query": "(: $prf (Consolidates review positive_current_evidence_base) $tv)",
+          "source": "deterministic",
+          "stage": "semantic_gate_not_considered",
+          "detail": "ranked below top 5 by embedding similarity (score 0.445)"
+        },
+        {
+          "query": "(: $prf (OccurredIn reduction_in_hba1c_level_and_body_weight routine_clinical_practice) $tv)",
+          "source": "deterministic",
+          "stage": "semantic_gate_not_considered",
+          "detail": "ranked below top 5 by embedding similarity (score 0.440)"
+        },
+        {
+          "query": "(: $prf (Has body_weight_reduction value 488_kg) $tv)",
+          "source": "deterministic",
+          "stage": "semantic_gate_not_considered",
+          "detail": "ranked below top 5 by embedding similarity (score 0.439)"
+        },
+        {
+          "query": "(: $prf (Searched four_databa) $tv)",
+          "source": "deterministic",
+          "stage": "semantic_gate_not_considered",
+          "detail": "ranked below top 5 by embedding similarity (score 0.422)"
+        },
+        {
+          "query": "(: $prf (IsOf rapid_review randomized_controlled_trial_rct_based_meta_analys_mas) $tv)",
+          "source": "deterministic",
+          "stage": "semantic_gate_not_considered",
+          "detail": "ranked below top 5 by embedding similarity (score 0.421)"
+        },
+        {
+          "query": "(: $prf (Identified we 33publication) $tv)",
+          "source": "deterministic",
+          "stage": "semantic_gate_not_considered",
+          "detail": "ranked below top 5 by embedding similarity (score 0.415)"
+        },
+        {
+          "query": "(: $prf (Includes economic_outcome quality_adjusted_life_year) $tv)",
+          "source": "deterministic",
+          "stage": "semantic_gate_not_considered",
+          "detail": "ranked below top 5 by embedding similarity (score 0.414)"
+        },
+        {
+          "query": "(: $prf (Retrieved prospective_cohort_real_world_study_rws) $tv)",
+          "source": "deterministic",
+          "stage": "semantic_gate_not_considered",
+          "detail": "ranked below top 5 by embedding similarity (score 0.409)"
+        },
+        {
+          "query": "(: $prf (Includes outcome_of_interest economic_outcome) $tv)",
+          "source": "deterministic",
+          "stage": "semantic_gate_not_considered",
+          "detail": "ranked below top 5 by embedding similarity (score 0.409)"
+        },
+        {
+          "query": "(: $prf (UrgentlyRequired further_rigorous_study) $tv)",
+          "source": "deterministic",
+          "stage": "semantic_gate_not_considered",
+          "detail": "ranked below top 5 by embedding similarity (score 0.409)"
+        },
+        {
+          "query": "(: $prf (Conducted we rapid_review) $tv)",
+          "source": "deterministic",
+          "stage": "semantic_gate_not_considered",
+          "detail": "ranked below top 5 by embedding similarity (score 0.401)"
+        }
+      ],
+      "rejection_reasons": [],
+      "answer": "Yes. The proof establishes (ComparedTo semaglutide_at_usual_dos most_glp_1_ras).",
+      "seconds": 10.5109
+    },
+    {
+      "id": "A05",
+      "name": "A05_tirzepatide_liraglutide_semaglutide_comparison",
+      "category": "comparative_claim",
+      "source_type": "abstract",
+      "question": "Which treatments are compared for reducing cardiovascular events?",
+      "ingest_error": "",
+      "ingest_seconds": 74.7876,
+      "atom_count": 6,
+      "quarantined_count": 6,
+      "query_error": "",
+      "translator_queries": [
+        "(: $prf (Compared $what) $tv)"
+      ],
+      "provider_error": "",
+      "pln_canonicalized_queries": [
+        "(: $prf (Compared $what) $tv)"
+      ],
+      "qdrant_aligned_queries": [
+        "(: $prf (ReducedRiskOfIncidentMacesComparedTo tirzepatide liraglutide) $tv)",
+        "(: $prf (ApprovedForTreatmentOf glucagon_like_peptide_1_glp_1_receptor_agonist type_2_diabete_t2d) $tv)",
+        "(: $prf (ReducedIncidentOsaComparedTo tirzepatide liraglutide) $tv)",
+        "(: $prf (AssociatedWithLowerIncidenceOfMacesComparedTo tirzepatide liraglutide) $tv)"
+      ],
+      "execution_candidates": [
+        "(: $prf (Compared $what) $tv)"
+      ],
+      "executed_query": "(: $prf (Compared $what) $tv)",
+      "query_source": "parser",
+      "query_status": "well_aligned",
+      "intent_mode": "open",
+      "proof_status": "unknown",
+      "support_kind": "unknown",
+      "candidate_rejections": [
+        {
+          "query": "(: $prf (ReducedRiskOfIncidentMacesComparedTo tirzepatide liraglutide) $tv)",
+          "source": "deterministic",
+          "stage": "semantic_gate",
+          "detail": "related (confidence 0.90): The question asks which treatments are compared. This target states that tirzepatide and liraglutide are compared for reducing cardiovascular events, but it doesn't directly answer the 'which treatments' part, it states the outcome of the comparison. It's related but not exactly what's asked."
+        },
+        {
+          "query": "(: $prf (ReducedIncidentOsaComparedTo tirzepatide liraglutide) $tv)",
+          "source": "deterministic",
+          "stage": "semantic_gate",
+          "detail": "unrelated (confidence 0.90): This target is about reducing incident OSA, not cardiovascular events, making it unrelated to the question's topic."
+        },
+        {
+          "query": "(: $prf (AssociatedWithLowerIncidenceOfMacesComparedTo tirzepatide liraglutide) $tv)",
+          "source": "deterministic",
+          "stage": "semantic_gate",
+          "detail": "related (confidence 0.90): Similar to target 0, this target states that tirzepatide and liraglutide are associated with a lower incidence of maces compared to each other, which is a comparison related to cardiovascular events. However, it doesn't directly answer 'which treatments are compared' but rather the outcome of such a comparison."
+        },
+        {
+          "query": "(: $prf (ApprovedForTreatmentOf glucagon_like_peptide_1_glp_1_receptor_agonist type_2_diabete_t2d) $tv)",
+          "source": "deterministic",
+          "stage": "semantic_gate",
+          "detail": "unrelated (confidence 0.90): This target is about approval for treatment of type 2 diabetes, which is unrelated to comparing treatments for cardiovascular events."
+        },
+        {
+          "query": "(: $prf (Included cohort_1 7836_patient) $tv)",
+          "source": "deterministic",
+          "stage": "semantic_gate_not_considered",
+          "detail": "ranked below top 5 by embedding similarity (score 0.473)"
+        },
+        {
+          "query": "(: $prf (Included cohort_2 7394_patient) $tv)",
+          "source": "deterministic",
+          "stage": "semantic_gate_not_considered",
+          "detail": "ranked below top 5 by embedding similarity (score 0.465)"
+        }
+      ],
+      "rejection_reasons": [],
+      "answer": "I don't know - no value could be proved for (Compared $what).",
+      "seconds": 13.607
+    },
+    {
+      "id": "A06",
+      "name": "A06_contact_lens_wettability_friction",
+      "category": "comparative_claim",
+      "source_type": "abstract",
+      "question": "How does serafilcon A compare with other reusable silicone hydrogel lens materials?",
+      "ingest_error": "",
+      "ingest_seconds": 97.5846,
+      "atom_count": 18,
+      "quarantined_count": 28,
+      "query_error": "",
+      "translator_queries": [
+        "(: $prf (ComparesWith serafilcon_a other_reusable_silicone_hydrogel_len_material) $tv)"
+      ],
+      "provider_error": "",
+      "pln_canonicalized_queries": [
+        "(: $prf (ComparesWith serafilcon_a other_reusable_silicone_hydrogel_len_material) $tv)"
+      ],
+      "qdrant_aligned_queries": [
+        "(: $prf (EvaluatedForWettabilityAndCoefficientOfFriction serafilcon_a_senofilcon_a_samfilcon_a_comfilcon_a) $tv)",
+        "(: $prf (AreReusable other_si_hy_len_material) $tv)",
+        "(: $prf (CoincidedWith reduction_in_peo_pbo_in_the_len increase_in_contact_angle_for_serafilcon_a) $tv)",
+        "(: $prf (HadStableContactAngles other_contact_len_material) $tv)",
+        "(: $prf (GraduallyDepletesReserveOf serafilcon_a peo_pbo) $tv)",
+        "(: $prf (DecreasedByPercentage relative_fluorescence_of_nbd_peo_pbo_in_serafilcon_a 18) $tv)"
+      ],
+      "execution_candidates": [
+        "(: $prf (ComparesWith serafilcon_a other_reusable_silicone_hydrogel_len_material) $tv)"
+      ],
+      "executed_query": "(: $prf (ComparesWith serafilcon_a other_reusable_silicone_hydrogel_len_material) $tv)",
+      "query_source": "parser",
+      "query_status": "well_aligned",
+      "intent_mode": "open",
+      "proof_status": "unknown",
+      "support_kind": "unknown",
+      "candidate_rejections": [
+        {
+          "query": "(: $prf (EvaluatedForWettabilityAndCoefficientOfFriction serafilcon_a_senofilcon_a_samfilcon_a_comfilcon_a) $tv)",
+          "source": "deterministic",
+          "stage": "semantic_gate",
+          "detail": "related (confidence 0.90): This target is about evaluating specific materials for wettability and coefficient of friction, which are properties relevant to lens materials, but it doesn't directly address the general comparison requested by the question. It's a specific aspect of comparison, not the comparison itself."
+        },
+        {
+          "query": "(: $prf (DecreasedByPercentage relative_fluorescence_of_nbd_peo_pbo_in_serafilcon_a 18) $tv)",
+          "source": "deterministic",
+          "stage": "semantic_gate",
+          "detail": "unrelated (confidence 1.00): This target is about the decrease in relative fluorescence of a specific component (nbd peo pbo) in serafilcon A. This is a very specific property of serafilcon A and does not relate to how it compares with other materials in a general sense."
+        },
+        {
+          "query": "(: $prf (AreReusable other_si_hy_len_material) $tv)",
+          "source": "deterministic",
+          "stage": "semantic_gate",
+          "detail": "related (confidence 0.80): This target states that other silicone hydrogel lens materials are reusable. While reusability is a characteristic mentioned in the question's circumstance, the target doesn't compare serafilcon A with these materials; it only states a property of the other materials. It's a piece of information related to the context but not the core comparison."
+        },
+        {
+          "query": "(: $prf (HadStableContactAngles other_contact_len_material) $tv)",
+          "source": "deterministic",
+          "stage": "semantic_gate",
+          "detail": "unrelated (confidence 1.00): This target is about stable contact angles of 'other contact lens material'. This is too general and doesn't specifically relate to serafilcon A or its comparison with other reusable silicone hydrogel lens materials."
+        },
+        {
+          "query": "(: $prf (GraduallyDepletesReserveOf serafilcon_a peo_pbo) $tv)",
+          "source": "deterministic",
+          "stage": "semantic_gate_not_considered",
+          "detail": "ranked below top 5 by embedding similarity (score 0.455)"
+        },
+        {
+          "query": "(: $prf (HadIncreaseInContactAngle samfilcon_a) $tv)",
+          "source": "deterministic",
+          "stage": "semantic_gate_not_considered",
+          "detail": "ranked below top 5 by embedding similarity (score 0.454)"
+        },
+        {
+          "query": "(: $prf (EvaluatedAtTime samfilcon_a 30day) $tv)",
+          "source": "deterministic",
+          "stage": "semantic_gate_not_considered",
+          "detail": "ranked below top 5 by embedding similarity (score 0.430)"
+        },
+        {
+          "query": "(: $prf (ReleasedFrom nbd_peo_pbo serafilcon_a) $tv)",
+          "source": "deterministic",
+          "stage": "semantic_gate_not_considered",
+          "detail": "ranked below top 5 by embedding similarity (score 0.425)"
+        },
+        {
+          "query": "(: $prf (IsLessThanByPercentage amount_of_nbd_peo_pbo_released_on_day_7 amount_of_nbd_peo_pbo_released_on_day_1_50) $tv)",
+          "source": "deterministic",
+          "stage": "semantic_gate_not_considered",
+          "detail": "ranked below top 5 by embedding similarity (score 0.424)"
+        },
+        {
+          "query": "(: $prf (IsA peo_pbo poly_oxyethylene_co_poly_oxybutylene) $tv)",
+          "source": "deterministic",
+          "stage": "semantic_gate_not_considered",
+          "detail": "ranked below top 5 by embedding similarity (score 0.415)"
+        },
+        {
+          "query": "(: $prf (MeasuredUsing coefficient_of_friction nano_tribometer) $tv)",
+          "source": "deterministic",
+          "stage": "semantic_gate_not_considered",
+          "detail": "ranked below top 5 by embedding similarity (score 0.414)"
+        },
+        {
+          "query": "(: $prf (CoincidedWith reduction_in_peo_pbo_in_the_len increase_in_contact_angle_for_serafilcon_a) $tv)",
+          "source": "deterministic",
+          "stage": "semantic_gate_not_considered",
+          "detail": "ranked below top 5 by embedding similarity (score 0.405)"
+        },
+        {
+          "query": "(: $prf (Assessed nikbut_measurement) $tv)",
+          "source": "deterministic",
+          "stage": "semantic_gate_not_considered",
+          "detail": "ranked below top 5 by embedding similarity (score 0.393)"
+        },
+        {
+          "query": "(: $prf (Determined sessile_drop_contact_angle) $tv)",
+          "source": "deterministic",
+          "stage": "semantic_gate_not_considered",
+          "detail": "ranked below top 5 by embedding similarity (score 0.383)"
+        },
+        {
+          "query": "(: $prf (Has amount_of_nbd_peo_pbo_released_on_day_7 value 34_0_5_g_len) $tv)",
+          "source": "deterministic",
+          "stage": "semantic_gate_not_considered",
+          "detail": "ranked below top 5 by embedding similarity (score 0.380)"
+        },
+        {
+          "query": "(: $prf (SignificantlyChanged len_performance) $tv)",
+          "source": "deterministic",
+          "stage": "semantic_gate_not_considered",
+          "detail": "ranked below top 5 by embedding similarity (score 0.379)"
+        },
+        {
+          "query": "(: $prf (Has amount_of_nbd_peo_pbo_released_on_day_1 value 65_1_0_g_len) $tv)",
+          "source": "deterministic",
+          "stage": "semantic_gate_not_considered",
+          "detail": "ranked below top 5 by embedding similarity (score 0.374)"
+        },
+        {
+          "query": "(: $prf (EvaluatedAtTime all_len_type 14day) $tv)",
+          "source": "deterministic",
+          "stage": "semantic_gate_not_considered",
+          "detail": "ranked below top 5 by embedding similarity (score 0.360)"
+        }
+      ],
+      "rejection_reasons": [],
+      "answer": "I don't know - neither the proposition nor its explicit negation was proved.",
+      "seconds": 12.667
+    },
+    {
+      "id": "A07",
+      "name": "A07_mendelian_randomization_gut_microbiome_colorectal_cancer",
+      "category": "causal_mechanistic_claim",
+      "source_type": "abstract",
+      "question": "Does the abstract claim a causal role for gut microbiome in colorectal cancer?",
+      "ingest_error": "",
+      "ingest_seconds": 39.8628,
+      "atom_count": 16,
+      "quarantined_count": 2,
+      "query_error": "",
+      "translator_queries": [
+        "(: $prf (ClaimsCausalRole abstract gut_microbiome colorectal_cancer) $tv)"
+      ],
+      "provider_error": "",
+      "pln_canonicalized_queries": [
+        "(: $prf (ClaimsCausalRole abstract gut_microbiome colorectal_cancer) $tv)"
+      ],
+      "qdrant_aligned_queries": [
+        "(: $prf (IsUnclear role_of_the_human_gut_microbiome_in_colorectal_cancer_crc) $tv)",
+        "(: $prf (Estimates two_sample_mendelian_randomization_mr causal_relationship_between_the_gut_microbiome_and_crc) $tv)",
+        "(: $prf (InitiallyIdentified our_study potential_causal_role_for_two_microbial_trait_in_crc) $tv)",
+        "(: $prf (UnableToDiscern most_study_on_the_topic correlation_from_causation) $tv)"
+      ],
+      "execution_candidates": [
+        "(: $prf (ClaimsCausalRole abstract gut_microbiome colorectal_cancer) $tv)"
+      ],
+      "executed_query": "(: $prf (ClaimsCausalRole abstract gut_microbiome colorectal_cancer) $tv)",
+      "query_source": "parser",
+      "query_status": "well_aligned",
+      "intent_mode": "boolean",
+      "proof_status": "unknown",
+      "support_kind": "unknown",
+      "candidate_rejections": [
+        {
+          "query": "(: $prf (IsUnclear role_of_the_human_gut_microbiome_in_colorectal_cancer_crc) $tv)",
+          "source": "deterministic",
+          "stage": "semantic_gate",
+          "detail": "epistemic_proxy (confidence 1.00): The target states that the role is unclear, which is about the state of knowledge or evidence, not a direct negation of a causal role being claimed. It's an epistemic statement."
+        },
+        {
+          "query": "(: $prf (Estimates two_sample_mendelian_randomization_mr causal_relationship_between_the_gut_microbiome_and_crc) $tv)",
+          "source": "deterministic",
+          "stage": "semantic_gate",
+          "detail": "related (confidence 0.90): This target states that something 'estimates' a causal relationship, which is related to the topic but doesn't directly answer whether the abstract *claims* a causal role. It's about a method or finding, not the abstract's claim itself."
+        },
+        {
+          "query": "(: $prf (InitiallyIdentified our_study potential_causal_role_for_two_microbial_trait_in_crc) $tv)",
+          "source": "deterministic",
+          "stage": "semantic_gate",
+          "detail": "related (confidence 0.90): This target states that 'our study' initially identified a potential causal role. While related to the topic of a causal role, it refers to 'our study' identifying it, not the 'abstract' claiming it, and it's about a 'potential' role, not a definitive claim by the abstract."
+        },
+        {
+          "query": "(: $prf (FoundStrongEvidenceThatCausallyAffected we crc_these_microbial_trait) $tv)",
+          "source": "deterministic",
+          "stage": "semantic_gate",
+          "detail": "related (confidence 0.90): This target states that 'we' found strong evidence that causally affected CRC. This is about the findings of a study, not whether the abstract *claims* a causal role. It's related to the topic but answers a different question about the study's results."
+        },
+        {
+          "query": "(: $prf (IncreasedRiskFor presence_of_an_unclassified_group_of_bacteria_within_the_bacteroidale_order_in_the_gut overall_and_site_specific_crc) $tv)",
+          "source": "deterministic",
+          "stage": "semantic_gate_not_considered",
+          "detail": "ranked below top 5 by embedding similarity (score 0.663)"
+        },
+        {
+          "query": "(: $prf (EstimatesCausalEffectOn summary_level_data_from_independent_genome_wide_association_study overall_crc_55_168_cas_65_160_control_and_site_specific_crc_risk) $tv)",
+          "source": "deterministic",
+          "stage": "semantic_gate_not_considered",
+          "detail": "ranked below top 5 by embedding similarity (score 0.651)"
+        },
+        {
+          "query": "(: $prf (IsNeededWhenInterpreting caution mr_analy_with_gut_microbiome_exposure) $tv)",
+          "source": "deterministic",
+          "stage": "semantic_gate_not_considered",
+          "detail": "ranked below top 5 by embedding similarity (score 0.645)"
+        },
+        {
+          "query": "(: $prf (UnableToDiscern most_study_on_the_topic correlation_from_causation) $tv)",
+          "source": "deterministic",
+          "stage": "semantic_gate_not_considered",
+          "detail": "ranked below top 5 by embedding similarity (score 0.524)"
+        },
+        {
+          "query": "(: $prf (Apply we two_sample_mendelian_randomization_mr) $tv)",
+          "source": "deterministic",
+          "stage": "semantic_gate_not_considered",
+          "detail": "ranked below top 5 by embedding similarity (score 0.519)"
+        },
+        {
+          "query": "(: $prf (Used we summary_level_data_from_independent_genome_wide_association_study) $tv)",
+          "source": "deterministic",
+          "stage": "semantic_gate_not_considered",
+          "detail": "ranked below top 5 by embedding similarity (score 0.515)"
+        },
+        {
+          "query": "(: $prf (Suggested initial_mr_analysis) $tv)",
+          "source": "deterministic",
+          "stage": "semantic_gate_not_considered",
+          "detail": "ranked below top 5 by embedding similarity (score 0.511)"
+        },
+        {
+          "query": "(: $prf (Suggested sensitivity_analy) $tv)",
+          "source": "deterministic",
+          "stage": "semantic_gate_not_considered",
+          "detail": "ranked below top 5 by embedding similarity (score 0.490)"
+        },
+        {
+          "query": "(: $prf (Highlighted further_exploration_of_these_relationship) $tv)",
+          "source": "deterministic",
+          "stage": "semantic_gate_not_considered",
+          "detail": "ranked below top 5 by embedding similarity (score 0.490)"
+        },
+        {
+          "query": "(: $prf (Conducted we several_sensitivity_analy_to_understand_the_nature_of_result) $tv)",
+          "source": "deterministic",
+          "stage": "semantic_gate_not_considered",
+          "detail": "ranked below top 5 by embedding similarity (score 0.464)"
+        }
+      ],
+      "rejection_reasons": [],
+      "answer": "I don't know - neither the proposition nor its explicit negation was proved.",
+      "seconds": 8.9368
+    },
+    {
+      "id": "A08",
+      "name": "A08_microbiota_host_inflammation",
+      "category": "causal_mechanistic_claim",
+      "source_type": "abstract",
+      "question": "How can microbiota affect inflammation?",
+      "ingest_error": "",
+      "ingest_seconds": 20.0264,
+      "atom_count": 4,
+      "quarantined_count": 6,
+      "query_error": "",
+      "translator_queries": [
+        "(: $prf (Affect microbiota inflammation) $tv)"
+      ],
+      "provider_error": "",
+      "pln_canonicalized_queries": [
+        "(: $prf (Affects microbiota inflammation) $tv)"
+      ],
+      "qdrant_aligned_queries": [
+        "(: $prf (Affect microbiota_derived_bioactive_molecule inflammation) $tv)",
+        "(: $prf (Affects microbiome innate_and_adaptive_immunological_player) $tv)"
+      ],
+      "execution_candidates": [
+        "(: $prf (Affects microbiota inflammation) $tv)"
+      ],
+      "executed_query": "(: $prf (Affects microbiota inflammation) $tv)",
+      "query_source": "parser",
+      "query_status": "well_aligned",
+      "intent_mode": "open",
+      "proof_status": "unknown",
+      "support_kind": "unknown",
+      "candidate_rejections": [
+        {
+          "query": "(: $prf (Affect microbiota_derived_bioactive_molecule inflammation) $tv)",
+          "source": "deterministic",
+          "stage": "semantic_gate",
+          "detail": "related (confidence 0.90): The question asks about microbiota affecting inflammation. Target 1 is about \"microbiota derived bioactive molecule\" affecting inflammation. While related, it's a more specific aspect of microbiota, not the general microbiota itself as asked."
+        },
+        {
+          "query": "(: $prf (Affects microbiome innate_and_adaptive_immunological_player) $tv)",
+          "source": "deterministic",
+          "stage": "semantic_gate",
+          "detail": "related (confidence 0.80): The question asks about microbiota affecting inflammation. Target 2 is about \"microbiome\" affecting \"innate and adaptive immunological player\". While the microbiome is related to microbiota and immunological players are related to inflammation, it's not a direct match to \"microbiota affect inflammation\"."
+        },
+        {
+          "query": "(: $prf (InfluencesHostResponseTo microbiome infection) $tv)",
+          "source": "deterministic",
+          "stage": "semantic_gate",
+          "detail": "related (confidence 0.70): The question asks about microbiota affecting inflammation. Target 3 is about \"influences host response to microbiome infection\". This is a different topic, focusing on host response to infection rather than microbiota's direct effect on inflammation."
+        },
+        {
+          "query": "(: $prf (AreAnatomicallyRemoteAs site brain) $tv)",
+          "source": "deterministic",
+          "stage": "semantic_gate",
+          "detail": "unrelated (confidence 1.00): The question is about microbiota and inflammation. Target 4 is about anatomical remoteness of a site and the brain, which is completely unrelated to the question."
+        }
+      ],
+      "rejection_reasons": [],
+      "answer": "I don't know - neither the proposition nor its explicit negation was proved.",
+      "seconds": 8.1547
+    },
+    {
+      "id": "A09",
+      "name": "A09_sodium_heparin_perovskite_solar_cells",
+      "category": "causal_mechanistic_claim",
+      "source_type": "abstract",
+      "question": "Why does sodium heparin improve perovskite solar cells?",
+      "ingest_error": "",
+      "ingest_seconds": 58.548,
+      "atom_count": 11,
+      "quarantined_count": 9,
+      "query_error": "",
+      "translator_queries": [
+        "(: $prf (Improves sodium_heparin perovskite_solar_cell) $tv)"
+      ],
+      "provider_error": "",
+      "pln_canonicalized_queries": [
+        "(: $prf (Improves sodium_heparin perovskite_solar_cell) $tv)"
+      ],
+      "qdrant_aligned_queries": [
+        "(: $prf (Features heparin_sodium functional_group) $tv)",
+        "(: $prf (IsA heparin_sodium linear_polymer) $tv)",
+        "(: $prf (IsA heparin_sodium multifunctional_interface_bridge_layer) $tv)"
+      ],
+      "execution_candidates": [],
+      "executed_query": "",
+      "query_source": "none",
+      "query_status": "no_query",
+      "intent_mode": "explanation",
+      "proof_status": "unknown",
+      "support_kind": "unknown",
+      "candidate_rejections": [
+        {
+          "query": "(: $prf (Improves sodium_heparin perovskite_solar_cell) $tv)",
+          "source": "parser",
+          "stage": "semantic_gate",
+          "detail": "related (confidence 1.00): The question asks for the *reason why* sodium heparin improves perovskite solar cells. This target only states *that* it improves them, not the reason why."
+        },
+        {
+          "query": "(: $prf (HasUnderminedEfficiency perovskite_solar_cell) $tv)",
+          "source": "deterministic",
+          "stage": "semantic_gate",
+          "detail": "unrelated (confidence 1.00): This target is about perovskite solar cell efficiency being undermined, which is not directly related to why sodium heparin improves them."
+        },
+        {
+          "query": "(: $prf (IsA perovskite_solar_cell perovskite_solar_cell) $tv)",
+          "source": "deterministic",
+          "stage": "semantic_gate",
+          "detail": "unrelated (confidence 1.00): This target states that a perovskite solar cell is a perovskite solar cell, which is a tautology and unrelated to the question about sodium heparin's effect."
+        },
+        {
+          "query": "(: $prf (IsA heparin_sodium linear_polymer) $tv)",
+          "source": "deterministic",
+          "stage": "semantic_gate",
+          "detail": "unrelated (confidence 1.00): This target states that heparin sodium is a linear polymer, which is a property of heparin sodium but does not explain why it improves perovskite solar cells."
+        },
+        {
+          "query": "(: $prf (IsA heparin_sodium multifunctional_interface_bridge_layer) $tv)",
+          "source": "deterministic",
+          "stage": "semantic_gate",
+          "detail": "unrelated (confidence 1.00): This target states that heparin sodium is a multifunctional interface bridge layer, which is a property of heparin sodium but does not explain why it improves perovskite solar cells."
+        },
+        {
+          "query": "(: $prf (IsMechanicallyWeak perovskite_solar_cell) $tv)",
+          "source": "deterministic",
+          "stage": "semantic_gate_not_considered",
+          "detail": "ranked below top 5 by embedding similarity (score 0.638)"
+        },
+        {
+          "query": "(: $prf (IsDefective perovskite_solar_cell) $tv)",
+          "source": "deterministic",
+          "stage": "semantic_gate_not_considered",
+          "detail": "ranked below top 5 by embedding similarity (score 0.628)"
+        },
+        {
+          "query": "(: $prf (Has heparin_sodium_based_device pce_retained_after_1800h_mppt_1_sun 949) $tv)",
+          "source": "deterministic",
+          "stage": "semantic_gate_not_considered",
+          "detail": "ranked below top 5 by embedding similarity (score 0.600)"
+        },
+        {
+          "query": "(: $prf (Features heparin_sodium functional_group) $tv)",
+          "source": "deterministic",
+          "stage": "semantic_gate_not_considered",
+          "detail": "ranked below top 5 by embedding similarity (score 0.590)"
+        },
+        {
+          "query": "(: $prf (Has heparin_sodium_based_device pce_retained_after_ageing_85c_1800h 952) $tv)",
+          "source": "deterministic",
+          "stage": "semantic_gate_not_considered",
+          "detail": "ranked below top 5 by embedding similarity (score 0.588)"
+        },
+        {
+          "query": "(: $prf (Has flexible_sno2_heparin_sodium_based_psc power_conversion_efficiency 2523) $tv)",
+          "source": "deterministic",
+          "stage": "semantic_gate_not_considered",
+          "detail": "ranked below top 5 by embedding similarity (score 0.585)"
+        },
+        {
+          "query": "(: $prf (UsedIn heparin_sodium n_i_p_psc) $tv)",
+          "source": "deterministic",
+          "stage": "semantic_gate_not_considered",
+          "detail": "ranked below top 5 by embedding similarity (score 0.536)"
+        },
+        {
+          "query": "(: $prf (Has resulting_rigid_device power_conversion_efficiency 2661) $tv)",
+          "source": "deterministic",
+          "stage": "semantic_gate_not_considered",
+          "detail": "ranked below top 5 by embedding similarity (score 0.445)"
+        },
+        {
+          "query": "(: $prf (Has resulting_rigid_device certified_power_conversion_efficiency 2654) $tv)",
+          "source": "deterministic",
+          "stage": "semantic_gate_not_considered",
+          "detail": "ranked below top 5 by embedding similarity (score 0.433)"
+        },
+        {
+          "query": "(: $prf (PositionedAmong resulting_rigid_device highest_efficiency_psc) $tv)",
+          "source": "deterministic",
+          "stage": "semantic_gate_not_considered",
+          "detail": "ranked below top 5 by embedding similarity (score 0.396)"
+        }
+      ],
+      "rejection_reasons": [
+        "semantic_gate",
+        "semantic_gate_not_considered"
+      ],
+      "answer": "I couldn't translate this question into a logical query.",
+      "seconds": 6.7771
+    },
+    {
+      "id": "A10",
+      "name": "A10_biochemical_hematological_markers_covid_severity",
+      "category": "indicator_proxy_language",
+      "source_type": "abstract",
+      "question": "Which biomarkers predict COVID-19 severity?",
+      "ingest_error": "",
+      "ingest_seconds": 63.0189,
+      "atom_count": 21,
+      "quarantined_count": 21,
+      "query_error": "",
+      "translator_queries": [
+        "(: $prf (PredictsCovid19Severity $what covid_19_severity) $tv)"
+      ],
+      "provider_error": "",
+      "pln_canonicalized_queries": [
+        "(: $prf (PredictsCovid19Severity $what covid_19_severity) $tv)"
+      ],
+      "qdrant_aligned_queries": [
+        "(: $prf (CouldBeUsedToPredictSeverity covid_19) $tv)",
+        "(: $prf (HasCovid19Severity covid_19) $tv)"
+      ],
+      "execution_candidates": [
+        "(: $prf (CouldBeUsedToPredictSeverity biomarker) $tv)",
+        "(: $prf (PredictsCovid19Severity $what covid_19_severity) $tv)"
+      ],
+      "executed_query": "(: $prf (CouldBeUsedToPredictSeverity biomarker) $tv)",
+      "query_source": "deterministic",
+      "query_status": "well_aligned",
+      "intent_mode": "open",
+      "proof_status": "unknown",
+      "support_kind": "unknown",
+      "candidate_rejections": [
+        {
+          "query": "(: $prf (HasCovid19Severity biomarker) $tv)",
+          "source": "deterministic",
+          "stage": "semantic_gate",
+          "detail": "unrelated (confidence 1.00): The target asks about whether a biomarker has COVID-19 severity, which is nonsensical. Biomarkers predict severity, they don't have it."
+        },
+        {
+          "query": "(: $prf (CouldBeUsedToPredictSeverity covid_19) $tv)",
+          "source": "deterministic",
+          "stage": "semantic_gate",
+          "detail": "related (confidence 0.90): This target is about what could be used to predict severity for COVID-19, which is related to the question. However, it's not asking about biomarkers specifically, but rather about COVID-19 itself as the subject of prediction."
+        },
+        {
+          "query": "(: $prf (HasCovid19Severity covid_19) $tv)",
+          "source": "deterministic",
+          "stage": "semantic_gate",
+          "detail": "unrelated (confidence 1.00): The target asks whether COVID-19 has COVID-19 severity, which is a tautology and not what the question is asking. The question is about what predicts severity, not what has it."
+        },
+        {
+          "query": "(: $prf (HasCovid19Severity $p) $tv)",
+          "source": "deterministic",
+          "stage": "semantic_gate_not_considered",
+          "detail": "ranked below top 5 by embedding similarity (score 0.715)"
+        },
+        {
+          "query": "(: $prf (HasComorbidity biomarker) $tv)",
+          "source": "deterministic",
+          "stage": "semantic_gate_not_considered",
+          "detail": "ranked below top 5 by embedding similarity (score 0.701)"
+        },
+        {
+          "query": "(: $prf (IsA covid_19 neutrophil_count) $tv)",
+          "source": "deterministic",
+          "stage": "semantic_gate_not_considered",
+          "detail": "ranked below top 5 by embedding similarity (score 0.695)"
+        },
+        {
+          "query": "(: $prf (CouldBeUsedToPredictSeverity $x) $tv)",
+          "source": "deterministic",
+          "stage": "semantic_gate_not_considered",
+          "detail": "ranked below top 5 by embedding similarity (score 0.690)"
+        },
+        {
+          "query": "(: $prf (IsA biomarker neutrophil_count) $tv)",
+          "source": "deterministic",
+          "stage": "semantic_gate_not_considered",
+          "detail": "ranked below top 5 by embedding similarity (score 0.690)"
+        },
+        {
+          "query": "(: $prf (IsA biomarker crp_level) $tv)",
+          "source": "deterministic",
+          "stage": "semantic_gate_not_considered",
+          "detail": "ranked below top 5 by embedding similarity (score 0.676)"
+        },
+        {
+          "query": "(: $prf (IsA biomarker patient) $tv)",
+          "source": "deterministic",
+          "stage": "semantic_gate_not_considered",
+          "detail": "ranked below top 5 by embedding similarity (score 0.674)"
+        },
+        {
+          "query": "(: $prf (Determine correlation_of_laboratory_parameter severity_of_covid_19_infection) $tv)",
+          "source": "deterministic",
+          "stage": "semantic_gate_not_considered",
+          "detail": "ranked below top 5 by embedding similarity (score 0.673)"
+        },
+        {
+          "query": "(: $prf (IsA biomarker alt) $tv)",
+          "source": "deterministic",
+          "stage": "semantic_gate_not_considered",
+          "detail": "ranked below top 5 by embedding similarity (score 0.667)"
+        },
+        {
+          "query": "(: $prf (HasComorbidity covid_19) $tv)",
+          "source": "deterministic",
+          "stage": "semantic_gate_not_considered",
+          "detail": "ranked below top 5 by embedding similarity (score 0.654)"
+        },
+        {
+          "query": "(: $prf (IsA covid_19 crp_level) $tv)",
+          "source": "deterministic",
+          "stage": "semantic_gate_not_considered",
+          "detail": "ranked below top 5 by embedding similarity (score 0.647)"
+        },
+        {
+          "query": "(: $prf (IsA biomarker ldh) $tv)",
+          "source": "deterministic",
+          "stage": "semantic_gate_not_considered",
+          "detail": "ranked below top 5 by embedding similarity (score 0.632)"
+        },
+        {
+          "query": "(: $prf (IsA biomarker d_dimer) $tv)",
+          "source": "deterministic",
+          "stage": "semantic_gate_not_considered",
+          "detail": "ranked below top 5 by embedding similarity (score 0.630)"
+        },
+        {
+          "query": "(: $prf (HasOlderAge biomarker) $tv)",
+          "source": "deterministic",
+          "stage": "semantic_gate_not_considered",
+          "detail": "ranked below top 5 by embedding similarity (score 0.628)"
+        },
+        {
+          "query": "(: $prf (IsA covid_19 d_dimer) $tv)",
+          "source": "deterministic",
+          "stage": "semantic_gate_not_considered",
+          "detail": "ranked below top 5 by embedding similarity (score 0.625)"
+        },
+        {
+          "query": "(: $prf (IsA covid_19 patient) $tv)",
+          "source": "deterministic",
+          "stage": "semantic_gate_not_considered",
+          "detail": "ranked below top 5 by embedding similarity (score 0.612)"
+        },
+        {
+          "query": "(: $prf (AssociatedWith relative_risk_factor severe_covid_19) $tv)",
+          "source": "deterministic",
+          "stage": "semantic_gate_not_considered",
+          "detail": "ranked below top 5 by embedding similarity (score 0.610)"
+        },
+        {
+          "query": "(: $prf (CreatedNeedForInvestigationOfProgression covid_19 disease_progression) $tv)",
+          "source": "deterministic",
+          "stage": "semantic_gate_not_considered",
+          "detail": "ranked below top 5 by embedding similarity (score 0.600)"
+        },
+        {
+          "query": "(: $prf (Inform biomarker intervention) $tv)",
+          "source": "deterministic",
+          "stage": "semantic_gate_not_considered",
+          "detail": "ranked below top 5 by embedding similarity (score 0.600)"
+        },
+        {
+          "query": "(: $prf (MightAllow timely_analysis_of_these_marker early_prediction_of_disease_progression) $tv)",
+          "source": "deterministic",
+          "stage": "semantic_gate_not_considered",
+          "detail": "ranked below top 5 by embedding similarity (score 0.595)"
+        },
+        {
+          "query": "(: $prf (IsA covid_19 alt) $tv)",
+          "source": "deterministic",
+          "stage": "semantic_gate_not_considered",
+          "detail": "ranked below top 5 by embedding similarity (score 0.592)"
+        },
+        {
+          "query": "(: $prf (IsA covid_19 ldh) $tv)",
+          "source": "deterministic",
+          "stage": "semantic_gate_not_considered",
+          "detail": "ranked below top 5 by embedding similarity (score 0.584)"
+        },
+        {
+          "query": "(: $prf (HasOlderAge covid_19) $tv)",
+          "source": "deterministic",
+          "stage": "semantic_gate_not_considered",
+          "detail": "ranked below top 5 by embedding similarity (score 0.578)"
+        },
+        {
+          "query": "(: $prf (IsA $x neutrophil_count) $tv)",
+          "source": "deterministic",
+          "stage": "semantic_gate_not_considered",
+          "detail": "ranked below top 5 by embedding similarity (score 0.576)"
+        },
+        {
+          "query": "(: $prf (AimsToAssess this_study correlation_of_laboratory_parameter) $tv)",
+          "source": "deterministic",
+          "stage": "semantic_gate_not_considered",
+          "detail": "ranked below top 5 by embedding similarity (score 0.576)"
+        },
+        {
+          "query": "(: $prf (Determined binary_logistic_regression_analysis relative_risk_factor) $tv)",
+          "source": "deterministic",
+          "stage": "semantic_gate_not_considered",
+          "detail": "ranked below top 5 by embedding similarity (score 0.565)"
+        },
+        {
+          "query": "(: $prf (HasComorbidity $p) $tv)",
+          "source": "deterministic",
+          "stage": "semantic_gate_not_considered",
+          "detail": "ranked below top 5 by embedding similarity (score 0.565)"
+        },
+        {
+          "query": "(: $prf (Has neutrophil cut_off_value 785) $tv)",
+          "source": "deterministic",
+          "stage": "semantic_gate_not_considered",
+          "detail": "ranked below top 5 by embedding similarity (score 0.533)"
+        },
+        {
+          "query": "(: $prf (ConductedAmong this_study 191covid_19_patient) $tv)",
+          "source": "deterministic",
+          "stage": "semantic_gate_not_considered",
+          "detail": "ranked below top 5 by embedding similarity (score 0.529)"
+        },
+        {
+          "query": "(: $prf (Has d_dimer sensitivity 822) $tv)",
+          "source": "deterministic",
+          "stage": "semantic_gate_not_considered",
+          "detail": "ranked below top 5 by embedding similarity (score 0.520)"
+        },
+        {
+          "query": "(: $prf (DividedInto these_patient severe_and_nonsevere_group) $tv)",
+          "source": "deterministic",
+          "stage": "semantic_gate_not_considered",
+          "detail": "ranked below top 5 by embedding similarity (score 0.498)"
+        },
+        {
+          "query": "(: $prf (CalculatedWith auc roc_curve) $tv)",
+          "source": "deterministic",
+          "stage": "semantic_gate_not_considered",
+          "detail": "ranked below top 5 by embedding similarity (score 0.497)"
+        },
+        {
+          "query": "(: $prf (IsA $x crp_level) $tv)",
+          "source": "deterministic",
+          "stage": "semantic_gate_not_considered",
+          "detail": "ranked below top 5 by embedding similarity (score 0.484)"
+        },
+        {
+          "query": "(: $prf (Has d_dimer specificity 812) $tv)",
+          "source": "deterministic",
+          "stage": "semantic_gate_not_considered",
+          "detail": "ranked below top 5 by embedding similarity (score 0.484)"
+        },
+        {
+          "query": "(: $prf (HasOlderAge $p) $tv)",
+          "source": "deterministic",
+          "stage": "semantic_gate_not_considered",
+          "detail": "ranked below top 5 by embedding similarity (score 0.481)"
+        },
+        {
+          "query": "(: $prf (HighestFor auc d_dimer) $tv)",
+          "source": "deterministic",
+          "stage": "semantic_gate_not_considered",
+          "detail": "ranked below top 5 by embedding similarity (score 0.480)"
+        },
+        {
+          "query": "(: $prf (IsA $p patient) $tv)",
+          "source": "deterministic",
+          "stage": "semantic_gate_not_considered",
+          "detail": "ranked below top 5 by embedding similarity (score 0.476)"
+        },
+        {
+          "query": "(: $prf (Has d_dimer auc 0874) $tv)",
+          "source": "deterministic",
+          "stage": "semantic_gate_not_considered",
+          "detail": "ranked below top 5 by embedding similarity (score 0.475)"
+        },
+        {
+          "query": "(: $prf (WerePerformed renal_function_test) $tv)",
+          "source": "deterministic",
+          "stage": "semantic_gate_not_considered",
+          "detail": "ranked below top 5 by embedding similarity (score 0.474)"
+        },
+        {
+          "query": "(: $prf (Has sgpt cut_off_value 355_u_l) $tv)",
+          "source": "deterministic",
+          "stage": "semantic_gate_not_considered",
+          "detail": "ranked below top 5 by embedding similarity (score 0.465)"
+        },
+        {
+          "query": "(: $prf (Has age cut_off_value 545_year) $tv)",
+          "source": "deterministic",
+          "stage": "semantic_gate_not_considered",
+          "detail": "ranked below top 5 by embedding similarity (score 0.454)"
+        },
+        {
+          "query": "(: $prf (IsA $x alt) $tv)",
+          "source": "deterministic",
+          "stage": "semantic_gate_not_considered",
+          "detail": "ranked below top 5 by embedding similarity (score 0.443)"
+        },
+        {
+          "query": "(: $prf (IsA $x d_dimer) $tv)",
+          "source": "deterministic",
+          "stage": "semantic_gate_not_considered",
+          "detail": "ranked below top 5 by embedding similarity (score 0.418)"
+        },
+        {
+          "query": "(: $prf (IsA $x ldh) $tv)",
+          "source": "deterministic",
+          "stage": "semantic_gate_not_considered",
+          "detail": "ranked below top 5 by embedding similarity (score 0.413)"
+        },
+        {
+          "query": "(: $prf (LocatedIn sumeru_hospital lalitpur) $tv)",
+          "source": "deterministic",
+          "stage": "semantic_gate_not_considered",
+          "detail": "ranked below top 5 by embedding similarity (score 0.400)"
+        }
+      ],
+      "rejection_reasons": [],
+      "answer": "I don't know - neither the proposition nor its explicit negation was proved.",
+      "seconds": 17.2756
+    },
+    {
+      "id": "A11",
+      "name": "A11_serological_biomarkers_inflammation_covid_severity",
+      "category": "indicator_proxy_language",
+      "source_type": "abstract",
+      "question": "Can serological inflammation indicators predict COVID-19 severity?",
+      "ingest_error": "",
+      "ingest_seconds": 85.7223,
+      "atom_count": 10,
+      "quarantined_count": 16,
+      "query_error": "",
+      "translator_queries": [
+        "(: $prf (HasPotentialToPredict serological_inflammation_indicator covid_19_severity) $tv)"
+      ],
+      "provider_error": "",
+      "pln_canonicalized_queries": [
+        "(: $prf (HasPotentialToPredict serological_inflammation_indicator covid_19_severity) $tv)"
+      ],
+      "qdrant_aligned_queries": [
+        "(: $prf (Develops covid_19 acute respiratory distress) $tv)"
+      ],
+      "execution_candidates": [
+        "(: $prf (HasPotentialToPredict serological_inflammation_indicator covid_19_severity) $tv)"
+      ],
+      "executed_query": "(: $prf (HasPotentialToPredict serological_inflammation_indicator covid_19_severity) $tv)",
+      "query_source": "parser",
+      "query_status": "well_aligned",
+      "intent_mode": "boolean",
+      "proof_status": "unknown",
+      "support_kind": "unknown",
+      "candidate_rejections": [
+        {
+          "query": "(: $prf (HasSeverity covid_19_m2 severe) $tv)",
+          "source": "deterministic",
+          "stage": "semantic_gate",
+          "detail": "unrelated (confidence 1.00): The question is about whether indicators can predict severity, not about the severity of a specific COVID-19 case (covid_19_m2) itself. This target is about the severity of a particular instance of COVID-19, not the predictive power of indicators."
+        },
+        {
+          "query": "(: $prf (CorrelatedWith hscpar risk_of_severe_disease) $tv)",
+          "source": "deterministic",
+          "stage": "semantic_gate",
+          "detail": "related (confidence 0.80): This target states that 'hscpar' (a biomarker, which could be a serological inflammation indicator) is correlated with the 'risk of severe disease' (which is related to COVID-19 severity). While it's related to the topic of prediction and severity, it's specific to a particular biomarker and talks about correlation rather than the general predictive capability of 'serological inflammation indicators'. It's a specific instance of the general question, but not the general question itself."
+        },
+        {
+          "query": "(: $prf (Develops covid_19 acute respiratory distress) $tv)",
+          "source": "qdrant_alignment",
+          "stage": "semantic_gate",
+          "detail": "unrelated (confidence 1.00): This target is about COVID-19 developing acute respiratory distress. This is a symptom or outcome of COVID-19, not about the predictive power of serological inflammation indicators for COVID-19 severity."
+        },
+        {
+          "query": "(: $prf (CorrelatedWith hscpar duration_of_hospital_stay) $tv)",
+          "source": "deterministic",
+          "stage": "semantic_gate",
+          "detail": "related (confidence 0.80): This target states that 'hscpar' (a biomarker) is correlated with 'duration of hospital stay'. While duration of hospital stay can be an indicator of severity, and hscpar could be a serological inflammation indicator, the target is about a specific biomarker and a specific outcome (duration of hospital stay) rather than the general predictive power for 'COVID-19 severity'."
+        },
+        {
+          "query": "(: $prf (Between correlation serological_biomarker_and_duration_of_hospital_stay) $tv)",
+          "source": "deterministic",
+          "stage": "semantic_gate_not_considered",
+          "detail": "ranked below top 5 by embedding similarity (score 0.571)"
+        },
+        {
+          "query": "(: $prf (MayServeAs hscpar accurate_biomarker) $tv)",
+          "source": "deterministic",
+          "stage": "semantic_gate_not_considered",
+          "detail": "ranked below top 5 by embedding similarity (score 0.548)"
+        },
+        {
+          "query": "(: $prf (UsedToUnderstand spearman_method correlation) $tv)",
+          "source": "deterministic",
+          "stage": "semantic_gate_not_considered",
+          "detail": "ranked below top 5 by embedding similarity (score 0.476)"
+        },
+        {
+          "query": "(: $prf (AnalyzedAt 114patient jinyintan_hospital) $tv)",
+          "source": "deterministic",
+          "stage": "semantic_gate_not_considered",
+          "detail": "ranked below top 5 by embedding similarity (score 0.470)"
+        },
+        {
+          "query": "(: $prf (Showed nomogram_combining_the_three_parameter good_discrimination) $tv)",
+          "source": "deterministic",
+          "stage": "semantic_gate_not_considered",
+          "detail": "ranked below top 5 by embedding similarity (score 0.456)"
+        },
+        {
+          "query": "(: $prf (HadCIndex nomogram_combining_the_three_parameter 0873) $tv)",
+          "source": "deterministic",
+          "stage": "semantic_gate_not_considered",
+          "detail": "ranked below top 5 by embedding similarity (score 0.417)"
+        }
+      ],
+      "rejection_reasons": [],
+      "answer": "I don't know - neither the proposition nor its explicit negation was proved.",
+      "seconds": 6.1282
+    },
+    {
+      "id": "A12",
+      "name": "A12_contact_angle_hydrophilicity_hydrophobicity",
+      "category": "indicator_proxy_language",
+      "source_type": "abstract",
+      "question": "What does contact angle indicate about hydrophilicity or hydrophobicity?",
+      "ingest_error": "",
+      "ingest_seconds": 64.762,
+      "atom_count": 9,
+      "quarantined_count": 5,
+      "query_error": "",
+      "translator_queries": [
+        "(: $prf (IndicatesAbout contact_angle hydrophilicity_or_hydrophobicity $what) $tv)"
+      ],
+      "provider_error": "",
+      "pln_canonicalized_queries": [
+        "(: $prf (IndicatesAbout contact_angle hydrophilicity_or_hydrophobicity $what) $tv)"
+      ],
+      "qdrant_aligned_queries": [
+        "(: $prf (InvestigatesSystematically this_study advancing_contact_angle) $tv)",
+        "(: $prf (BroadenedSubstantially square_pillar_roughness advancing_contact_angle) $tv)",
+        "(: $prf (Induces increasing_roughness hydrophilic_wenzel_to_hemiwicking_transition) $tv)"
+      ],
+      "execution_candidates": [
+        "(: $prf (IndicatesAbout contact_angle hydrophilicity_or_hydrophobicity $what) $tv)",
+        "(: $prf (InvestigatesSystematically this_study advancing_contact_angle) $tv)",
+        "(: $prf (BroadenedSubstantially square_pillar_roughness advancing_contact_angle) $tv)",
+        "(: $prf (Induces increasing_roughness hydrophilic_wenzel_to_hemiwicking_transition) $tv)",
+        "(: $prf (RefinesUnderstandingOf the_framework_established_here roughness_mediated_wetting_transition) $tv)"
+      ],
+      "executed_query": "(: $prf (InvestigatesSystematically this_study advancing_contact_angle) $tv)",
+      "query_source": "deterministic",
+      "query_status": "well_aligned",
+      "intent_mode": "open",
+      "proof_status": "positive",
+      "support_kind": "entailed",
+      "candidate_rejections": [
+        {
+          "query": "(: $prf (Enables roughening hydrophobic_wenzel_to_cassie_transition) $tv)",
+          "source": "deterministic",
+          "stage": "semantic_gate_not_considered",
+          "detail": "ranked below top 5 by embedding similarity (score 0.547)"
+        },
+        {
+          "query": "(: $prf (On wetting_transition polydopamine_coated_noa81_substrate) $tv)",
+          "source": "deterministic",
+          "stage": "semantic_gate_not_considered",
+          "detail": "ranked below top 5 by embedding similarity (score 0.541)"
+        },
+        {
+          "query": "(: $prf (Has af tuned_range 361_to_80_7) $tv)",
+          "source": "deterministic",
+          "stage": "semantic_gate_not_considered",
+          "detail": "ranked below top 5 by embedding similarity (score 0.497)"
+        },
+        {
+          "query": "(: $prf (LessThan af 55) $tv)",
+          "source": "deterministic",
+          "stage": "semantic_gate_not_considered",
+          "detail": "ranked below top 5 by embedding similarity (score 0.473)"
+        },
+        {
+          "query": "(: $prf (WereIdentified two_transition_capability_regime) $tv)",
+          "source": "deterministic",
+          "stage": "semantic_gate_not_considered",
+          "detail": "ranked below top 5 by embedding similarity (score 0.465)"
+        },
+        {
+          "query": "(: $prf (GreaterThan af 80) $tv)",
+          "source": "deterministic",
+          "stage": "semantic_gate_not_considered",
+          "detail": "ranked below top 5 by embedding similarity (score 0.461)"
+        },
+        {
+          "query": "(: $prf (PatternedWith polydopamine_coated_noa81_substrate regular_array_of_square_micro_pillar) $tv)",
+          "source": "deterministic",
+          "stage": "semantic_gate_not_considered",
+          "detail": "ranked below top 5 by embedding similarity (score 0.441)"
+        }
+      ],
+      "rejection_reasons": [],
+      "answer": "Yes. The proof establishes (InvestigatesSystematically this_study advancing_contact_angle).",
+      "seconds": 9.1836
+    },
+    {
+      "id": "A13",
+      "name": "A13_big_data_perovskite_stability_analysis",
+      "category": "multi_sentence_implicit_inference",
+      "source_type": "abstract",
+      "question": "Why is comparing perovskite stability difficult?",
+      "ingest_error": "",
+      "ingest_seconds": 29.144,
+      "atom_count": 5,
+      "quarantined_count": 10,
+      "query_error": "",
+      "translator_queries": [
+        "(: $prf (MakesDifficultToCompare $what comparing_perovskite_stability) $tv)"
+      ],
+      "provider_error": "",
+      "pln_canonicalized_queries": [
+        "(: $prf (MakesDifficultToCompare $what comparing_perovskite_stability) $tv)"
+      ],
+      "qdrant_aligned_queries": [
+        "(: $prf (MakesDifficultToCompare lack_of_properly_implemented_unified_stability_testing_and_disseminating_standard historical_stability_data) $tv)",
+        "(: $prf (Restricts stability_of_perovskite_solar_cell commercialization) $tv)"
+      ],
+      "execution_candidates": [
+        "(: $prf (MakesDifficultToCompare $what comparing_perovskite_stability) $tv)"
+      ],
+      "executed_query": "(: $prf (MakesDifficultToCompare $what comparing_perovskite_stability) $tv)",
+      "query_source": "parser",
+      "query_status": "well_aligned",
+      "intent_mode": "explanation",
+      "proof_status": "unknown",
+      "support_kind": "unknown",
+      "candidate_rejections": [
+        {
+          "query": "(: $prf (MakesDifficultToCompare lack_of_properly_implemented_unified_stability_testing_and_disseminating_standard historical_stability_data) $tv)",
+          "source": "deterministic",
+          "stage": "semantic_gate",
+          "detail": "related (confidence 0.80): This target provides a specific reason for difficulty in comparing stability, which is related to the question. However, the question is general about 'perovskite stability' while the target specifies 'historical stability data' and 'lack of properly implemented unified stability testing and disseminating standard'. While it's a potential answer, it's more specific than the general question, making it related rather than an exact match for the general 'why' question."
+        },
+        {
+          "query": "(: $prf (Restricts stability_of_perovskite_solar_cell commercialization) $tv)",
+          "source": "deterministic",
+          "stage": "semantic_gate",
+          "detail": "unrelated (confidence 1.00): This target is about the stability of perovskite solar cells restricting commercialization. This is a consequence or effect of stability, not a reason why comparing stability is difficult. It's a different topic altogether."
+        },
+        {
+          "query": "(: $prf (ShownGreatPotentialFor lead_halide_perovskite photovoltaic_application) $tv)",
+          "source": "deterministic",
+          "stage": "semantic_gate",
+          "detail": "unrelated (confidence 1.00): This target is about lead halide perovskite showing great potential for photovoltaic applications. This is completely unrelated to the difficulty of comparing perovskite stability."
+        },
+        {
+          "query": "(: $prf (Propose we single_indicator) $tv)",
+          "source": "deterministic",
+          "stage": "semantic_gate",
+          "detail": "unrelated (confidence 1.00): This target is about proposing a single indicator. This is a potential solution or action, not a reason why comparing perovskite stability is difficult. It's unrelated to the question's core."
+        },
+        {
+          "query": "(: $prf (ProvideSuggestionsFor we future_direction) $tv)",
+          "source": "deterministic",
+          "stage": "semantic_gate_not_considered",
+          "detail": "ranked below top 5 by embedding similarity (score 0.398)"
+        }
+      ],
+      "rejection_reasons": [],
+      "answer": "I don't know - no value could be proved for (MakesDifficultToCompare $what comparing_perovskite_stability).",
+      "seconds": 10.8346
+    },
+    {
+      "id": "A14",
+      "name": "A14_perovskite_stability_follows_efficiency",
+      "category": "multi_sentence_implicit_inference",
+      "source_type": "abstract",
+      "question": "What relationship is reported between efficiency and stability?",
+      "ingest_error": "",
+      "ingest_seconds": 41.3986,
+      "atom_count": 9,
+      "quarantined_count": 7,
+      "query_error": "",
+      "translator_queries": [
+        "(: $prf (HasRelationship efficiency stability $what) $tv)"
+      ],
+      "provider_error": "",
+      "pln_canonicalized_queries": [
+        "(: $prf (HasRelationship efficiency stability $what) $tv)"
+      ],
+      "qdrant_aligned_queries": [
+        "(: $prf (CorrelatedWith frequency_of_particular_shape_of_degradation_curve maximum_reached_pce) $tv)",
+        "(: $prf (RemainCriticalChallenge stability_issue) $tv)",
+        "(: $prf (ReachedCompetitiveEfficiencyValues perovskite_solar_cell) $tv)"
+      ],
+      "execution_candidates": [
+        "(: $prf (HasRelationship efficiency stability $what) $tv)"
+      ],
+      "executed_query": "(: $prf (HasRelationship efficiency stability $what) $tv)",
+      "query_source": "parser",
+      "query_status": "well_aligned",
+      "intent_mode": "open",
+      "proof_status": "unknown",
+      "support_kind": "unknown",
+      "candidate_rejections": [
+        {
+          "query": "(: $prf (ShowsHigherStability $x) $tv)",
+          "source": "deterministic",
+          "stage": "semantic_gate",
+          "detail": "related (confidence 0.90): This target is about stability, which is one of the entities in the question, but it doesn't mention efficiency or the relationship between them."
+        },
+        {
+          "query": "(: $prf (RemainCriticalChallenge stability_issue) $tv)",
+          "source": "deterministic",
+          "stage": "semantic_gate",
+          "detail": "unrelated (confidence 1.00): This target is about stability issues being a challenge, which is not what the question is asking about."
+        },
+        {
+          "query": "(: $prf (ReachedCompetitiveEfficiencyValues perovskite_solar_cell) $tv)",
+          "source": "deterministic",
+          "stage": "semantic_gate",
+          "detail": "related (confidence 0.90): This target is about efficiency, which is one of the entities in the question, but it doesn't mention stability or the relationship between them."
+        },
+        {
+          "query": "(: $prf (CorrelatedWith frequency_of_particular_shape_of_degradation_curve maximum_reached_pce) $tv)",
+          "source": "deterministic",
+          "stage": "semantic_gate",
+          "detail": "unrelated (confidence 1.00): This target is about a correlation between different entities (frequency of degradation curve and maximum PCE), not efficiency and stability."
+        },
+        {
+          "query": "(: $prf (ReachedCompetitiveEfficiencyValues $x) $tv)",
+          "source": "deterministic",
+          "stage": "semantic_gate_not_considered",
+          "detail": "ranked below top 5 by embedding similarity (score 0.597)"
+        },
+        {
+          "query": "(: $prf (CorrelatedWith maximum_reached_power_conversion_efficiency_pce relative_pce_loss_observed_after_150_hour_of_ageing) $tv)",
+          "source": "deterministic",
+          "stage": "semantic_gate_not_considered",
+          "detail": "ranked below top 5 by embedding similarity (score 0.594)"
+        },
+        {
+          "query": "(: $prf (IsMoreEfficient $x) $tv)",
+          "source": "deterministic",
+          "stage": "semantic_gate_not_considered",
+          "detail": "ranked below top 5 by embedding similarity (score 0.583)"
+        },
+        {
+          "query": "(: $prf (AreAnalysed 2245_mppt_ageing_curve) $tv)",
+          "source": "deterministic",
+          "stage": "semantic_gate_not_considered",
+          "detail": "ranked below top 5 by embedding similarity (score 0.533)"
+        },
+        {
+          "query": "(: $prf (Analyse we dataset) $tv)",
+          "source": "deterministic",
+          "stage": "semantic_gate_not_considered",
+          "detail": "ranked below top 5 by embedding similarity (score 0.488)"
+        },
+        {
+          "query": "(: $prf (CollectedWith we custom_built_high_throughput_ageing_system) $tv)",
+          "source": "deterministic",
+          "stage": "semantic_gate_not_considered",
+          "detail": "ranked below top 5 by embedding similarity (score 0.471)"
+        }
+      ],
+      "rejection_reasons": [],
+      "answer": "I don't know - no value could be proved for (HasRelationship efficiency stability $what).",
+      "seconds": 23.497
+    },
+    {
+      "id": "A15",
+      "name": "A15_microbiome_causality_consensus_statement",
+      "category": "ambiguous_hard_scientific_phrasing",
+      "source_type": "abstract",
+      "question": "What methodological approaches help establish causality in microbiome research?",
+      "ingest_error": "",
+      "ingest_seconds": 39.8446,
+      "atom_count": 13,
+      "quarantined_count": 17,
+      "query_error": "",
+      "translator_queries": [
+        "(: $prf (HelpEstablishCausality $what causality_in_microbiome_research) $tv)"
+      ],
+      "provider_error": "",
+      "pln_canonicalized_queries": [
+        "(: $prf (HelpEstablishCausality $what causality_in_microbiome_research) $tv)"
+      ],
+      "qdrant_aligned_queries": [
+        "(: $prf (ImplicatedIn disruption_in_gut_microbiome_composition various_inflammatory_condition) $tv)",
+        "(: $prf (Comprises gut_microbiome trillion_of_microorganism) $tv)",
+        "(: $prf (Initiated human_microbiome_action_consortium delphi_survey) $tv)"
+      ],
+      "execution_candidates": [
+        "(: $prf (HelpEstablishCausality $what causality_in_microbiome_research) $tv)"
+      ],
+      "executed_query": "(: $prf (HelpEstablishCausality $what causality_in_microbiome_research) $tv)",
+      "query_source": "parser",
+      "query_status": "well_aligned",
+      "intent_mode": "open",
+      "proof_status": "unknown",
+      "support_kind": "unknown",
+      "candidate_rejections": [
+        {
+          "query": "(: $prf (ElucidatesCausalRoleOf preclinical_model gut_microbiome_in_disea) $tv)",
+          "source": "deterministic",
+          "stage": "semantic_gate",
+          "detail": "related (confidence 0.80): This target is about elucidating the causal role of preclinical models and the gut microbiome in disease. While related to causality and microbiome, it's specific to preclinical models and disease, not general methodological approaches for establishing causality in microbiome research."
+        },
+        {
+          "query": "(: $prf (UsedInFutureStudiesOf preclinical_model gut_microbiome_related_disea) $tv)",
+          "source": "deterministic",
+          "stage": "semantic_gate",
+          "detail": "unrelated (confidence 0.90): This target is about preclinical models being used in future studies of gut microbiome-related diseases. This is about future use, not about current methodological approaches to establish causality."
+        },
+        {
+          "query": "(: $prf (Modulates gut_microbiome immune_respon) $tv)",
+          "source": "deterministic",
+          "stage": "semantic_gate",
+          "detail": "unrelated (confidence 0.90): This target states that the gut microbiome modulates immune response. This is a specific biological statement, not about methodological approaches to establish causality in microbiome research."
+        },
+        {
+          "query": "(: $prf (OfferCrucialInsightsIntoRoleOf preclinical_model gut_microbiome_in_disea) $tv)",
+          "source": "deterministic",
+          "stage": "semantic_gate",
+          "detail": "related (confidence 0.80): This target is about offering crucial insights into the role of preclinical models and the gut microbiome in disease. Similar to target 1, it's related to causality and microbiome but focuses on insights from preclinical models in disease, not general methodological approaches."
+        },
+        {
+          "query": "(: $prf (ImplicatedIn disruption_in_gut_microbiome_composition various_inflammatory_condition) $tv)",
+          "source": "deterministic",
+          "stage": "semantic_gate_not_considered",
+          "detail": "ranked below top 5 by embedding similarity (score 0.656)"
+        },
+        {
+          "query": "(: $prf (ImplicatedIn disruption_in_gut_microbiome_composition neurodegenerative_disea) $tv)",
+          "source": "deterministic",
+          "stage": "semantic_gate_not_considered",
+          "detail": "ranked below top 5 by embedding similarity (score 0.652)"
+        },
+        {
+          "query": "(: $prf (Initiated human_microbiome_action_consortium delphi_survey) $tv)",
+          "source": "deterministic",
+          "stage": "semantic_gate_not_considered",
+          "detail": "ranked below top 5 by embedding similarity (score 0.649)"
+        },
+        {
+          "query": "(: $prf (Comprises gut_microbiome trillion_of_microorganism) $tv)",
+          "source": "deterministic",
+          "stage": "semantic_gate_not_considered",
+          "detail": "ranked below top 5 by embedding similarity (score 0.613)"
+        },
+        {
+          "query": "(: $prf (RequestedToEvaluate experts limitation_of_preclinical_model) $tv)",
+          "source": "deterministic",
+          "stage": "semantic_gate_not_considered",
+          "detail": "ranked below top 5 by embedding similarity (score 0.554)"
+        },
+        {
+          "query": "(: $prf (RequestedToEvaluate experts suitability_of_preclinical_model) $tv)",
+          "source": "deterministic",
+          "stage": "semantic_gate_not_considered",
+          "detail": "ranked below top 5 by embedding similarity (score 0.554)"
+        },
+        {
+          "query": "(: $prf (RequestedToEvaluate experts strength_of_preclinical_model) $tv)",
+          "source": "deterministic",
+          "stage": "semantic_gate_not_considered",
+          "detail": "ranked below top 5 by embedding similarity (score 0.554)"
+        },
+        {
+          "query": "(: $prf (ProvideValuableInsightsForSelecting recommendation preclinical_model) $tv)",
+          "source": "deterministic",
+          "stage": "semantic_gate_not_considered",
+          "detail": "ranked below top 5 by embedding similarity (score 0.548)"
+        },
+        {
+          "query": "(: $prf (AimedToAddressComplexityOfSelecting delphi_survey appropriate_preclinical_model) $tv)",
+          "source": "deterministic",
+          "stage": "semantic_gate_not_considered",
+          "detail": "ranked below top 5 by embedding similarity (score 0.546)"
+        }
+      ],
+      "rejection_reasons": [],
+      "answer": "I don't know - no value could be proved for (HelpEstablishCausality $what causality_in_microbiome_research).",
+      "seconds": 8.8571
+    },
+    {
+      "id": "S01",
+      "name": "S01_sodium_heparin_perovskite_snippets",
+      "category": "short_noisy_snippet",
+      "source_type": "snippets",
+      "question": "What role does sodium heparin play in perovskite solar cells?",
+      "ingest_error": "",
+      "ingest_seconds": 37.821,
+      "atom_count": 2,
+      "quarantined_count": 6,
+      "query_error": "",
+      "translator_queries": [
+        "(: $prf (PlaysRoleIn sodium_heparin perovskite_solar_cell $what) $tv)"
+      ],
+      "provider_error": "",
+      "pln_canonicalized_queries": [
+        "(: $prf (PlaysRoleIn sodium_heparin perovskite_solar_cell $what) $tv)"
+      ],
+      "qdrant_aligned_queries": [
+        "(: $prf (ReportedAsAdditiveStrategyFor sodium_heparin perovskite_solar_cell) $tv)",
+        "(: $prf (OftenDescribedAsImproving sodium_heparin perovskite_solar_cell_performance) $tv)"
+      ],
+      "execution_candidates": [
+        "(: $prf (PlaysRoleIn sodium_heparin perovskite_solar_cell $what) $tv)"
+      ],
+      "executed_query": "(: $prf (PlaysRoleIn sodium_heparin perovskite_solar_cell $what) $tv)",
+      "query_source": "parser",
+      "query_status": "well_aligned",
+      "intent_mode": "open",
+      "proof_status": "unknown",
+      "support_kind": "unknown",
+      "candidate_rejections": [
+        {
+          "query": "(: $prf (OftenDescribedAsImproving sodium_heparin perovskite_solar_cell_performance) $tv)",
+          "source": "deterministic",
+          "stage": "semantic_gate",
+          "detail": "related (confidence 0.90): This target states that sodium heparin is often described as improving perovskite solar cell performance. While related to the topic, it describes a specific effect rather than the general 'role' it plays, which could encompass more than just improvement."
+        },
+        {
+          "query": "(: $prf (ReportedAsAdditiveStrategyFor sodium_heparin perovskite_solar_cell) $tv)",
+          "source": "deterministic",
+          "stage": "semantic_gate",
+          "detail": "related (confidence 0.90): This target states that sodium heparin is reported as an additive strategy for perovskite solar cells. This is a specific application or method, not a general description of its 'role' which could be broader."
+        }
+      ],
+      "rejection_reasons": [],
+      "answer": "I don't know - no value could be proved for (PlaysRoleIn sodium_heparin perovskite_solar_cell $what).",
+      "seconds": 6.7162
+    },
+    {
+      "id": "S02",
+      "name": "S02_covid_biomarkers_severity_snippets",
+      "category": "short_noisy_snippet",
+      "source_type": "snippets",
+      "question": "Which blood markers are associated with severe COVID-19?",
+      "ingest_error": "",
+      "ingest_seconds": 30.2418,
+      "atom_count": 4,
+      "quarantined_count": 0,
+      "query_error": "",
+      "translator_queries": [
+        "(: $prf (AssociatedWithMoreSevereDisease $what severe_covid_19) $tv)"
+      ],
+      "provider_error": "",
+      "pln_canonicalized_queries": [
+        "(: $prf (AssociatedWithMoreSevereDisease $what severe_covid_19) $tv)"
+      ],
+      "qdrant_aligned_queries": [
+        "(: $prf (AssociatedWithMoreSevereDisease covid_19) $tv)"
+      ],
+      "execution_candidates": [
+        "(: $prf (AssociatedWithMoreSevereDisease $x) $tv)"
+      ],
+      "executed_query": "(: $prf (AssociatedWithMoreSevereDisease $x) $tv)",
+      "query_source": "deterministic",
+      "query_status": "well_aligned",
+      "intent_mode": "open",
+      "proof_status": "unknown",
+      "support_kind": "unknown",
+      "candidate_rejections": [
+        {
+          "query": "(: $prf (AssociatedWithMoreSevereDisease $what severe_covid_19) $tv)",
+          "source": "parser",
+          "stage": "arity_conflict",
+          "detail": "AssociatedWithMoreSevereDisease was observed with arity [1], target uses 2"
+        },
+        {
+          "query": "(: $prf (AssociatedWithMoreSevereDisease covid_19) $tv)",
+          "source": "qdrant_alignment",
+          "stage": "semantic_gate",
+          "detail": "related (confidence 0.90): The target states that COVID-19 is associated with more severe disease, but the question asks which blood markers are associated with severe COVID-19. The target does not identify any blood markers."
+        },
+        {
+          "query": "(: $prf (FrequentlyDiscussedAsPredictorOrIndicatorOf inflammatory_and_coagulation_marker covid_19_severity) $tv)",
+          "source": "deterministic",
+          "stage": "semantic_gate",
+          "detail": "related (confidence 0.80): This target states that inflammatory and coagulation markers are frequently discussed as predictors of COVID-19 severity. While related to the topic, it doesn't directly state an association, but rather a discussion about it, and it's a general category of markers, not specific ones."
+        },
+        {
+          "query": "(: $prf (IsCommonlyMentionedAsBiomarkerLinkedToPoorClinicalOutcomes crp) $tv)",
+          "source": "deterministic",
+          "stage": "semantic_gate",
+          "detail": "related (confidence 0.80): This target states that CRP is commonly mentioned as a biomarker linked to poor clinical outcomes. This is related to the question, but it's about being 'mentioned' and 'linked to poor clinical outcomes' rather than directly 'associated with severe COVID-19' as asked. It's also only one specific marker, not a general answer to 'which blood markers'."
+        },
+        {
+          "query": "(: $prf (IsCommonlyMentionedAsBiomarkerLinkedToPoorClinicalOutcomes d_dimer) $tv)",
+          "source": "deterministic",
+          "stage": "semantic_gate",
+          "detail": "related (confidence 0.80): This target states that D-dimer is commonly mentioned as a biomarker linked to poor clinical outcomes. Similar to candidate 2, this is related but not an exact match. It's about being 'mentioned' and 'linked to poor clinical outcomes' rather than directly 'associated with severe COVID-19' as asked. It's also only one specific marker, not a general answer to 'which blood markers'."
+        },
+        {
+          "query": "(: $prf (HasElevated $x c_reactive_protein) $tv)",
+          "source": "deterministic",
+          "stage": "semantic_gate_not_considered",
+          "detail": "ranked below top 5 by embedding similarity (score 0.578)"
+        },
+        {
+          "query": "(: $prf (HasAltered $x blood_cell_count) $tv)",
+          "source": "deterministic",
+          "stage": "semantic_gate_not_considered",
+          "detail": "ranked below top 5 by embedding similarity (score 0.555)"
+        },
+        {
+          "query": "(: $prf (HasElevated $x lactate_dehydrogenase) $tv)",
+          "source": "deterministic",
+          "stage": "semantic_gate_not_considered",
+          "detail": "ranked below top 5 by embedding similarity (score 0.501)"
+        },
+        {
+          "query": "(: $prf (HasElevated $x d_dimer) $tv)",
+          "source": "deterministic",
+          "stage": "semantic_gate_not_considered",
+          "detail": "ranked below top 5 by embedding similarity (score 0.483)"
+        }
+      ],
+      "rejection_reasons": [],
+      "answer": "I don't know - no value could be proved for (AssociatedWithMoreSevereDisease $x).",
+      "seconds": 19.3778
+    },
+    {
+      "id": "S03",
+      "name": "S03_semaglutide_comparison_snippets",
+      "category": "multi_source_redundant_snippets",
+      "source_type": "snippets",
+      "question": "How does semaglutide compare with other GLP-1 receptor agonists?",
+      "ingest_error": "",
+      "ingest_seconds": 20.3468,
+      "atom_count": 3,
+      "quarantined_count": 9,
+      "query_error": "",
+      "translator_queries": [
+        "(: $prf (ComparedWith semaglutide other_glp_1_receptor_agonist) $tv)"
+      ],
+      "provider_error": "",
+      "pln_canonicalized_queries": [
+        "(: $prf (ComparedWith semaglutide other_glp_1_receptor_agonist) $tv)"
+      ],
+      "qdrant_aligned_queries": [],
+      "execution_candidates": [
+        "(: $prf (ComparedWith semaglutide other_glp_1_receptor_agonist) $tv)"
+      ],
+      "executed_query": "(: $prf (ComparedWith semaglutide other_glp_1_receptor_agonist) $tv)",
+      "query_source": "parser",
+      "query_status": "well_aligned",
+      "intent_mode": "open",
+      "proof_status": "unknown",
+      "support_kind": "unknown",
+      "candidate_rejections": [
+        {
+          "query": "(: $prf (IsA semaglutide glp_1_receptor_agonist) $tv)",
+          "source": "deterministic",
+          "stage": "semantic_gate",
+          "detail": "related (confidence 1.00): The question asks for a comparison of semaglutide with other GLP-1 receptor agonists. This target only states that semaglutide is a GLP-1 receptor agonist, which is a prerequisite for the comparison but not the comparison itself."
+        },
+        {
+          "query": "(: $prf (ComparedWith semaglutide other_incretin_based_therapy) $tv)",
+          "source": "deterministic",
+          "stage": "semantic_gate",
+          "detail": "related (confidence 1.00): The question specifically asks to compare semaglutide with other GLP-1 receptor agonists. This target compares it with 'other incretin based therapy', which is a broader category and not what the question is focused on."
+        },
+        {
+          "query": "(: $prf (ProducesStrongGlycemicControlEffects semaglutide) $tv)",
+          "source": "deterministic",
+          "stage": "semantic_gate",
+          "detail": "related (confidence 1.00): The question asks for a comparison. This target describes a property of semaglutide (producing strong glycemic control effects) but does not compare it to other GLP-1 receptor agonists."
+        }
+      ],
+      "rejection_reasons": [],
+      "answer": "I don't know - neither the proposition nor its explicit negation was proved.",
+      "seconds": 5.3904
+    },
+    {
+      "id": "S04",
+      "name": "S04_contact_angle_wettability_snippets",
+      "category": "multi_source_redundant_snippets",
+      "source_type": "snippets",
+      "question": "What does contact angle tell us about wettability?",
+      "ingest_error": "",
+      "ingest_seconds": 16.7111,
+      "atom_count": 6,
+      "quarantined_count": 0,
+      "query_error": "",
+      "translator_queries": [
+        "(: $prf (IsUsedAsMeasurementOf contact_angle $what) $tv)"
+      ],
+      "provider_error": "",
+      "pln_canonicalized_queries": [
+        "(: $prf (IsUsedAsMeasurementOf contact_angle $what) $tv)"
+      ],
+      "qdrant_aligned_queries": [
+        "(: $prf (IsUsedAsMeasurementOf contact_angle surface_wettability) $tv)"
+      ],
+      "execution_candidates": [
+        "(: $prf (IsUsedAsMeasurementOf contact_angle surface_wettability) $tv)"
+      ],
+      "executed_query": "(: $prf (IsUsedAsMeasurementOf contact_angle surface_wettability) $tv)",
+      "query_source": "deterministic",
+      "query_status": "well_aligned",
+      "intent_mode": "open",
+      "proof_status": "positive",
+      "support_kind": "entailed",
+      "candidate_rejections": [
+        {
+          "query": "(: $prf (HasHydrophilicWettingBehavior contact_angle) $tv)",
+          "source": "deterministic",
+          "stage": "semantic_gate",
+          "detail": "related (confidence 0.90): The question asks what contact angle tells us about wettability. This target states that contact angle has hydrophilic wetting behavior, which is a specific aspect of wettability, but doesn't explain what it 'tells us' or its general relationship to wettability."
+        },
+        {
+          "query": "(: $prf (HasHydrophobicBehavior contact_angle) $tv)",
+          "source": "deterministic",
+          "stage": "semantic_gate",
+          "detail": "related (confidence 0.90): The question asks what contact angle tells us about wettability. This target states that contact angle has hydrophobic behavior, which is a specific aspect of wettability, but doesn't explain what it 'tells us' or its general relationship to wettability."
+        },
+        {
+          "query": "(: $prf (HasLowerWaterContactAngle contact_angle) $tv)",
+          "source": "deterministic",
+          "stage": "semantic_gate",
+          "detail": "related (confidence 0.80): The question asks what contact angle tells us about wettability. This target states that contact angle has a lower water contact angle, which is a specific property of contact angle, but doesn't explain its general relationship or what it 'tells us' about wettability."
+        },
+        {
+          "query": "(: $prf (HasHigherContactAngle contact_angle) $tv)",
+          "source": "deterministic",
+          "stage": "semantic_gate",
+          "detail": "related (confidence 0.80): The question asks what contact angle tells us about wettability. This target states that contact angle has a higher contact angle, which is a specific property of contact angle, but doesn't explain its general relationship or what it 'tells us' about wettability."
+        },
+        {
+          "query": "(: $prf (HasLowerWaterContactAngle $x) $tv)",
+          "source": "deterministic",
+          "stage": "semantic_gate_not_considered",
+          "detail": "ranked below top 5 by embedding similarity (score 0.683)"
+        },
+        {
+          "query": "(: $prf (IsUsedAsDividerBetween 90degree_contact_angle_threshold hydrophilic_and_hydrophobic_surface) $tv)",
+          "source": "deterministic",
+          "stage": "semantic_gate_not_considered",
+          "detail": "ranked below top 5 by embedding similarity (score 0.676)"
+        },
+        {
+          "query": "(: $prf (IsUsedAsMeasurementOf contact_angle $what) $tv)",
+          "source": "parser",
+          "stage": "semantic_gate_not_considered",
+          "detail": "ranked below top 5 by embedding similarity (score 0.674)"
+        },
+        {
+          "query": "(: $prf (HasHigherContactAngle $x) $tv)",
+          "source": "deterministic",
+          "stage": "semantic_gate_not_considered",
+          "detail": "ranked below top 5 by embedding similarity (score 0.655)"
+        },
+        {
+          "query": "(: $prf (HasHydrophilicWettingBehavior $x) $tv)",
+          "source": "deterministic",
+          "stage": "semantic_gate_not_considered",
+          "detail": "ranked below top 5 by embedding similarity (score 0.647)"
+        },
+        {
+          "query": "(: $prf (HasHydrophobicBehavior $x) $tv)",
+          "source": "deterministic",
+          "stage": "semantic_gate_not_considered",
+          "detail": "ranked below top 5 by embedding similarity (score 0.575)"
+        }
+      ],
+      "rejection_reasons": [],
+      "answer": "Yes. The proof establishes (IsUsedAsMeasurementOf contact_angle surface_wettability).",
+      "seconds": 20.9602
+    },
+    {
+      "id": "S05",
+      "name": "S05_gut_microbiome_colorectal_cancer_causality_snippets",
+      "category": "conflicting_or_partially_overlapping_snippets",
+      "source_type": "snippets",
+      "question": "Is the gut microbiome causally linked to colorectal cancer?",
+      "ingest_error": "",
+      "ingest_seconds": 26.55,
+      "atom_count": 5,
+      "quarantined_count": 4,
+      "query_error": "",
+      "translator_queries": [
+        "(: $prf (CausallyLinkedTo gut_microbiome colorectal_cancer) $tv)"
+      ],
+      "provider_error": "",
+      "pln_canonicalized_queries": [
+        "(: $prf (CausallyLinkedTo gut_microbiome colorectal_cancer) $tv)"
+      ],
+      "qdrant_aligned_queries": [
+        "(: $prf (ReportAssociationsBetween many_study gut_microbiome_composition_and_colorectal_cancer_risk_or_progression) $tv)",
+        "(: $prf (IsMixed evidence_base) $tv)",
+        "(: $prf (AttemptToDistinguish mendelian_randomization_study correlation_from_causation) $tv)",
+        "(: $prf (Emphasize other microbiome_cancer_association_do_not_automatically_establish_causality) $tv)"
+      ],
+      "execution_candidates": [
+        "(: $prf (CausallyLinkedTo gut_microbiome colorectal_cancer) $tv)"
+      ],
+      "executed_query": "(: $prf (CausallyLinkedTo gut_microbiome colorectal_cancer) $tv)",
+      "query_source": "parser",
+      "query_status": "well_aligned",
+      "intent_mode": "boolean",
+      "proof_status": "unknown",
+      "support_kind": "unknown",
+      "candidate_rejections": [
+        {
+          "query": "(: $prf (ReportAssociationsBetween many_study gut_microbiome_composition_and_colorectal_cancer_risk_or_progression) $tv)",
+          "source": "deterministic",
+          "stage": "semantic_gate",
+          "detail": "related (confidence 0.90): Target 1 talks about studies reporting 'associations' between gut microbiome composition and colorectal cancer risk. While related, association is not the same as causal linkage, and the question specifically asks about causality."
+        },
+        {
+          "query": "(: $prf (Emphasize other microbiome_cancer_association_do_not_automatically_establish_causality) $tv)",
+          "source": "deterministic",
+          "stage": "semantic_gate",
+          "detail": "related (confidence 0.80): Target 2 emphasizes that 'microbiome cancer association do not automatically establish causality'. This is related to the topic of causality in microbiome-cancer links, but it doesn't directly answer whether a causal link exists for the gut microbiome and colorectal cancer; it's a general statement about establishing causality."
+        },
+        {
+          "query": "(: $prf (Describe some_snippet possible_causal_role_for_particular_microbial_taxa) $tv)",
+          "source": "deterministic",
+          "stage": "semantic_gate",
+          "detail": "related (confidence 0.80): Target 3 describes 'possible causal role for particular microbial taxa'. This is related to the topic of causality and the microbiome, but it's about 'possible' roles and 'particular microbial taxa' rather than a direct statement about the gut microbiome as a whole being causally linked to colorectal cancer."
+        },
+        {
+          "query": "(: $prf (AttemptToDistinguish mendelian_randomization_study correlation_from_causation) $tv)",
+          "source": "deterministic",
+          "stage": "semantic_gate",
+          "detail": "related (confidence 0.70): Target 4 discusses 'attempt to distinguish correlation from causation'. This is a general methodological point relevant to establishing causality, but it doesn't directly address whether the gut microbiome is causally linked to colorectal cancer."
+        },
+        {
+          "query": "(: $prf (IsMixed evidence_base) $tv)",
+          "source": "deterministic",
+          "stage": "semantic_gate_not_considered",
+          "detail": "ranked below top 5 by embedding similarity (score 0.445)"
+        }
+      ],
+      "rejection_reasons": [],
+      "answer": "I don't know - neither the proposition nor its explicit negation was proved.",
+      "seconds": 6.2256
+    },
+    {
+      "id": "S06",
+      "name": "S06_digital_diabetes_logbook_snippets",
+      "category": "underspecified_entity_context",
+      "source_type": "snippets",
+      "question": "Did the logbook improve diabetes control?",
+      "ingest_error": "",
+      "ingest_seconds": 15.1215,
+      "atom_count": 5,
+      "quarantined_count": 0,
+      "query_error": "",
+      "translator_queries": [
+        "(: $prf (ImproveDiabetesControl logbook) $tv)"
+      ],
+      "provider_error": "",
+      "pln_canonicalized_queries": [
+        "(: $prf (ImproveDiabetesControl logbook) $tv)"
+      ],
+      "qdrant_aligned_queries": [
+        "(: $prf (OftenEvaluateProposition clinical_study_of_diabete_logbook_tool structured_logging_improve_glycemic_control) $tv)",
+        "(: $prf (CanRecord digital_diabete_logbook glucose_measurement) $tv)",
+        "(: $prf (Define some_trial optimal_control) $tv)",
+        "(: $prf (CommonlyMeasuredWith glycemic_control hba1c) $tv)",
+        "(: $prf (DefinedByThreshold optimal_control hba1c_below_6_5) $tv)"
+      ],
+      "execution_candidates": [
+        "(: $prf (ImproveDiabetesControl logbook) $tv)",
+        "(: $prf (OftenEvaluateProposition clinical_study_of_diabete_logbook_tool structured_logging_improve_glycemic_control) $tv)",
+        "(: $prf (CanRecord digital_diabete_logbook glucose_measurement) $tv)",
+        "(: $prf (CommonlyMeasuredWith glycemic_control hba1c) $tv)",
+        "(: $prf (DefinedByThreshold optimal_control hba1c_below_6_5) $tv)"
+      ],
+      "executed_query": "(: $prf (OftenEvaluateProposition clinical_study_of_diabete_logbook_tool structured_logging_improve_glycemic_control) $tv)",
+      "query_source": "deterministic",
+      "query_status": "well_aligned",
+      "intent_mode": "boolean",
+      "proof_status": "positive",
+      "support_kind": "entailed",
+      "candidate_rejections": [
+        {
+          "query": "(: $prf (Define some_trial optimal_control) $tv)",
+          "source": "deterministic",
+          "stage": "semantic_gate_not_considered",
+          "detail": "ranked below top 5 by embedding similarity (score 0.419)"
+        }
+      ],
+      "rejection_reasons": [],
+      "answer": "Yes. The proof establishes (OftenEvaluateProposition clinical_study_of_diabete_logbook_tool structured_logging_improve_glycemic_control).",
+      "seconds": 4.2634
+    },
+    {
+      "id": "S07",
+      "name": "S07_perovskite_stability_efficiency_snippets",
+      "category": "underspecified_entity_context",
+      "source_type": "snippets",
+      "question": "Does higher efficiency imply better stability in perovskite cells?",
+      "ingest_error": "",
+      "ingest_seconds": 27.405,
+      "atom_count": 4,
+      "quarantined_count": 2,
+      "query_error": "",
+      "translator_queries": [
+        "(: $prf (Implies higher_efficiency better_stability perovskite_cell) $tv)"
+      ],
+      "provider_error": "",
+      "pln_canonicalized_queries": [
+        "(: $prf (Implies higher_efficiency better_stability perovskite_cell) $tv)"
+      ],
+      "qdrant_aligned_queries": [
+        "(: $prf (OftenEvaluates perovskite_solar_cell_research power_conversion_efficiency) $tv)"
+      ],
+      "execution_candidates": [
+        "(: $prf (Implies higher_efficiency better_stability perovskite_cell) $tv)"
+      ],
+      "executed_query": "(: $prf (Implies higher_efficiency better_stability perovskite_cell) $tv)",
+      "query_source": "parser",
+      "query_status": "well_aligned",
+      "intent_mode": "boolean",
+      "proof_status": "unknown",
+      "support_kind": "unknown",
+      "candidate_rejections": [
+        {
+          "query": "(: $prf (OftenEvaluates perovskite_solar_cell_research power_conversion_efficiency) $tv)",
+          "source": "deterministic",
+          "stage": "semantic_gate",
+          "detail": "unrelated (confidence 1.00): This target states that perovskite solar cell research often evaluates power conversion efficiency. While related to perovskite cells and efficiency, it does not address the implication between efficiency and stability."
+        },
+        {
+          "query": "(: $prf (HaveExaminedRelationship large_database_study stability_trend_and_efficiency_trend_in_published_perovskite_device) $tv)",
+          "source": "deterministic",
+          "stage": "semantic_gate",
+          "detail": "epistemic_proxy (confidence 1.00): This target states that a large database study has examined the relationship between stability and efficiency trends. This is about the existence of a study or examination of the relationship, not the relationship itself. It's about the evidence or knowledge status."
+        },
+        {
+          "query": "(: $prf (Has stability_follow_efficiency can_be_misread_as causal_claim) $tv)",
+          "source": "deterministic",
+          "stage": "semantic_gate",
+          "detail": "unrelated (confidence 1.00): This target states that 'stability follow efficiency' can be misread as a causal claim. This is a meta-statement about how a finding might be interpreted, not about the actual implication between efficiency and stability."
+        },
+        {
+          "query": "(: $prf (SometimesCompressFindingAs search_snippet stability_follow_efficiency) $tv)",
+          "source": "deterministic",
+          "stage": "semantic_gate",
+          "detail": "unrelated (confidence 1.00): This target states that search snippets sometimes compress findings as 'stability follow efficiency'. This is about how information is presented in search results, not about the actual relationship between efficiency and stability."
+        }
+      ],
+      "rejection_reasons": [],
+      "answer": "I don't know - neither the proposition nor its explicit negation was proved.",
+      "seconds": 5.8664
+    },
+    {
+      "id": "E01",
+      "name": "E01_mercury_7186778_venus_brightness",
+      "category": "simple_2_step_entailment",
+      "source_type": "entailmentbank",
+      "question": "Why does Venus appear brighter than other planets?",
+      "ingest_error": "",
+      "ingest_seconds": 12.7417,
+      "atom_count": 6,
+      "quarantined_count": 0,
+      "query_error": "",
+      "translator_queries": [
+        "(: $prf (AppearsBrighterThan venus other_planet) $tv)"
+      ],
+      "provider_error": "",
+      "pln_canonicalized_queries": [
+        "(: $prf (AppearsBrighterThan venus other_planet) $tv)"
+      ],
+      "qdrant_aligned_queries": [
+        "(: $prf (ReflectsMoreSunlightTowardEarthThan venus other_planet) $tv)",
+        "(: $prf (AppearsBrighter venus) $tv)",
+        "(: $prf (HighlyReflective venus) $tv)"
+      ],
+      "execution_candidates": [
+        "(: $prf (AppearsBrighterThan venus other_planet) $tv)"
+      ],
+      "executed_query": "(: $prf (AppearsBrighterThan venus other_planet) $tv)",
+      "query_source": "parser",
+      "query_status": "well_aligned",
+      "intent_mode": "explanation",
+      "proof_status": "unknown",
+      "support_kind": "unknown",
+      "candidate_rejections": [
+        {
+          "query": "(: $prf (AppearsBrighter venus) $tv)",
+          "source": "deterministic",
+          "stage": "semantic_gate",
+          "detail": "related (confidence 0.90): This target states that Venus appears brighter, but it doesn't include the comparison to 'other planets' which is a crucial part of the question."
+        },
+        {
+          "query": "(: $prf (AppearsBrighter other_planet) $tv)",
+          "source": "deterministic",
+          "stage": "semantic_gate",
+          "detail": "unrelated (confidence 1.00): This target states that other planets appear brighter, which is not what the question is asking about Venus."
+        },
+        {
+          "query": "(: $prf (ReflectsMoreLight venus) $tv)",
+          "source": "deterministic",
+          "stage": "semantic_gate",
+          "detail": "related (confidence 0.80): This target provides a potential reason for Venus appearing brighter (reflects more light), but it doesn't directly state the proposition that Venus appears brighter than other planets. It's a related fact, but not the direct answer to the 'why' of the comparison."
+        },
+        {
+          "query": "(: $prf (ReflectsMoreSunlightTowardEarthThan venus other_planet) $tv)",
+          "source": "deterministic",
+          "stage": "semantic_gate",
+          "detail": "related (confidence 0.90): This target provides a potential reason for Venus appearing brighter than other planets, which is highly relevant to the 'why' aspect of the question. However, the question asks \"Why does Venus appear brighter than other planets?\" and this target states a reason for that appearance, not the appearance itself. It's a strong candidate for an answer to the 'why', but not the direct proposition of the question's main clause."
+        },
+        {
+          "query": "(: $prf (ReflectsMoreLight other_planet) $tv)",
+          "source": "deterministic",
+          "stage": "semantic_gate_not_considered",
+          "detail": "ranked below top 5 by embedding similarity (score 0.690)"
+        },
+        {
+          "query": "(: $prf (HighlyReflective venus) $tv)",
+          "source": "deterministic",
+          "stage": "semantic_gate_not_considered",
+          "detail": "ranked below top 5 by embedding similarity (score 0.689)"
+        },
+        {
+          "query": "(: $prf (HighlyReflective other_planet) $tv)",
+          "source": "deterministic",
+          "stage": "semantic_gate_not_considered",
+          "detail": "ranked below top 5 by embedding similarity (score 0.619)"
+        }
+      ],
+      "rejection_reasons": [],
+      "answer": "The proof rules depend on these requirements: (ReflectsMoreLight venus) [positive].",
+      "seconds": 11.5937
+    },
+    {
+      "id": "E02",
+      "name": "E02_nysedregents_2004_4_1_daylight_june",
+      "category": "three_step_entailment",
+      "source_type": "entailmentbank",
+      "question": "During which month does New York State have the greatest daylight?",
+      "ingest_error": "",
+      "ingest_seconds": 13.3585,
+      "atom_count": 7,
+      "quarantined_count": 0,
+      "query_error": "",
+      "translator_queries": [
+        "(: $prf (IsGreatestIn daylight new_york_state $month) $tv)"
+      ],
+      "provider_error": "",
+      "pln_canonicalized_queries": [
+        "(: $prf (IsGreatestIn daylight new_york_state $month) $tv)"
+      ],
+      "qdrant_aligned_queries": [],
+      "execution_candidates": [],
+      "executed_query": "",
+      "query_source": "none",
+      "query_status": "no_query",
+      "intent_mode": "open",
+      "proof_status": "unknown",
+      "support_kind": "unknown",
+      "candidate_rejections": [
+        {
+          "query": "(: $prf (IsGreatestIn daylight new_york_state $month) $tv)",
+          "source": "parser",
+          "stage": "arity_conflict",
+          "detail": "IsGreatestIn was observed with arity [2], target uses 3"
+        },
+        {
+          "query": "(: $prf (IsSummerMonthFor june new_york_state) $tv)",
+          "source": "deterministic",
+          "stage": "semantic_gate",
+          "detail": "related (confidence 0.90): The question asks for the month with the greatest daylight in New York State. This target identifies June as a summer month for New York State, which is related to the concept of daylight but doesn't directly answer which month has the greatest daylight."
+        },
+        {
+          "query": "(: $prf (IsGreatestIn amount_of_daylight summer) $tv)",
+          "source": "deterministic",
+          "stage": "semantic_gate",
+          "detail": "related (confidence 0.80): This target states that the amount of daylight is greatest in summer. While relevant to the question's topic, it doesn't specify a particular month or link it to New York State."
+        },
+        {
+          "query": "(: $prf (IsA new_york_state state) $tv)",
+          "source": "deterministic",
+          "stage": "semantic_gate",
+          "detail": "unrelated (confidence 1.00): This target states that New York State is a state, which is a factual statement but completely unrelated to the amount of daylight or specific months."
+        },
+        {
+          "query": "(: $prf (IsSummerMonthIn june northern_hemisphere) $tv)",
+          "source": "deterministic",
+          "stage": "semantic_gate",
+          "detail": "related (confidence 0.80): This target identifies June as a summer month in the Northern Hemisphere. This is related to the concept of daylight and seasons, but it doesn't directly answer the question about the greatest daylight in New York State."
+        },
+        {
+          "query": "(: $prf (LocatedIn new_york_state northern_hemisphere) $tv)",
+          "source": "deterministic",
+          "stage": "semantic_gate",
+          "detail": "related (confidence 0.90): This target states that New York State is located in the Northern Hemisphere. This is a relevant geographical fact that helps understand why June might have more daylight, but it doesn't directly answer which month has the greatest daylight."
+        },
+        {
+          "query": "(: $prf (LocatedIn new_york_state united_state_of_america) $tv)",
+          "source": "deterministic",
+          "stage": "semantic_gate_not_considered",
+          "detail": "ranked below top 5 by embedding similarity (score 0.589)"
+        },
+        {
+          "query": "(: $prf (LocatedIn united_state northern_hemisphere) $tv)",
+          "source": "deterministic",
+          "stage": "semantic_gate_not_considered",
+          "detail": "ranked below top 5 by embedding similarity (score 0.515)"
+        }
+      ],
+      "rejection_reasons": [
+        "arity_conflict",
+        "semantic_gate",
+        "semantic_gate_not_considered"
+      ],
+      "answer": "I couldn't translate this question into a logical query.",
+      "seconds": 15.6336
+    },
+    {
+      "id": "E03",
+      "name": "E03_akde_ed_2012_4_22_sun_brightness",
+      "category": "harder_multi_intermediate_entailment",
+      "source_type": "entailmentbank",
+      "question": "Why does the Sun appear brighter than the stars seen in the night sky?",
+      "ingest_error": "",
+      "ingest_seconds": 30.5333,
+      "atom_count": 9,
+      "quarantined_count": 0,
+      "query_error": "",
+      "translator_queries": [
+        "(: $prf (BrighterThan sun star_seen_in_the_night_sky) $tv)"
+      ],
+      "provider_error": "",
+      "pln_canonicalized_queries": [
+        "(: $prf (BrighterThan sun star_seen_in_the_night_sky) $tv)"
+      ],
+      "qdrant_aligned_queries": [
+        "(: $prf (AppearsBrighter sun) $tv)",
+        "(: $prf (IsA sun star) $tv)",
+        "(: $prf (ProducesLight sun) $tv)"
+      ],
+      "execution_candidates": [
+        "(: $prf (BrighterThan sun star_seen_in_the_night_sky) $tv)"
+      ],
+      "executed_query": "(: $prf (BrighterThan sun star_seen_in_the_night_sky) $tv)",
+      "query_source": "parser",
+      "query_status": "well_aligned",
+      "intent_mode": "explanation",
+      "proof_status": "unknown",
+      "support_kind": "unknown",
+      "candidate_rejections": [
+        {
+          "query": "(: $prf (AppearsBrighter sun) $tv)",
+          "source": "deterministic",
+          "stage": "semantic_gate",
+          "detail": "related (confidence 0.90): This target states that the Sun appears brighter, but it doesn't compare it to stars, which is a key part of the question."
+        },
+        {
+          "query": "(: $prf (BrighterThan sun other_star) $tv)",
+          "source": "deterministic",
+          "stage": "semantic_gate",
+          "detail": "related (confidence 0.80): This target states the Sun is brighter than 'other star', which is too general. The question specifically refers to 'stars seen in the night sky', implying a specific context of observation."
+        },
+        {
+          "query": "(: $prf (AppearsBrighter stars) $tv)",
+          "source": "deterministic",
+          "stage": "semantic_gate",
+          "detail": "unrelated (confidence 1.00): This target states that stars appear brighter, which is the opposite of what the question implies about the Sun's relative brightness."
+        },
+        {
+          "query": "(: $prf (AppearsBrighter star) $tv)",
+          "source": "deterministic",
+          "stage": "semantic_gate",
+          "detail": "unrelated (confidence 1.00): This target states that a star appears brighter, which is not the comparison being asked about in the question."
+        },
+        {
+          "query": "(: $prf (ProducesLight sun) $tv)",
+          "source": "deterministic",
+          "stage": "semantic_gate_not_considered",
+          "detail": "ranked below top 5 by embedding similarity (score 0.736)"
+        },
+        {
+          "query": "(: $prf (BrighterThan stars other_star) $tv)",
+          "source": "deterministic",
+          "stage": "semantic_gate_not_considered",
+          "detail": "ranked below top 5 by embedding similarity (score 0.715)"
+        },
+        {
+          "query": "(: $prf (BrighterThan star other_star) $tv)",
+          "source": "deterministic",
+          "stage": "semantic_gate_not_considered",
+          "detail": "ranked below top 5 by embedding similarity (score 0.715)"
+        },
+        {
+          "query": "(: $prf (ProducesLight stars) $tv)",
+          "source": "deterministic",
+          "stage": "semantic_gate_not_considered",
+          "detail": "ranked below top 5 by embedding similarity (score 0.705)"
+        },
+        {
+          "query": "(: $prf (ProducesLight star) $tv)",
+          "source": "deterministic",
+          "stage": "semantic_gate_not_considered",
+          "detail": "ranked below top 5 by embedding similarity (score 0.705)"
+        },
+        {
+          "query": "(: $prf (CloserToEarthThan sun other_star) $tv)",
+          "source": "deterministic",
+          "stage": "semantic_gate_not_considered",
+          "detail": "ranked below top 5 by embedding similarity (score 0.676)"
+        },
+        {
+          "query": "(: $prf (IsA sun star) $tv)",
+          "source": "deterministic",
+          "stage": "semantic_gate_not_considered",
+          "detail": "ranked below top 5 by embedding similarity (score 0.657)"
+        },
+        {
+          "query": "(: $prf (CloserToEarthThan stars other_star) $tv)",
+          "source": "deterministic",
+          "stage": "semantic_gate_not_considered",
+          "detail": "ranked below top 5 by embedding similarity (score 0.644)"
+        },
+        {
+          "query": "(: $prf (CloserToEarthThan star other_star) $tv)",
+          "source": "deterministic",
+          "stage": "semantic_gate_not_considered",
+          "detail": "ranked below top 5 by embedding similarity (score 0.644)"
+        },
+        {
+          "query": "(: $prf (BecomesCloser sun) $tv)",
+          "source": "deterministic",
+          "stage": "semantic_gate_not_considered",
+          "detail": "ranked below top 5 by embedding similarity (score 0.641)"
+        },
+        {
+          "query": "(: $prf (BecomesCloser stars) $tv)",
+          "source": "deterministic",
+          "stage": "semantic_gate_not_considered",
+          "detail": "ranked below top 5 by embedding similarity (score 0.622)"
+        },
+        {
+          "query": "(: $prf (BecomesCloser star) $tv)",
+          "source": "deterministic",
+          "stage": "semantic_gate_not_considered",
+          "detail": "ranked below top 5 by embedding similarity (score 0.622)"
+        },
+        {
+          "query": "(: $prf (SourceOf sun light) $tv)",
+          "source": "deterministic",
+          "stage": "semantic_gate_not_considered",
+          "detail": "ranked below top 5 by embedding similarity (score 0.607)"
+        },
+        {
+          "query": "(: $prf (SourceOf stars light) $tv)",
+          "source": "deterministic",
+          "stage": "semantic_gate_not_considered",
+          "detail": "ranked below top 5 by embedding similarity (score 0.606)"
+        },
+        {
+          "query": "(: $prf (SourceOf star light) $tv)",
+          "source": "deterministic",
+          "stage": "semantic_gate_not_considered",
+          "detail": "ranked below top 5 by embedding similarity (score 0.606)"
+        },
+        {
+          "query": "(: $prf (VeryFarAwayFrom star_in_night_sky earth) $tv)",
+          "source": "deterministic",
+          "stage": "semantic_gate_not_considered",
+          "detail": "ranked below top 5 by embedding similarity (score 0.573)"
+        },
+        {
+          "query": "(: $prf (IsA stars star) $tv)",
+          "source": "deterministic",
+          "stage": "semantic_gate_not_considered",
+          "detail": "ranked below top 5 by embedding similarity (score 0.572)"
+        },
+        {
+          "query": "(: $prf (IsA star star) $tv)",
+          "source": "deterministic",
+          "stage": "semantic_gate_not_considered",
+          "detail": "ranked below top 5 by embedding similarity (score 0.572)"
+        }
+      ],
+      "rejection_reasons": [],
+      "answer": "The proof rules depend on these requirements: (SourceOf sun light) [unknown], (BecomesCloser sun) [unknown], (IsA sun star) [positive], (CloserToEarthThan sun other_star) [positive].",
+      "seconds": 9.6
+    }
+  ]
+}

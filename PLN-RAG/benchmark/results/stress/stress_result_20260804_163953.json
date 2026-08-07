@@ -1,0 +1,527 @@
+{
+  "created_at": "2026-08-04T16:36:18.405087+00:00",
+  "api_base": "http://localhost:8000",
+  "suite_file": "C:\\Users\\fraol\\Documents\\test\\compare\\lang-extract\\PLN-RAG\\benchmark\\stress25_v1.json",
+  "labels_available": false,
+  "metrics": {
+    "case_count": 3,
+    "executed_rate": 0.0,
+    "no_query_rate": 1.0,
+    "weakly_aligned_rate": 0.0,
+    "proof_found_rate": 0.0,
+    "suppressed_candidate_count": 3,
+    "suppressed_case_ids": [
+      "A01",
+      "A02",
+      "A03"
+    ],
+    "request_error_count": 0,
+    "request_error_case_ids": [],
+    "rejection_stages": {
+      "intent_entity": 33,
+      "intent_coverage": 25,
+      "alignment_coverage": 3,
+      "arity_unknown_head": 1
+    },
+    "by_category": {
+      "direct_factual_relation": {
+        "total": 3,
+        "executed": 0,
+        "no_query": 3
+      }
+    },
+    "intent_modes": {
+      "boolean": 2,
+      "open": 1
+    },
+    "proof_status_counts": {
+      "unknown": 3
+    },
+    "latency_seconds": {
+      "ingest_p50": 60.2253,
+      "ingest_p95": 100.4722,
+      "query_p50": 5.8429,
+      "query_p95": 9.0014
+    }
+  },
+  "cases": [
+    {
+      "id": "A01",
+      "name": "A01_digital_diabetes_logbook",
+      "category": "direct_factual_relation",
+      "source_type": "abstract",
+      "question": "Did the digital diabetes logbook improve glycemic control?",
+      "ingest_error": "",
+      "ingest_seconds": 104.9441,
+      "atom_count": 25,
+      "quarantined_count": 22,
+      "query_error": "",
+      "translator_queries": [
+        "(: $prf (ImproveGlycemicControl the_digital_diabete_logbook) $tv)"
+      ],
+      "provider_error": "",
+      "pln_canonicalized_queries": [
+        "(: $prf (ImproveGlycemicControl the_digital_diabete_logbook) $tv)"
+      ],
+      "qdrant_aligned_queries": [],
+      "execution_candidates": [],
+      "executed_query": "",
+      "query_source": "none",
+      "query_status": "no_query",
+      "intent_mode": "boolean",
+      "proof_status": "unknown",
+      "support_kind": "unknown",
+      "candidate_rejections": [
+        {
+          "query": "(: $prf (Requires treatment_of_diabete substantial_self_management) $tv)",
+          "source": "deterministic",
+          "stage": "intent_coverage",
+          "detail": "uncovered question terms ['control', 'digital', 'glycemic', 'improve', 'logbook'] (target terms ['diabete', 'management', 'require', 'self', 'substantial', 'treatment'])"
+        },
+        {
+          "query": "(: $prf (CanHelpReduceBurdenOf digital_tool self_management) $tv)",
+          "source": "deterministic",
+          "stage": "intent_coverage",
+          "detail": "uncovered question terms ['control', 'diabete', 'glycemic', 'improve', 'logbook'] (target terms ['burden', 'digital', 'help', 'management', 'reduce', 'self', 'tool'])"
+        },
+        {
+          "query": "(: $prf (AimsToDetermine this_study whether_the_use_of_a_digital_diabete_logbook_increased_the_likelihood_of_achieving_optimal_glycemic_control) $tv)",
+          "source": "deterministic",
+          "stage": "intent_coverage",
+          "detail": "uncovered question terms ['improve'] (target terms ['achiev', 'achieve', 'achieving', 'aim', 'control', 'determine', 'diabete', 'digital', 'glycemic', 'increas', 'increased', 'likelihood', 'logbook', 'optimal', 'study', 'use', 'whether'])"
+        },
+        {
+          "query": "(: $prf (WasToEvaluate secondary_objective long_term_impact_of_the_logbook_on_mean_blood_glucose_level_over_3_and_12_month) $tv)",
+          "source": "deterministic",
+          "stage": "intent_coverage",
+          "detail": "uncovered question terms ['control', 'diabete', 'digital', 'glycemic', 'improve'] (target terms ['12', '3', 'blood', 'evaluate', 'glucose', 'impact', 'level', 'logbook', 'long', 'mean', 'month', 'objective', 'over', 'secondary', 'term'])"
+        },
+        {
+          "query": "(: $prf (Analyzed data_from_342_participant) $tv)",
+          "source": "deterministic",
+          "stage": "intent_coverage",
+          "detail": "uncovered question terms ['control', 'diabete', 'digital', 'glycemic', 'improve', 'logbook'] (target terms ['342', 'analyz', 'analyzed', 'data', 'participant'])"
+        },
+        {
+          "query": "(: $prf (PerformedToExamine robust_logistic_regression likelihood_of_achieving_optimal_glycemic_control) $tv)",
+          "source": "deterministic",
+          "stage": "intent_coverage",
+          "detail": "uncovered question terms ['diabete', 'digital', 'improve', 'logbook'] (target terms ['achiev', 'achieve', 'achieving', 'control', 'examine', 'glycemic', 'likelihood', 'logistic', 'optimal', 'perform', 'performed', 'regression', 'robust'])"
+        },
+        {
+          "query": "(: $prf (IncludedAs baseline_hb_a1c covariate) $tv)",
+          "source": "deterministic",
+          "stage": "intent_coverage",
+          "detail": "uncovered question terms ['control', 'diabete', 'digital', 'glycemic', 'improve', 'logbook'] (target terms ['a1c', 'baseline', 'covariate', 'hb', 'includ', 'included'])"
+        },
+        {
+          "query": "(: $prf (Identified 2861participant) $tv)",
+          "source": "deterministic",
+          "stage": "intent_coverage",
+          "detail": "uncovered question terms ['control', 'diabete', 'digital', 'glycemic', 'improve', 'logbook'] (target terms ['2861participant', 'identifi', 'identified'])"
+        },
+        {
+          "query": "(: $prf (ConductedToAnalyze one_sample_t_test change_in_mean_blood_glucose) $tv)",
+          "source": "deterministic",
+          "stage": "intent_coverage",
+          "detail": "uncovered question terms ['control', 'diabete', 'digital', 'glycemic', 'improve', 'logbook'] (target terms ['analyze', 'blood', 'change', 'conduct', 'conducted', 'glucose', 'mean', 'one', 'sample', 't', 'test'])"
+        },
+        {
+          "query": "(: $prf (Showed rct_data likelihood_of_achieving_optimal_glycemic_control_was_nearly_doubled_in_the_intervention_group) $tv)",
+          "source": "deterministic",
+          "stage": "intent_coverage",
+          "detail": "uncovered question terms ['diabete', 'digital', 'improve', 'logbook'] (target terms ['achiev', 'achieve', 'achieving', 'control', 'data', 'doubl', 'doubled', 'glycemic', 'group', 'intervention', 'likelihood', 'nearly', 'optimal', 'rct', 'show', 'showed'])"
+        },
+        {
+          "query": "(: $prf (Has likelihood_of_achieving_optimal_glycemic_control odd_ratio 224) $tv)",
+          "source": "deterministic",
+          "stage": "intent_coverage",
+          "detail": "uncovered question terms ['diabete', 'digital', 'improve', 'logbook'] (target terms ['224', 'achiev', 'achieve', 'achieving', 'control', 'glycemic', 'likelihood', 'odd', 'optimal', 'ratio'])"
+        },
+        {
+          "query": "(: $prf (Has likelihood_of_achieving_optimal_glycemic_control 95confidence_interval 112_4_47) $tv)",
+          "source": "deterministic",
+          "stage": "intent_coverage",
+          "detail": "uncovered question terms ['diabete', 'digital', 'improve', 'logbook'] (target terms ['112', '4', '47', '95confidence', 'achiev', 'achieve', 'achieving', 'control', 'glycemic', 'interval', 'likelihood', 'optimal'])"
+        },
+        {
+          "query": "(: $prf (Has likelihood_of_achieving_optimal_glycemic_control p_value 002) $tv)",
+          "source": "deterministic",
+          "stage": "intent_coverage",
+          "detail": "uncovered question terms ['diabete', 'digital', 'improve', 'logbook'] (target terms ['002', 'achiev', 'achieve', 'achieving', 'control', 'glycemic', 'likelihood', 'optimal', 'p', 'value'])"
+        },
+        {
+          "query": "(: $prf (Indicated rwd mean_blood_glucose_level_significantly_improved_over_3_month_of_app_use_in_both_group) $tv)",
+          "source": "deterministic",
+          "stage": "intent_coverage",
+          "detail": "uncovered question terms ['control', 'diabete', 'digital', 'glycemic', 'logbook'] (target terms ['3', 'app', 'blood', 'both', 'glucose', 'group', 'improv', 'improved', 'indicat', 'indicated', 'level', 'mean', 'month', 'over', 'rwd', 'significantly', 'use'])"
+        },
+        {
+          "query": "(: $prf (Has mean_blood_glucose_level_type_1 change 163_mg_dl) $tv)",
+          "source": "deterministic",
+          "stage": "intent_coverage",
+          "detail": "uncovered question terms ['control', 'diabete', 'digital', 'glycemic', 'improve', 'logbook'] (target terms ['1', '163', 'blood', 'change', 'dl', 'glucose', 'level', 'mean', 'mg', 'type'])"
+        },
+        {
+          "query": "(: $prf (Has mean_blood_glucose_level_type_1 95confidence_interval 206_to_12_4) $tv)",
+          "source": "deterministic",
+          "stage": "intent_coverage",
+          "detail": "uncovered question terms ['control', 'diabete', 'digital', 'glycemic', 'improve', 'logbook'] (target terms ['1', '12', '206', '4', '95confidence', 'blood', 'glucose', 'interval', 'level', 'mean', 'type'])"
+        },
+        {
+          "query": "(: $prf (Has mean_blood_glucose_level_type_2 change 273_mg_dl) $tv)",
+          "source": "deterministic",
+          "stage": "intent_coverage",
+          "detail": "uncovered question terms ['control', 'diabete', 'digital', 'glycemic', 'improve', 'logbook'] (target terms ['2', '273', 'blood', 'change', 'dl', 'glucose', 'level', 'mean', 'mg', 'type'])"
+        },
+        {
+          "query": "(: $prf (Has mean_blood_glucose_level_type_2 95confidence_interval 287_to_25_9) $tv)",
+          "source": "deterministic",
+          "stage": "intent_coverage",
+          "detail": "uncovered question terms ['control', 'diabete', 'digital', 'glycemic', 'improve', 'logbook'] (target terms ['2', '25', '287', '9', '95confidence', 'blood', 'glucose', 'interval', 'level', 'mean', 'type'])"
+        },
+        {
+          "query": "(: $prf (IsA rwd person) $tv)",
+          "source": "deterministic",
+          "stage": "intent_coverage",
+          "detail": "uncovered question terms ['control', 'diabete', 'digital', 'glycemic', 'improve', 'logbook'] (target terms ['person', 'rwd'])"
+        },
+        {
+          "query": "(: $prf (ShowedGreatestReductionsIn participant_with_an_estimated_hb_a1c_8_5_at_baseline mean_blood_glucose) $tv)",
+          "source": "deterministic",
+          "stage": "intent_coverage",
+          "detail": "uncovered question terms ['control', 'diabete', 'digital', 'glycemic', 'improve', 'logbook'] (target terms ['5', '8', 'a1c', 'baseline', 'blood', 'estimat', 'estimated', 'glucose', 'greatest', 'hb', 'mean', 'participant', 'reduction', 'show', 'showed'])"
+        },
+        {
+          "query": "(: $prf (HadType1MeanBloodGlucoseReductionOf participant_with_an_estimated_hb_a1c_8_5_at_baseline 822_mg_dl) $tv)",
+          "source": "deterministic",
+          "stage": "intent_coverage",
+          "detail": "uncovered question terms ['control', 'diabete', 'digital', 'glycemic', 'improve', 'logbook'] (target terms ['5', '8', '822', 'a1c', 'baseline', 'blood', 'dl', 'estimat', 'estimated', 'glucose', 'hb', 'mean', 'mg', 'participant', 'reduction', 'type1'])"
+        },
+        {
+          "query": "(: $prf (HadType2MeanBloodGlucoseReductionOf participant_with_an_estimated_hb_a1c_8_5_at_baseline 1046_mg_dl) $tv)",
+          "source": "deterministic",
+          "stage": "intent_coverage",
+          "detail": "uncovered question terms ['control', 'diabete', 'digital', 'glycemic', 'improve', 'logbook'] (target terms ['1046', '5', '8', 'a1c', 'baseline', 'blood', 'dl', 'estimat', 'estimated', 'glucose', 'hb', 'mean', 'mg', 'participant', 'reduction', 'type2'])"
+        },
+        {
+          "query": "(: $prf (RevealedSustainedReductionIn long_term_analy mean_blood_glucose) $tv)",
+          "source": "deterministic",
+          "stage": "intent_coverage",
+          "detail": "uncovered question terms ['control', 'diabete', 'digital', 'glycemic', 'improve', 'logbook'] (target terms ['analy', 'blood', 'glucose', 'long', 'mean', 'reduction', 'reveal', 'revealed', 'sustain', 'sustained', 'term'])"
+        },
+        {
+          "query": "(: $prf (HadMeanDecreaseOf mean_blood_glucose 198_mg_dl) $tv)",
+          "source": "deterministic",
+          "stage": "intent_coverage",
+          "detail": "uncovered question terms ['control', 'diabete', 'digital', 'glycemic', 'improve', 'logbook'] (target terms ['198', 'blood', 'decrease', 'dl', 'glucose', 'mean', 'mg'])"
+        },
+        {
+          "query": "(: $prf (DemonstratedSignificantIncreaseInLikelihoodOf secondary_analysis_of_the_rct achieving_optimal_glycemic_control) $tv)",
+          "source": "deterministic",
+          "stage": "intent_coverage",
+          "detail": "uncovered question terms ['diabete', 'digital', 'improve', 'logbook'] (target terms ['achiev', 'achieve', 'achieving', 'analysis', 'control', 'demonstrat', 'demonstrated', 'glycemic', 'increase', 'likelihood', 'optimal', 'rct', 'secondary', 'significant'])"
+        },
+        {
+          "query": "(: $prf (ImproveGlycemicControl the_digital_diabete_logbook) $tv)",
+          "source": "parser",
+          "stage": "arity_unknown_head",
+          "detail": "predicate ImproveGlycemicControl was never observed in the knowledge base"
+        }
+      ],
+      "rejection_reasons": [
+        "intent_coverage",
+        "arity_unknown_head"
+      ],
+      "answer": "I couldn't translate this question into a logical query.",
+      "seconds": 5.8429
+    },
+    {
+      "id": "A02",
+      "name": "A02_iot_glycemic_control_type2_diabetes",
+      "category": "direct_factual_relation",
+      "source_type": "abstract",
+      "question": "Did the IoT-based intervention reduce HbA1c?",
+      "ingest_error": "",
+      "ingest_seconds": 60.2253,
+      "atom_count": 22,
+      "quarantined_count": 8,
+      "query_error": "",
+      "translator_queries": [
+        "(: $prf (ReducedHba1cInPatientsWithType2Diabetes io_t_based_intervention) $tv)"
+      ],
+      "provider_error": "",
+      "pln_canonicalized_queries": [
+        "(: $prf (ReducedHba1cInPatientsWithType2Diabetes io_t_based) $tv)",
+        "(: $prf (ReducedHba1cInPatientsWithType2Diabetes hb_a1c) $tv)",
+        "(: $prf (ReducedHba1cInPatientsWithType2Diabetes io_t_based_intervention) $tv)"
+      ],
+      "qdrant_aligned_queries": [],
+      "execution_candidates": [],
+      "executed_query": "",
+      "query_source": "none",
+      "query_status": "no_query",
+      "intent_mode": "boolean",
+      "proof_status": "unknown",
+      "support_kind": "unknown",
+      "candidate_rejections": [
+        {
+          "query": "(: $prf (ReducedHba1cInPatientsWithType2Diabetes io_t_based) $tv)",
+          "source": "parser",
+          "stage": "alignment_coverage",
+          "detail": "uncovered question anchors ['intervention', 'iot', 'iot_bas', 'iot_based'] (target terms ['diabete', 'hba1c', 'in', 'patient', 'reduc', 'reduced', 'type2', 'with'])"
+        },
+        {
+          "query": "(: $prf (ReducedHba1cInPatientsWithType2Diabetes hb_a1c) $tv)",
+          "source": "parser",
+          "stage": "alignment_coverage",
+          "detail": "uncovered question anchors ['intervention', 'iot', 'iot_bas', 'iot_based'] (target terms ['diabete', 'hba1c', 'in', 'patient', 'reduc', 'reduced', 'type2', 'with'])"
+        },
+        {
+          "query": "(: $prf (ReducedHba1cInPatientsWithType2Diabetes io_t_based_intervention) $tv)",
+          "source": "parser",
+          "stage": "alignment_coverage",
+          "detail": "uncovered question anchors ['iot', 'iot_bas'] (target terms ['diabete', 'hba1c', 'in', 'io_t_based_intervention', 'patient', 'reduc', 'reduced', 'type2', 'with'])"
+        },
+        {
+          "query": "(: $prf (IsControversial utilization_of_long_term_effect_of_internet_of_thing_iot_on_glycemic_control) $tv)",
+          "source": "deterministic",
+          "stage": "intent_entity",
+          "detail": "target args ['utilization_of_long_term_effect_of_internet_of_thing_iot_on_glycemic_control'] omit question entities ['io_t_based', 'hb_a1c']"
+        },
+        {
+          "query": "(: $prf (AimedToExamine this_trial effect_of_an_io_t_based_approach_for_type_2_diabete) $tv)",
+          "source": "deterministic",
+          "stage": "intent_entity",
+          "detail": "target args ['this_trial', 'effect_of_an_io_t_based_approach_for_type_2_diabete'] omit question entities ['io_t_based', 'hb_a1c']"
+        },
+        {
+          "query": "(: $prf (Enrolled this_randomized_controlled_trial 1159_adult) $tv)",
+          "source": "deterministic",
+          "stage": "intent_entity",
+          "detail": "target args ['this_randomized_controlled_trial', '1159_adult'] omit question entities ['io_t_based', 'hb_a1c']"
+        },
+        {
+          "query": "(: $prf (Has 1159_adult age_range 2074_year) $tv)",
+          "source": "deterministic",
+          "stage": "intent_entity",
+          "detail": "target args ['1159_adult', 'age_range', '2074_year'] omit question entities ['io_t_based', 'hb_a1c']"
+        },
+        {
+          "query": "(: $prf (HasCondition 1159_adult type_2_diabete) $tv)",
+          "source": "deterministic",
+          "stage": "intent_entity",
+          "detail": "target args ['1159_adult', 'type_2_diabete'] omit question entities ['io_t_based', 'hb_a1c']"
+        },
+        {
+          "query": "(: $prf (Has 1159_adult hb_a1c 60_8_9_42_74_mmol_mol) $tv)",
+          "source": "deterministic",
+          "stage": "intent_entity",
+          "detail": "target args ['1159_adult', 'hb_a1c', '60_8_9_42_74_mmol_mol'] omit question entities ['io_t_based', 'hb_a1c']"
+        },
+        {
+          "query": "(: $prf (UsingSmartphoneDaily 1159_adult) $tv)",
+          "source": "deterministic",
+          "stage": "intent_entity",
+          "detail": "target args ['1159_adult'] omit question entities ['io_t_based', 'hb_a1c']"
+        },
+        {
+          "query": "(: $prf (RandomlyAssignedTo 1159_adult io_t_based_approach_group_itg) $tv)",
+          "source": "deterministic",
+          "stage": "intent_entity",
+          "detail": "target args ['1159_adult', 'io_t_based_approach_group_itg'] omit question entities ['io_t_based', 'hb_a1c']"
+        },
+        {
+          "query": "(: $prf (RandomlyAssignedTo 1159_adult control_group_ctg) $tv)",
+          "source": "deterministic",
+          "stage": "intent_entity",
+          "detail": "target args ['1159_adult', 'control_group_ctg'] omit question entities ['io_t_based', 'hb_a1c']"
+        },
+        {
+          "query": "(: $prf (SupervisedToUtilize itg io_t_automated_system) $tv)",
+          "source": "deterministic",
+          "stage": "intent_entity",
+          "detail": "target args ['itg', 'io_t_automated_system'] omit question entities ['io_t_based', 'hb_a1c']"
+        },
+        {
+          "query": "(: $prf (Was primary_end_point hb_a1c_change_over_52_week) $tv)",
+          "source": "deterministic",
+          "stage": "intent_entity",
+          "detail": "target args ['primary_end_point', 'hb_a1c_change_over_52_week'] omit question entities ['io_t_based', 'hb_a1c']"
+        },
+        {
+          "query": "(: $prf (Has change_in_hb_a1c_from_baseline_to_the_final_measurement_at_52_week_in_itg mean_sd 0000_0_6225) $tv)",
+          "source": "deterministic",
+          "stage": "intent_entity",
+          "detail": "target args ['change_in_hb_a1c_from_baseline_to_the_final_measurement_at_52_week_in_itg', 'mean_sd', '0000_0_6225'] omit question entities ['io_t_based', 'hb_a1c']"
+        },
+        {
+          "query": "(: $prf (Has change_in_hb_a1c_from_baseline_to_the_final_measurement_at_52_week_in_ctg mean_sd 0006_0_6449) $tv)",
+          "source": "deterministic",
+          "stage": "intent_entity",
+          "detail": "target args ['change_in_hb_a1c_from_baseline_to_the_final_measurement_at_52_week_in_ctg', 'mean_sd', '0006_0_6449'] omit question entities ['io_t_based', 'hb_a1c']"
+        },
+        {
+          "query": "(: $prf (Has p_value_for_change_in_hb_a1c_from_baseline_to_the_final_measurement_at_52_week value 08766) $tv)",
+          "source": "deterministic",
+          "stage": "intent_entity",
+          "detail": "target args ['p_value_for_change_in_hb_a1c_from_baseline_to_the_final_measurement_at_52_week', 'value', '08766'] omit question entities ['io_t_based', 'hb_a1c']"
+        },
+        {
+          "query": "(: $prf (Includes per_protocol_set itg_using_the_io_t_system_almost_daily) $tv)",
+          "source": "deterministic",
+          "stage": "intent_entity",
+          "detail": "target args ['per_protocol_set', 'itg_using_the_io_t_system_almost_daily'] omit question entities ['io_t_based', 'hb_a1c']"
+        },
+        {
+          "query": "(: $prf (Has difference_in_hb_a1c_from_baseline_to_52_week_in_itg_per_protocol_set mean_sd 0098_0_579) $tv)",
+          "source": "deterministic",
+          "stage": "intent_entity",
+          "detail": "target args ['difference_in_hb_a1c_from_baseline_to_52_week_in_itg_per_protocol_set', 'mean_sd', '0098_0_579'] omit question entities ['io_t_based', 'hb_a1c']"
+        },
+        {
+          "query": "(: $prf (Has difference_in_hb_a1c_from_baseline_to_52_week_in_ctg_per_protocol_set mean_sd 0027_0_571) $tv)",
+          "source": "deterministic",
+          "stage": "intent_entity",
+          "detail": "target args ['difference_in_hb_a1c_from_baseline_to_52_week_in_ctg_per_protocol_set', 'mean_sd', '0027_0_571'] omit question entities ['io_t_based', 'hb_a1c']"
+        },
+        {
+          "query": "(: $prf (Has p_value_for_difference_in_hb_a1c_from_baseline_to_52_week_per_protocol_set value 00201) $tv)",
+          "source": "deterministic",
+          "stage": "intent_entity",
+          "detail": "target args ['p_value_for_difference_in_hb_a1c_from_baseline_to_52_week_per_protocol_set', 'value', '00201'] omit question entities ['io_t_based', 'hb_a1c']"
+        },
+        {
+          "query": "(: $prf (HasSignificantDifferenceBetweenGroups adverse_event_profile) $tv)",
+          "source": "deterministic",
+          "stage": "intent_entity",
+          "detail": "target args ['adverse_event_profile'] omit question entities ['io_t_based', 'hb_a1c']"
+        },
+        {
+          "query": "(: $prf (ReducedHba1cInPatientsWithType2Diabetes io_t_based_approach) $tv)",
+          "source": "deterministic",
+          "stage": "intent_entity",
+          "detail": "target args ['io_t_based_approach'] omit question entities ['io_t_based', 'hb_a1c']"
+        },
+        {
+          "query": "(: $prf (MayBeRequiredToImprove io_t_based_intervention_using_data_on_the_daily_glycemic_control_and_hb_a1c_level glycemic_control) $tv)",
+          "source": "deterministic",
+          "stage": "intent_entity",
+          "detail": "target args ['io_t_based_intervention_using_data_on_the_daily_glycemic_control_and_hb_a1c_level', 'glycemic_control'] omit question entities ['io_t_based', 'hb_a1c']"
+        },
+        {
+          "query": "(: $prf (IsA itg person) $tv)",
+          "source": "deterministic",
+          "stage": "intent_entity",
+          "detail": "target args ['itg', 'person'] omit question entities ['io_t_based', 'hb_a1c']"
+        }
+      ],
+      "rejection_reasons": [
+        "alignment_coverage",
+        "intent_entity"
+      ],
+      "answer": "I couldn't translate this question into a logical query.",
+      "seconds": 9.3524
+    },
+    {
+      "id": "A03",
+      "name": "A03_cas9_aav6_beta_globin_hsc",
+      "category": "direct_factual_relation",
+      "source_type": "abstract",
+      "question": "What does Cas9-AAV6 correction improve in sickle cell disease cells?",
+      "ingest_error": "",
+      "ingest_seconds": 30.2951,
+      "atom_count": 10,
+      "quarantined_count": 1,
+      "query_error": "",
+      "translator_queries": [
+        "(: $prf (Improves cas9_aav6_correction $what sickle_cell_disease_cell) $tv)"
+      ],
+      "provider_error": "",
+      "pln_canonicalized_queries": [
+        "(: $prf (Improves cas9_aav6_correction $what sickle_cell_disease_cell) $tv)"
+      ],
+      "qdrant_aligned_queries": [],
+      "execution_candidates": [],
+      "executed_query": "",
+      "query_source": "none",
+      "query_status": "no_query",
+      "intent_mode": "open",
+      "proof_status": "unknown",
+      "support_kind": "unknown",
+      "candidate_rejections": [
+        {
+          "query": "(: $prf (Represents crispr_cas9_mediated_beta_globin_hbb_gene_correction_of_sickle_cell_disease_scd_patient_derived_hematopoietic_stem_cell_hsc_in_combination_with_autologous_transplantation a_recent_paradigm_in_gene_therapy) $tv)",
+          "source": "deterministic",
+          "stage": "intent_entity",
+          "detail": "target args ['crispr_cas9_mediated_beta_globin_hbb_gene_correction_of_sickle_cell_disease_scd_patient_derived_hematopoietic_stem_cell_hsc_in_combination_with_autologous_transplantation', 'a_recent_paradigm_in_gene_therapy'] omit question entities ['cas9_aav6']"
+        },
+        {
+          "query": "(: $prf (HaveBeenProposed several_cas9_based_hbb_correction_approache) $tv)",
+          "source": "deterministic",
+          "stage": "intent_entity",
+          "detail": "target args ['several_cas9_based_hbb_correction_approache'] omit question entities ['cas9_aav6']"
+        },
+        {
+          "query": "(: $prf (HasBeenInvestigatedPreviously functional_correction_of_in_vivo_erythropoiesis) $tv)",
+          "source": "deterministic",
+          "stage": "intent_entity",
+          "detail": "target args ['functional_correction_of_in_vivo_erythropoiesis'] omit question entities ['cas9_aav6']"
+        },
+        {
+          "query": "(: $prf (Studies this_study cas9_aav6_mediated_hbb_correction_in_functional_hsc_within_the_context_of_autologous_transplantation) $tv)",
+          "source": "deterministic",
+          "stage": "intent_entity",
+          "detail": "target args ['this_study', 'cas9_aav6_mediated_hbb_correction_in_functional_hsc_within_the_context_of_autologous_transplantation'] omit question entities ['cas9_aav6']"
+        },
+        {
+          "query": "(: $prf (CanBeGeneCorrectedExVivo long_term_multipotent_hsc) $tv)",
+          "source": "deterministic",
+          "stage": "intent_entity",
+          "detail": "target args ['long_term_multipotent_hsc'] omit question entities ['cas9_aav6']"
+        },
+        {
+          "query": "(: $prf (CanBeAchievedStablyInVivo hemoglobin_a_production) $tv)",
+          "source": "deterministic",
+          "stage": "intent_entity",
+          "detail": "target args ['hemoglobin_a_production'] omit question entities ['cas9_aav6']"
+        },
+        {
+          "query": "(: $prf (AchievedFrom hemoglobin_a_production hbb_corrected_hsc_following_autologous_transplantation) $tv)",
+          "source": "deterministic",
+          "stage": "intent_entity",
+          "detail": "target args ['hemoglobin_a_production', 'hbb_corrected_hsc_following_autologous_transplantation'] omit question entities ['cas9_aav6']"
+        },
+        {
+          "query": "(: $prf (HasDirectCorrelationWith increased_hbb_corrected_myeloid_chimerism normalized_in_vivo_red_blood_cell_rbc_feature) $tv)",
+          "source": "deterministic",
+          "stage": "intent_entity",
+          "detail": "target args ['increased_hbb_corrected_myeloid_chimerism', 'normalized_in_vivo_red_blood_cell_rbc_feature'] omit question entities ['cas9_aav6']"
+        },
+        {
+          "query": "(: $prf (ResultedIn low_level_of_chimerism robust_hemoglobin_a_level) $tv)",
+          "source": "deterministic",
+          "stage": "intent_entity",
+          "detail": "target args ['low_level_of_chimerism', 'robust_hemoglobin_a_level'] omit question entities ['cas9_aav6']"
+        },
+        {
+          "query": "(: $prf (OffersPlatformFor this_study gene_editing_of_mouse_hsc_for_both_basic_and_translational_research) $tv)",
+          "source": "deterministic",
+          "stage": "intent_entity",
+          "detail": "target args ['this_study', 'gene_editing_of_mouse_hsc_for_both_basic_and_translational_research'] omit question entities ['cas9_aav6']"
+        },
+        {
+          "query": "(: $prf (Improves cas9_aav6_correction $what sickle_cell_disease_cell) $tv)",
+          "source": "parser",
+          "stage": "intent_entity",
+          "detail": "target args ['cas9_aav6_correction', 'what', 'sickle_cell_disease_cell'] omit question entities ['cas9_aav6']"
+        }
+      ],
+      "rejection_reasons": [
+        "intent_entity"
+      ],
+      "answer": "I couldn't translate this question into a logical query.",
+      "seconds": 3.9344
+    }
+  ]
+}
